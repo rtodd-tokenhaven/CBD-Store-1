@@ -1,0 +1,109 @@
+{%- comment -%}
+  为给定 surface 派生一个可读 foreground。
+
+  输入：
+  - surface：当前要放文字/图标的背景色，例如 brand、striking、cta。
+  - foreground：主题原始 text_color，是最希望保留的品牌文字色。
+  - background：主题原始 background_color，是次优先的浅/暗背景锚点。
+
+  候选生成顺序：
+  1. 先尝试原始 palette 锚点：foreground、background。
+     如果它们已经满足 4.5:1，可直接复用，最大程度保持品牌体系一致。
+  2. 如果锚点不可读，用 foreground | color_mix: '#000000', weight 生成候选。
+     Shopify 的 color_mix 权重表示保留左侧颜色的比例：100 是 foreground，
+     0 是 #000000。因此当前权重会从接近黑色一路试到原始 foreground，
+     得到一组更深的文字色，用于浅色或中亮 surface。
+  3. 再用 background | color_mix: '#FFFFFF', weight 生成候选。
+     同理，100 是 background，0 是 #FFFFFF；当前权重会从接近白色一路试到
+     原始 background，得到一组更浅的文字色，用于深色 surface。
+  4. 最后尝试 #111111 和 #FFFFFF。
+     这是兜底路径，避免极端或手动修改 palette 时没有可用前景色。
+
+  选择规则：
+  - 只接受与 surface 对比度 >= 4.5 的候选。
+  - 在可读候选中，优先选择与 foreground 色差最小的颜色。
+    这样派生色会尽量接近主题 text_color，而不是轻易跳到纯黑/纯白。
+  - 如果两个候选与 foreground 的色差相同，则选择对比度更高的那个。
+{%- endcomment -%}
+{%- liquid
+  assign _surface = surface
+  assign _foreground = foreground
+  assign _background = background
+  assign _minimum_readable_contrast = 4.5
+  assign _weights = '8,12,16,20,24,30,40,50,65,80,100' | split: ','
+  assign _best_foreground = '#111111'
+  assign _best_distance = 9999
+  assign _best_contrast = 0
+  assign _base_candidates = _foreground | append: ',' | append: _background | split: ','
+
+  # 第一步：优先检查现有 palette 锚点，能直接用就不派生新颜色。
+  for _candidate in _base_candidates
+    assign _candidate_contrast = _surface | color_contrast: _candidate
+    if _candidate_contrast >= _minimum_readable_contrast
+      assign _candidate_distance = _candidate | color_difference: _foreground
+      if _candidate_distance < _best_distance
+        assign _best_foreground = _candidate
+        assign _best_distance = _candidate_distance
+        assign _best_contrast = _candidate_contrast
+      elsif _candidate_distance == _best_distance and _candidate_contrast > _best_contrast
+        assign _best_foreground = _candidate
+        assign _best_contrast = _candidate_contrast
+      endif
+    endif
+  endfor
+
+  # 第二步：color_mix 的 weight 是保留 text_color 的比例，数值越小越接近黑色。
+  for _weight in _weights
+    assign _weight_number = _weight | plus: 0
+    assign _candidate = _foreground | color_mix: '#000000', _weight_number
+    assign _candidate_contrast = _surface | color_contrast: _candidate
+    if _candidate_contrast >= _minimum_readable_contrast
+      assign _candidate_distance = _candidate | color_difference: _foreground
+      if _candidate_distance < _best_distance
+        assign _best_foreground = _candidate
+        assign _best_distance = _candidate_distance
+        assign _best_contrast = _candidate_contrast
+      elsif _candidate_distance == _best_distance and _candidate_contrast > _best_contrast
+        assign _best_foreground = _candidate
+        assign _best_contrast = _candidate_contrast
+      endif
+    endif
+  endfor
+
+  # 第三步：color_mix 的 weight 是保留 background_color 的比例，数值越小越接近白色。
+  for _weight in _weights
+    assign _weight_number = _weight | plus: 0
+    assign _candidate = _background | color_mix: '#FFFFFF', _weight_number
+    assign _candidate_contrast = _surface | color_contrast: _candidate
+    if _candidate_contrast >= _minimum_readable_contrast
+      assign _candidate_distance = _candidate | color_difference: _foreground
+      if _candidate_distance < _best_distance
+        assign _best_foreground = _candidate
+        assign _best_distance = _candidate_distance
+        assign _best_contrast = _candidate_contrast
+      elsif _candidate_distance == _best_distance and _candidate_contrast > _best_contrast
+        assign _best_foreground = _candidate
+        assign _best_contrast = _candidate_contrast
+      endif
+    endif
+  endfor
+
+  assign _fallbacks = '#111111,#FFFFFF' | split: ','
+  # 第四步：黑白兜底，覆盖异常或人工修改后的 palette。
+  for _candidate in _fallbacks
+    assign _candidate_contrast = _surface | color_contrast: _candidate
+    if _candidate_contrast >= _minimum_readable_contrast
+      assign _candidate_distance = _candidate | color_difference: _foreground
+      if _candidate_distance < _best_distance
+        assign _best_foreground = _candidate
+        assign _best_distance = _candidate_distance
+        assign _best_contrast = _candidate_contrast
+      elsif _candidate_distance == _best_distance and _candidate_contrast > _best_contrast
+        assign _best_foreground = _candidate
+        assign _best_contrast = _candidate_contrast
+      endif
+    endif
+  endfor
+
+  echo _best_foreground
+-%}

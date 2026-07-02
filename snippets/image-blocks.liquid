@@ -1,0 +1,48 @@
+{% comment %}
+  Lightweight block renderer for image-with-text sections.
+{% endcomment %}
+
+<div class="image-blocks{% if is_card %} image-blocks--card{% endif %}{% if has_padding %} image-blocks--padded{% endif %}">
+  {% for block in blocks %}
+    {% case block.type %}
+      {% when 'heading' %}
+        {% if block.settings.heading != blank %}
+          <h2 class="image-blocks__heading{% if block.settings.heading_size != blank %} image-blocks__heading--{{ block.settings.heading_size }}{% endif %}">
+            {{ block.settings.heading }}
+          </h2>
+        {% endif %}
+
+      {% when 'separator_line' %}
+        <div class="image-blocks__separator"></div>
+
+      {% when 'introduction' %}
+        {% if block.settings.text != blank %}
+          <p class="image-blocks__intro{% if block.settings.text_size != blank %} image-blocks__intro--{{ block.settings.text_size }}{% endif %}">
+            {{ block.settings.text }}
+          </p>
+        {% endif %}
+
+      {% when 'text' %}
+        {% if block.settings.text != blank %}
+          <div class="image-blocks__text{% if block.settings.text_size != blank %} image-blocks__text--{{ block.settings.text_size }}{% endif %}">
+            {{ block.settings.text }}
+          </div>
+        {% endif %}
+
+      {% when 'buttons' %}
+        <div class="image-blocks__buttons">
+          {% if block.settings.show_button_1 and block.settings.button_label_1 != blank %}
+            <a class="image-blocks__button image-blocks__button--{{ block.settings.button_style_secondary_1 | default: 'primary' }}{% if block.settings.color_style_button_1 != blank %} image-blocks__button--{{ block.settings.color_style_button_1 }}{% endif %}" href="{{ block.settings.button_link_1 | default: '#' }}">
+              {{ block.settings.button_label_1 }}
+            </a>
+          {% endif %}
+
+          {% if block.settings.show_button_2 and block.settings.button_label_2 != blank %}
+            <a class="image-blocks__button image-blocks__button--{{ block.settings.button_style_secondary_2 | default: 'primary' }}{% if block.settings.color_style_button_2 != blank %} image-blocks__button--{{ block.settings.color_style_button_2 }}{% endif %}" href="{{ block.settings.button_link_2 | default: '#' }}">
+              {{ block.settings.button_label_2 }}
+            </a>
+          {% endif %}
+        </div>
+    {% endcase %}
+  {% endfor %}
+</div>

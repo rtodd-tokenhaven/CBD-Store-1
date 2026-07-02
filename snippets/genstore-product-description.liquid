@@ -1,0 +1,30 @@
+{% comment %} 
+            -- block  块的信息 
+            -- product.description 产品描述
+            -- className 
+{% endcomment %}
+
+<div class="{{className}}">
+  {% if block.settings.enable_collapse == true %}
+    <details class="p-y-300 product__accordion" {{ block.genstore_attributes }}>
+      <summary class="f-row align-center content-between gap-200">
+        <div class="f-row align-center gap-200">
+          <span class="collapsible-title genstore-text-letter-spacing">
+            {% assign title = 'products.product.description' | t %}
+            {{ title | upcase }}
+          </span>
+        </div>
+        {% render 'genstore-svg'
+          , icon_name: 'icon-down'
+          , className: 'icon-caret' %}
+      </summary>
+      <div class="rich-text-content genstore-text-letter-spacing">
+        {{ product.description }}
+      </div>
+    </details>
+  {% else %}
+    <div class="p-y-300 rich-text-content genstore-text-letter-spacing" {{ block.genstore_attributes }}>
+      {{ product.description }}
+    </div>
+  {% endif %}
+</div>

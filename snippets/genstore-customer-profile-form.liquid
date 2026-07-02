@@ -1,0 +1,164 @@
+{% liquid
+  assign first_name_t = 'customer.register.first_name' | t
+  assign last_name_t = 'customer.register.last_name' | t
+  assign email_t = 'customer.login_page.email' | t
+  assign cancel_text = 'customer.profile_page.cancel' | t
+  assign save_text = 'customer.profile_page.save' | t
+  assign password_t = 'customer.login_page.password' | t
+  assign change_password_t = 'customer.profile_page.change_password' | t
+  assign current_password_t = 'customer.profile_page.current_password' | t
+  assign new_password_t = 'customer.profile_page.new_password' | t
+  assign confirm_new_password_t = 'customer.profile_page.confirm_new_password' | t
+  assign phone_t = 'customer.addresses.phone' | t
+  assign chang_pwd_success = 'customer.account.change_pwd_success' | t
+  assign save_success = 'customer.addresses.success' | t
+%}
+{% capture chang_pwd_content %}
+  <div class=" p-x-800 cursor hidden" id="change-pwd">
+    <span class="text">    {{ change_password_t }}    </span>
+    {%  render 'genstore-svg', icon_name: 'icon-edit' %}
+   </div>
+{% endcapture %}
+{% capture password_eye %}
+  {% render 'password-eye', class: 'eye'%}
+{% endcapture %}
+<customer-info
+  data-change-pwd-success='{{ chang_pwd_success }}'
+  data-save-success='{{ save_success }}'
+  data-has-password='{{ customer.has_password }}'
+  data-password-format-error='{{ "customer.profile_page.password_format_error" | t}}'
+  data-password-unique-error='{{ "customer.profile_page.password_unique_error" | t}}'
+  data-confirm-password-error='{{ "customer.profile_page.confirm_password_error" | t}}'
+  data-password-long-error='{{ "customer.profile_page.password_long_error" | t}}'
+  data-password-less-error='{{ "customer.profile_page.password_less_error" | t}}'
+  data-new-password-error='{{ "customer.profile_page.new_password_error" | t}}'
+  data-password-error='{{ "customer.profile_page.password_error" | t}}'
+>
+  <div class='customer-box-item-title f-row align-center justify-between'>
+    {% assign title = 'customer.account.my_profile' | t %}
+    {% render 'genstore-heading', title: title, heading_size: 's', className: 'flex-1', no_letter_spacing: true %}
+    <a class='f-row align-center gap-400 cursor' id='editButton'>
+      {% render 'genstore-svg', icon_name: 'icon-edit',icon_style: 'general', icon_weight: 'normal' %}
+      <span> {{ 'customer.account.edit_your_profile' | t }} </span>
+    </a>
+  </div>
+  <div class='customer-box-item-content f-column gap-600 m-t-800'>
+    <div class='customer-profile-input-container'>
+      {% render 'genstore-input-1',
+        label: first_name_t,
+        className: 'first_name_input s_input flex-1',
+        input_id: 'CustomerFirstName',
+        input_name: 'firstName',
+        value: customer.first_name,
+        disabled: true
+      %}
+      {% render 'genstore-input-1',
+        label: last_name_t,
+        className: 'last_name_input s_input flex-1',
+        input_id: 'CustomerLastName',
+        input_name: 'lastName',
+        value: customer.last_name,
+        disabled: true
+      %}
+    </div>
+    <div class='customer-profile-phone-container'>
+      {% render 'genstore-select',
+        label: label,
+        input_name: input_name,
+        selected_value: customer.phone,
+        api_url: '/regionInfo',
+        value_field: 'phoneNumberPrefix',
+        label_field: 'name',
+        search_fields: 'name,code,phoneNumberPrefix,otherLanguage',
+        search_placeholder: 'Search country...',
+        option_template: 'phone-code',
+        enable_search: true,
+        is_required: is_required,
+        disabled: true,
+        className: 'select-phone-code'
+      %}
+      {% render 'genstore-input-1',
+        label: phone_t,
+        className: 's_input flex-1',
+        input_id: 'CustomerEmail',
+        input_name: 'phone',
+        input_mode: 'phone',
+        value: customer.phone,
+        disabled: true
+      %}
+    </div>
+    <div>
+      {% render 'genstore-input-1',
+        label: email_t,
+        className: 's_input email_input',
+        input_id: 'CustomerEmail',
+        input_name: 'email',
+        input_mode: 'email',
+        value: customer.email,
+        disabled: true
+      %}
+    </div>
+
+    <div class='password_input password_section'>
+      {% render 'genstore-input-1',
+        label: password_t,
+        className: 's_input',
+        input_id: 'CustomerPassword',
+        input_name: 'password',
+        input_type: 'password',
+        value: customer.profile.password,
+        extra_content: chang_pwd_content,
+        disabled: true
+      %}
+    </div>
+  </div>
+</customer-info>
+
+<div class='f-row content-end m-t-auto gap-12 hidden' id='profile-actions'>
+  <button class=' genstore-btn default large brand genstore-not-letter-spacing' id='profile-cancel'>
+    {{ cancel_text }}
+  </button>
+  <button class='genstore-btn primary large brand genstore-not-letter-spacing' id='profile-save'>
+    {{ save_text }}
+  </button>
+</div>
+{% capture dialog_content %}
+  <div class='f-column gap-600'>
+  {% if customer.has_password %}
+    {% render 'genstore-input-1',
+      label: current_password_t,
+      className: 's_input',
+      input_id: 'current_password',
+      input_name: 'password',
+      input_type: 'password',
+      value: customer.password,
+      extra_content: password_eye
+    %}
+    {% endif %}
+    {% render 'genstore-input-1',
+      label: new_password_t,
+      className: 's_input',
+      input_id: 'new_password',
+      input_name: 'password',
+      input_type: 'password',
+      value: customer.password,
+      extra_content: password_eye
+    %}
+    {% render 'genstore-input-1',
+      label: confirm_new_password_t,
+      className: 's_input',
+      input_id: 'confirm_new_password',
+      input_name: 'password',
+      input_type: 'password',
+      value: customer.password,
+      extra_content: password_eye
+    %}
+  </div>
+{% endcapture %}
+{% render 'genstore-common-dialog',
+  dialog_id: 'profile-dialog',
+  dialog_title: change_password_t,
+  cancel_text: cancel_text,
+  save_text: save_text,
+  dialog_content: dialog_content
+%}

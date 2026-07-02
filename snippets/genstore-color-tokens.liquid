@@ -1,0 +1,15 @@
+{% liquid
+  assign color_scheme = color_scheme | default: 'scheme-1'
+  assign color_mode = color_mode | default: 'light'
+  assign color_style = color_style | default: 'brand'
+
+  assign index = color_scheme | split: 'scheme-' | last
+  if color_mode == 'dark'
+    assign index = index | times: 2
+  else
+    assign index = index | times: 2 | minus: 1
+  endif
+  assign color_scheme = 'color-scheme-' | append: index
+  assign color_scheme_class = color_scheme | append: ' ' | append: color_mode | append: ' ' | append: color_style
+%}
+{{ color_scheme_class }}

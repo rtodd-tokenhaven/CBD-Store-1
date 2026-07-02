@@ -1,0 +1,35 @@
+{% comment %}
+  snippets/ai-computed-discount.liquid — 折扣标签文本计算
+
+  参数:
+    compare_at_price — 原价（整数，单位：分）
+    price            — 现价（整数，单位：分）
+    badge_type       — 徽标类型：'save'（Save $X）/ 'sale'（$X Off）
+    badge_format     — 徽标格式：'percentage'（百分比）/ 'amount'（金额）
+
+  输出：折扣文本（如 "Save 20%" 或 "$10 Off"），无折扣时输出空
+{% endcomment %}
+{% liquid
+  assign compare_at_price = compare_at_price | to_integer
+  assign price = price | to_integer
+  assign label = ''
+
+  if compare_at_price > price
+    assign discount = compare_at_price | minus: price
+
+    if badge_format == 'percentage'
+      assign discount_str = discount | times: 100 | divided_by: compare_at_price | ceil | append: '%'
+    elsif settings.currency_code_enabled
+      assign discount_str = discount | money_with_currency
+    else
+      assign discount_str = discount | money
+    endif
+
+    if badge_type == 'save'
+      assign label = 'Save' | append: ' ' | append: discount_str
+    else
+      assign label = discount_str | append: ' ' | append: 'OFF'
+    endif
+  endif
+%}
+{{ label }}

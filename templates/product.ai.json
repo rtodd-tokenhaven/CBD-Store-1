@@ -1,0 +1,87 @@
+{
+  "sections": {
+    "main": {
+      "settings": {
+        "extra_desc_position": "block",
+        "media_size": "medium",
+        "media_position": "left",
+        "padding_top": "xl",
+        "gallery_layout": "thumbnail",
+        "padding_bottom": "xl",
+        "media_fit": "contain",
+        "enable_extra_desc": true
+      },
+      "blocks": {
+        "price_001": {
+          "settings": {
+            "price_emphasis": "foreground",
+            "enable_badge": true,
+            "text_size": "m",
+            "is_bolder": true,
+            "badge_order": "after",
+            "show_taxes": true,
+            "show_compare_at_price": true,
+            "badge_type": "sale",
+            "badge_format": "percentage"
+          },
+          "type": "price"
+        },
+        "description_004": {
+          "settings": {
+            "show_in_gallery": false,
+            "enable_collapse": false
+          },
+          "type": "description"
+        },
+        "variant_picker_002": {
+          "settings": {
+            "picker_type": "button"
+          },
+          "type": "variant_picker"
+        },
+        "buy_buttons_003": {
+          "settings": {
+            "layout": "rowAndColumn",
+            "show_dynamic_checkout": true,
+            "button_style": "primary",
+            "button_color_style": "brand",
+            "buy_button_style": "primary",
+            "enable_sticky_cart": true,
+            "buy_button_color_style": "brand",
+            "show_quantity_input": true,
+            "button_size": "xl"
+          },
+          "type": "buy_buttons"
+        },
+        "inventory_and_share_005": {
+          "settings": {
+            "show_inventory_quantity": true,
+            "enable_inventory": true,
+            "share_label": "Share",
+            "share_enable": true,
+            "inventory_threshold": 10
+          },
+          "type": "inventory_and_share"
+        },
+        "title_000": {
+          "settings": {
+            "heading_size": "l"
+          },
+          "type": "title"
+        }
+      },
+      "type": "ai-product-detail",
+      "block_order": [
+        "title_000",
+        "price_001",
+        "variant_picker_002",
+        "buy_buttons_003",
+        "description_004",
+        "inventory_and_share_005"
+      ]
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

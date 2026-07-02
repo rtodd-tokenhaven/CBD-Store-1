@@ -1,0 +1,18 @@
+{%- if section.settings.menu != blank -%}
+  <details class="header__details-menu">
+    <summary class="header__icon header__icon--menu link focus-inset" aria-label="{{ 'sections.header.menu' | t }}">
+      <span>☰</span>
+    </summary>
+    <div class="header__details-panel">
+      <nav class="header__details-nav">
+        <ul class="list-menu" role="list">
+          {%- for link in section.settings.menu.links -%}
+            <li>
+              <a href="{{ link.url }}" class="list-menu__item link link--text">{{ link.title | escape }}</a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      </nav>
+    </div>
+  </details>
+{%- endif -%}

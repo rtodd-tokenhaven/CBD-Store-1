@@ -1,0 +1,37 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-article",
+      "settings": {
+        "color_mode": "light",
+        "color_style": "pure",
+        "padding_top": "xl",
+        "padding_bottom": "xl",
+        "share_label": "Share"
+      },
+      "blocks": {
+        "featured_image": {
+          "type": "featured_image",
+          "settings": {
+            "image_ratio": 1.78
+          }
+        },
+        "title": {
+          "type": "title",
+          "settings": {
+            "heading_size": "l",
+            "blog_show_date": true,
+            "blog_show_author": true
+          }
+        }
+      },
+      "block_order": [
+        "title",
+        "featured_image"
+      ]
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

@@ -1,0 +1,93 @@
+{% assign modal_id = modal_id | default: "modal-#{uniq_id}" %}
+<div id="{{ modal_id }}" class="modal" style="display:none;">
+  <!-- 弹窗背景 -->
+  <div class="modal-overlay" onclick=""></div>
+
+  <div class="modal-content" style="{{ style }}">
+    <div class="modal-header">
+      <h2>{{ title }}</h2>
+      <button class="close-btn" onclick="closeModal('{{ modal_id }}')">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      {{ content }}
+      <div class="modal-footer">
+        {{ footer }}
+      </div>
+    </div>
+
+    
+  </div>
+</div>
+
+<!-- 弹窗样式 -->
+<style>
+  .modal {
+    position: fixed;
+    top: 0;
+    inset-inline-start: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    display: none;
+  }
+  .modal-overlay {
+    position: absolute;
+    top: 0;
+    inset-inline-start: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+  }
+  .modal-content {
+    position: absolute;
+    top: 50%;
+    inset-inline-start: 50%;
+    transform: translate(calc(var(--dir-sign) * -50%), -50%);
+    background: var(--genstore-neutral-background-default);
+    width: 80%;
+    max-width: 600px;
+    padding: var(--genstore-spacing-vertical-600)  var(--genstore-spacing-vertical-1200) var(--genstore-spacing-horizontal-1800);
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+  .close-btn {
+    background-color: transparent !important;
+    color: rgba(0, 0, 0, 0.9) !important;
+    font-size: 23px !important;
+    padding: 0px !important;
+    width: max-content;
+    display: block!important;
+    min-width: max-content!important;
+    min-height: max-content!important;
+  }
+  .close-btn::before {
+    display:none!important;
+  }
+  .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--genstore-spacing-gap-1800);
+  }
+  .modal-footer {
+    text-align: end;
+  }
+</style>
+
+<!-- 弹窗功能JS -->
+<script>
+  function closeModal(modal_id) {
+    document.getElementById(modal_id).style.display = 'none';
+  }
+
+  function openModal(modal_id) {
+    document.getElementById(modal_id).style.display = 'block';
+  }
+</script>

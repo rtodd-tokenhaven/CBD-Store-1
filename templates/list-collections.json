@@ -1,0 +1,23 @@
+{
+  "sections": {
+    "main": {
+      "settings": {
+        "color_mode": "light",
+        "gap": "l",
+        "image_ratio": "square",
+        "padding_top": "m",
+        "color_scheme": "scheme-1",
+        "sort": "alphabetical",
+        "title": "<p><meta charset=\"utf-8\" /><meta charset=\"utf-8\" /><span style=\"white-space:pre-wrap\">POPULAR CATEGORIES</span></p>",
+        "padding_bottom": "m",
+        "columns_desktop": 4,
+        "color_style": "pure",
+        "heading_size": "m"
+      },
+      "type": "main-list-collections"
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

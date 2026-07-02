@@ -1,0 +1,106 @@
+{% comment %}
+  Genstore Radio Group Component (Web Component)
+
+  参数说明:
+  - options: 选项列表，格式为逗号或分号分隔的字符串，每个选项格式为 "label:id" 或 "label:id:disabled"
+    例如: "选项1:opt1,选项2:opt2,选项3:opt3:true"
+  - selected_id: 预选的 id（单个值），例如: "opt1"
+  - name: radio 的 name 属性（必需），用于分组
+  - className: 自定义容器class
+  - disabled: 是否禁用整个组（可选）
+  - layout: 布局方式，可选值: 'vertical'(默认) 或 'horizontal'
+  - size: 尺寸，可选值: 'small', 'medium'(默认), 'large'
+  - id: 组件的唯一ID（可选）
+  - scope: 作用域标识（可选）
+
+  使用示例:
+  {% render 'genstore-radio-group',
+    options: '价格从低到高:price_asc,价格从高到低:price_desc,最新上架:date_desc',
+    selected_id: 'price_asc',
+    name: 'sort-order',
+    layout: 'horizontal',
+    className: 'my-radio-group'
+  %}
+
+  JavaScript API:
+  - getSelectedId(): 获取选中的 id
+  - setSelectedId(id): 设置选中的 id
+  - clearSelection(): 清空选中
+  - toggleById(id): 切换指定 id 的选中状态
+  - setDisabled(disabled): 启用/禁用整个组
+
+  事件:
+  - radio-change: 当选中状态改变时触发，event.detail 包含 { id, selectedId }
+{% endcomment %}
+
+{% liquid
+  assign group_class = 'genstore-radio-group'
+  assign size_class = size | default: 'medium'
+  assign is_disabled = disabled | default: false
+  assign component_id = id | default: ''
+  assign radio_name = name | default: 'radio-group'
+  assign selected = selected_id | default: ''
+
+  if className
+    assign group_class = group_class | append: ' ' | append: className
+  endif
+
+  assign group_class = group_class | append: ' genstore-radio-group--' | append: size_class
+%}
+
+<genstore-radio-group
+  class='genstore-selection-group {{ layout | default: 'vertical' }} {{ size | default: 'medium' }}'
+  {% if component_id != '' %}
+    id='{{ component_id }}'
+  {% endif %}
+  {% if scope %}
+    data-scope='{{ scope }}'
+  {% endif %}
+  data-radio-name='{{ radio_name }}'
+>
+  {% assign option_separator = ',' %}
+  {% if options contains ';' %}
+    {% assign option_separator = ';' %}
+  {% endif %}
+
+  {% assign options_array = options | split: option_separator %}
+
+  {% for option_str in options_array %}
+    {% assign option_parts = option_str | split: ':' %}
+    {% assign option_label = option_parts[0] | strip %}
+    {% assign radio_id = option_parts[1] | strip | default: option_label %}
+    {% assign option_disabled = option_parts[2] | strip | default: 'false' %}
+
+    {% assign is_checked = false %}
+    {% if selected == radio_id %}
+      {% assign is_checked = true %}
+    {% endif %}
+
+    {% assign is_option_disabled = false %}
+    {% if is_disabled or option_disabled == 'true' %}
+      {% assign is_option_disabled = true %}
+    {% endif %}
+
+    <div class='genstore-selection-item genstore-radio-item'>
+      <input
+        type='radio'
+        name='{{ radio_name }}'
+        id='{{ radio_id }}'
+        class='genstore-radio-input'
+        data-input-id='{{ radio_id }}'
+        {% if is_checked %}
+          checked
+        {% endif %}
+        {% if is_option_disabled %}
+          disabled
+        {% endif %}
+      >
+      <label for='{{ radio_id }}' class='genstore-radio-label f-row align-center gap-8'>
+        <span class='genstore-radio-box f-row align-center content-center'>
+          <span class='genstore-radio-icon'></span>
+        </span>
+        <span class='genstore-radio-text'>{{ option_label }}</span>
+      </label>
+    </div>
+  {% endfor %}
+</genstore-radio-group>

@@ -1,0 +1,22 @@
+{% liquid
+  assign minlength = minlength | default: 0
+  assign maxlength = maxlength | default: 100
+%}
+<div class="genstore-textField f-row align-center">
+  <input placeholder=" " type="text"
+         id="{{ input_id }}"
+         name="{{ input_name | escape }}"
+         data-min="0"
+         data-max="{{ max | default: 1000 }}"
+         maxlength="{{ maxlength }}"
+         minlength="{{ minlength }}"
+         inputmode="decimal"
+         data-pattern="\d| |,|\."
+         value="{{ value }}"
+         autocomplete="off"
+  />
+  <label>{{ label }}</label>
+  <span class="f-row align-center content-center icon remove-input-value">
+    {% render 'genstore-icon', icon_name: 'icon-close-small' %}
+  </span>
+</div>

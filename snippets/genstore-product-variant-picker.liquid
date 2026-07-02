@@ -1,0 +1,137 @@
+{% comment %}
+  Renders product variant-picker
+
+  Accepts:
+  -className
+  - product: {Object} product object.
+  - block: {Object} passing the block information.
+  - product_form_id: {String} Id of the product form to which the variant picker is associated.
+  - section_id: {String} id of section to which this snippet belongs.
+  Usage:
+  {% render 'product-variant-picker', product: product, block: block, product_form_id: product_form_id %}
+{% endcomment %}
+{% liquid
+  assign prefix = id_prefix | default: 'variant-selects'
+%}
+{%- if product.has_only_default_variant == false -%}
+  <variant-selects
+    id="{{ prefix }}-{{ section.id }}"
+    data-section="{{ section.id }}"
+    {{ block.genstore_attributes }}
+    class="product-variant-picker {{ className }}"
+    data-variant="{{ product.selected_or_first_available_variant.id }}"
+  >
+    {% if block.settings.picker_type == 'dropdown' %}
+      {%- for option in product.options_with_values -%}
+        <genstore-dropdown class="f-column gap-400" data-current-value="{{ option.selected_value.id }}">
+          <legend>{{ option.name }}</legend>
+          <div class="genstore-dropdown-container">
+            <button class="genstore-dropdown-trigger">
+              <span>{{ option.selected_value.name }}</span>
+              {% render 'genstore-icon', icon_name: 'icon-caret' %}
+            </button>
+            <div class="genstore-options-container" hidden>
+              {% for item in option.values %}
+                <li
+                  value="{{ item.id }}"
+                  checked="{{ item.selected }}"
+                  id="{{ prefix }}-{{ section.id }}-{{ option.position }}-{{ forloop.index }}"
+                  data-option-value-id="{{ item.id }}"
+                >
+                  {{ item.name }}
+                </li>
+              {% endfor %}
+            </div>
+          </div>
+        </genstore-dropdown>
+      {%- endfor -%}
+    {% else %}
+      {%- for option in product.options_with_values -%}
+        {%- capture input_name -%}
+          {{ option.name }}-{{ option.position }}
+        {%- endcapture -%}
+        {%- liquid
+          assign swatch_count = option.values | map: 'swatch' | compact | size
+          assign picker_type = picker_type | default: block.settings.picker_type
+        -%}
+        <fieldset class="product-form__input {% if option.is_all_image and option.option_type == 'image' %} product-form_scroll product-form_pattern {% endif %}">
+          <legend class="genstore-text font-bold m-b-200">{{ option.name }}</legend>
+          <div class="product-form__input_content {% if option.is_all_image and option.option_type == 'image' %}product-form__input_pattern  limit-content {% else %} product-form__input_new  {% endif %} {% if option.is_all_image and option.option_type == 'color'  %} product-form__input_img {% elsif  option.is_all_image == false and option.option_type == 'color' or option.option_type == 'text' %} product-form__input_text {% endif %} {% if option.is_all_image == false and option.option_type == 'color'  %} gap-color {% endif %}">
+            {% for value in option.values %}
+              {% liquid
+                assign option_picker_type = picker_type
+                if picker_type == 'button' and value.swatch.color != null
+                  assign option_picker_type = 'color'
+                endif
+                if picker_type == 'button' and value.swatch.image != null
+                  assign option_picker_type = 'image'
+                endif
+                if option.is_all_image and option.option_type == 'image'
+                  assign option_picker_type = 'image'
+                endif
+                if option.is_all_image == false and option.option_type == 'image'
+                  assign option_picker_type = 'button'
+                endif
+                if option.option_type == 'text'
+                  assign option_picker_type = 'button'
+                endif
+                assign option_disabled = value.available
+                if value.available == false
+                  assign option_disabled = true
+                else
+                  assign option_disabled = false
+                endif
+              %}
+              {% capture input_id %}{{prefix}}-{{ section.id }}-{{ option.position }}-{{ forloop.index }}{% endcapture %}
+              {%- capture input_dataset -%}
+              data-product-url="{{ value.product_url }}"
+              data-option-value-id="{{ value.id }}"
+            {%- endcapture -%}
+              {% render 'genstore-swatch-input',
+                input_id: input_id,
+                selected: value.selected,
+                shape: block.settings.swatch_shape,
+                input_name: input_name,
+                picker_type: option_picker_type,
+                value: value,
+                input_dataset: input_dataset,
+                form_id: product_form_id,
+                option_disabled: option_disabled
+              %}
+            {% endfor %}
+          </div>
+          <div class="show-more-wrap   no-show">
+            <div class="show-fold-more-btn">
+              <span class="show-more">
+                {{- 'products.facets.show_more_label' | t | append: ' ' -}}
+                <span class="show_fold_name">{{- option.name -}}</span>
+                {%- render 'genstore-svg',
+                  icon_name: 'icon-down',
+                  icon_style: 'frendly',
+                  icon_weight: 'bold',
+                  className: 'icon-arrow'
+                -%}
+              </span>
+              <span class="fold-up no-show">
+                {{- 'products.facets.fold_more_label' | t | append: ' ' -}}
+                <span class="show_fold_name">{{- option.name -}}</span>
+                {%- render 'genstore-svg',
+                  icon_name: 'icon-down',
+                  icon_style: 'frendly',
+                  icon_weight: 'bold',
+                  className: 'icon-arrow arrow-up'
+                -%}
+              </span>
+            </div>
+          </div>
+        </fieldset>
+      {%- endfor -%}
+    {% endif %}
+
+    <script type="application/json" data-selected-variant>
+      {{ product.selected_or_first_available_variant | json }}
+    </script>
+  </variant-selects>
+{% else %}
+  <variant-selects class="has-only-default-variant {{ className }}"></variant-selects>
+{%- endif -%}

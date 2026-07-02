@@ -1,0 +1,226 @@
+<style>
+  #genstore-section-{{ section.id }} {
+    {% render 'ai-color-tokens' %}
+    background: var(--background);
+    color: var(--foreground);
+    max-width: 100vw;
+  }
+
+  #genstore-section-{{ section.id }} .rps-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 64px 24px;
+  }
+
+  #genstore-section-{{ section.id }} .rps-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  #genstore-section-{{ section.id }} .rps-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--foreground);
+    opacity: 0.55;
+    margin: 0;
+  }
+
+  #genstore-section-{{ section.id }} .rps-heading {
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+    margin: 0;
+  }
+
+  #genstore-section-{{ section.id }} .rps-subheading {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--foreground);
+    opacity: 0.7;
+    margin: 0;
+    max-width: 560px;
+  }
+
+  #genstore-section-{{ section.id }} .rps-divider {
+    width: 48px;
+    height: 1px;
+    background: var(--secondary);
+    border: none;
+    margin: 4px 0 0;
+  }
+
+  #genstore-section-{{ section.id }} .rps-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid var(--secondary);
+  }
+
+  #genstore-section-{{ section.id }} .rps-cta {
+    display: inline-block;
+    background: var(--cta);
+    color: var(--cta-foreground);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 14px 36px;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+  }
+
+  #genstore-section-{{ section.id }} .rps-cta:hover {
+    opacity: 0.85;
+  }
+
+  @media (min-width: 768px) {
+    #genstore-section-{{ section.id }} .rps-container {
+      padding: 80px 40px;
+    }
+
+    #genstore-section-{{ section.id }} .rps-header {
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 48px;
+    }
+
+    #genstore-section-{{ section.id }} .rps-header-text {
+      flex: 1;
+    }
+
+    #genstore-section-{{ section.id }} .rps-heading {
+      font-size: 32px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    #genstore-section-{{ section.id }} .rps-container {
+      padding: 96px 48px;
+    }
+
+    #genstore-section-{{ section.id }} .rps-heading {
+      font-size: 36px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #genstore-section-{{ section.id }} * {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="rps-wrapper section-mark">
+  <div class="rps-container">
+    <div class="rps-header">
+      <div class="rps-header-text">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="rps-eyebrow" {{ '' | genstore_vkey: key:'eyebrow' }}>
+            {{ section.settings.eyebrow | default: "You May Also Like" }}
+          </p>
+        {%- endif -%}
+        <h2 class="rps-heading" {{ '' | genstore_vkey: key:'heading' }}>
+          {{ section.settings.heading | default: "Complete Your Wellness Routine" }}
+        </h2>
+        <hr class="rps-divider" aria-hidden="true">
+        {%- if section.settings.subheading != blank -%}
+          <p class="rps-subheading" {{ '' | genstore_vkey: key:'subheading' }}>
+            {{ section.settings.subheading | default: "Third-party tested. Zero compromise." }}
+          </p>
+        {%- endif -%}
+      </div>
+    </div>
+
+    {% render 'ai-product-list',
+      products: section.settings.collection.products,
+      layout: 'grid',
+      limit: section.settings.products_to_show
+    %}
+
+    {%- if section.settings.button_text != blank and section.settings.button_url != blank -%}
+      <div class="rps-footer">
+        <a href="{{ section.settings.button_url }}"
+           class="rps-cta"
+           {{ '' | genstore_vkey: key:'button_text' | genstore_vkey: key:'button_url' }}>
+          {{ section.settings.button_text | default: "Shop All Products" }}
+        </a>
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+<script src="{{ 'ai-product-card.js' | asset_url }}" defer></script>
+<script src="{{ 'ai-variant-selector.js' | asset_url }}" defer></script>
+<script src="{{ 'ai-quantity-input.js' | asset_url }}" defer></script>
+<script src="{{ 'ai-quick-add-cart.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Related Products Grid",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow Label",
+      "default": "You May Also Like"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Complete Your Wellness Routine"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Third-party tested. Zero compromise."
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "label": "Products to show",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button Text",
+      "default": "Shop All Products"
+    },
+    {
+      "type": "url",
+      "id": "button_url",
+      "label": "Button URL"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Related Products Grid",
+      "settings": {
+        "eyebrow": "You May Also Like",
+        "heading": "Complete Your Wellness Routine",
+        "subheading": "Third-party tested. Zero compromise.",
+        "products_to_show": 4,
+        "button_text": "Shop All Products"
+      }
+    }
+  ]
+}
+{% endschema %}

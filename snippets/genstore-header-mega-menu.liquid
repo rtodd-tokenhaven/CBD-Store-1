@@ -1,0 +1,145 @@
+{% comment %}
+  Renders a megamenu for the header.
+
+  Usage:
+  {% render 'header-mega-menu' %}
+{% endcomment %}
+{% capture slot_content %}
+  {% render 'genstore-svg', icon_name: 'icon-down', className: "icon-caret" %}
+{% endcapture %}
+{% liquid
+  assign tag_size = section.settings.menu_size | default: 's'
+  assign color_style = section.settings.menu_color_style | default: 'brand'
+  assign color_mode = section.settings.menu_color_mode | default: 'light'
+  assign color_scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign index = color_scheme | split: 'scheme-' | last
+  if color_mode == 'dark'
+    assign index = index | times: 2
+  else
+    assign index = index | times: 2 | minus: 1
+  endif
+  assign color_scheme = 'color-scheme-' | append: index
+%}
+<nav class="header__inline-menu">
+  <ul class="list-menu list-menu--inline" role="list">
+    {%- for link in section.settings.menu.links -%}
+      <li>
+        {%- if link.links != blank -%}
+          <header-menu>
+            <details id="Details-HeaderMenu-{{ forloop.index }}" class="mega-menu">
+              <summary id="HeaderMenu-{{ link.handle }}" class="header__menu-item list-menu__item link focus-inset">
+                {% render 'genstore-text-tag'
+                  , text: link.title
+                  , is_active: link.child_active
+                  , slot_content: slot_content
+                  , tag_size: tag_size %}
+              </summary>
+              <div
+                id="MegaMenu-Content-{{ forloop.index }}"
+                class="mega-menu__content {{color_scheme}} {{color_mode}} {{color_style}} gradient motion-reduce global-settings-popup"
+                tabindex="-1">
+                <ul class="mega-menu__list page-width{% if link.levels == 1 %} mega-menu__list--condensed{% endif %}" role="list">
+                  {%- for childlink in link.links -%}
+                    <li>
+                      <a
+                        id="HeaderMenu-{{ link.handle }}-{{ childlink.handle }}"
+                        href="{{ childlink.url }}"
+                        class="mega-menu__link mega-menu__link--level-2 link{% if childlink.current %} mega-menu__link--active{% endif %}"
+                        {% if childlink.current %}
+                        aria-current="page"
+                        {% endif %}>
+                        {{ childlink.title | escape }}
+                      </a>
+                      {%- if childlink.links != blank -%}
+                        <ul class="list-unstyled" role="list">
+                          {%- for grandchildlink in childlink.links -%}
+                            <li>
+                              <a
+                                id="HeaderMenu-{{ link.handle }}-{{ childlink.handle }}-{{ grandchildlink.handle }}"
+                                href="{{ grandchildlink.url }}"
+                                class="mega-menu__link link{% if grandchildlink.current %} mega-menu__link--active{% endif %}"
+                                {% if grandchildlink.current %}
+                                aria-current="page"
+                                {% endif %}>
+                                {{ grandchildlink.title | escape }}
+                              </a>
+                            </li>
+                          {%- endfor -%}
+                        </ul>
+                      {%- endif -%}
+                    </li>
+                  {%- endfor -%}
+                </ul>
+              </div>
+            </details>
+          </header-menu>
+        {%- else -%}
+          <a
+            id="HeaderMenu-{{ link.handle }}"
+            href="{{ link.url }}"
+            class="header__menu-item list-menu__item link link--text focus-inset"
+            {% if link.current %}
+            aria-current="page"
+            {% endif %}>
+            {% render 'genstore-text-tag'
+              , text: link.title
+              , is_active: link.child_active
+              , tag_size: tag_size %}
+          </a>
+        {%- endif -%}
+      </li>
+    {%- endfor -%}
+
+    {% comment %} 产品、产品系列导航 {% endcomment %}
+    {% if section.blocks.size > 0 %}
+     <nav class='header__inline-menu header__product-list'>
+       {% liquid
+         assign tag_size = section.settings.menu_size | default: 's'
+       %}
+       <ul class='list-menu--inline' role='list'>
+         {% capture slot_content %}
+               {% render 'genstore-svg', icon_name: 'icon-down', className: "product-list__nav__icon" %}
+             {% endcapture %}
+         {% for block in section.blocks %}
+         {% liquid
+          assign products = block.settings.collection.products
+          if block.type == "header_product_list"
+           assign products = block.settings.products
+          endif 
+         %}
+           <li class='header__product-list__item'>
+             <div class='header__product-list__item__target'>
+               {% if products.size > 0 %}
+                 {% render 'genstore-text-tag',
+                   text: block.settings.title,
+                   url: block.settings.link,
+                   slot_content: slot_content,
+                   tag_size: tag_size
+                 %}
+                 <div class='target__bridge'></div>
+               {% else %}
+                 {% render 'genstore-text-tag',
+                   text: block.settings.title,
+                   url: block.settings.link,
+                   tag_size: tag_size
+                 %}
+               {% endif %}
+             </div>
+             
+             {% if products.size > 0 %}
+               {% render 'header-product-list',
+                 products: products,
+                 settings: block.settings,
+                 sale_badge_color_scheme: settings.sale_badge_color_scheme,
+                 card_badge_position: settings.card_badge_position,
+                 card_color_scheme: settings.card_color_scheme,
+                 card_text_limit: settings.card_text_limit
+               %}
+             {% endif %}
+           </li>
+         {% endfor %}
+       </ul>
+     </nav>
+    {% endif %}
+  </ul>
+</nav>

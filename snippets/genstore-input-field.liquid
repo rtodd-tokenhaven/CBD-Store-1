@@ -1,0 +1,67 @@
+{{ 'input-field.css' | asset_url | stylesheet_tag }}
+
+{% comment %} <script src='{{ 'input-field.js' | asset_url }}' defer></script> {% endcomment %}
+<div class='input-field-wrapper common-input-field'>
+  <div class='field {{ class }}' field-id='{{ name }}' style='{{ style }}'>
+    <input
+      class='input-field {{ name }}'
+      type='{{ type }}'
+      name='{{ name }}'
+      id='{{ id }}'
+      value='{{ value }}'
+      autocomplete='text'
+      autocorrect='off'
+      autocapitalize='off'
+      {% if errors contains name %}
+        aria-invalid='true'
+      {% endif %}
+      placeholder='{{ placeholder | t }}'
+    >
+
+    <label for='{{ id }}'>
+      {{ placeholder | t }}
+    </label>
+    {% if type == 'password' %}
+      <span class='toggle-password-visibility' data-password-id='{{ id }}'>
+        {% comment %} <svg class='eye-open-icon' xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 32 32'>
+          <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 16a5 5 0 0 1-5 5m-5-5a5 5 0 0 1 5-5m-3 13.654A13.4 13.4 0 0 0 16 25c7.18 0 13-6 13-9c0-1.336-1.155-3.268-3.071-5M19.5 7.47A13.5 13.5 0 0 0 16 7C8.82 7 3 13 3 16c0 1.32 1.127 3.22 3 4.935M7 25L25 7"/>
+        </svg> {% endcomment %}
+        <svg
+          class='eye-closed-icon'
+          xmlns='http://www.w3.org/2000/svg'
+          width='20'
+          height='20'
+          viewBox='0 0 24 24'
+          style='display: none;'
+        >
+          <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+            <path d="M15 12a3 3 0 1 1-6 0a3 3 0 0 1 6 0"/>
+            <path d="M2 12c1.6-4.097 5.336-7 10-7s8.4 2.903 10 7c-1.6 4.097-5.336 7-10 7s-8.4-2.903-10-7"/>
+          </g>
+        </svg>
+        <svg  class='eye-open-icon' xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'>
+          <path fill="currentColor" d="m9.343 18.782l-1.932-.518l.787-2.939a11 11 0 0 1-3.237-1.872l-2.153 2.154l-1.414-1.414l2.153-2.154a10.96 10.96 0 0 1-2.371-5.07l1.968-.359a9.002 9.002 0 0 0 17.713 0l1.968.358a10.96 10.96 0 0 1-2.372 5.071l2.154 2.154l-1.414 1.414l-2.154-2.154a11 11 0 0 1-3.237 1.872l.788 2.94l-1.932.517l-.788-2.94a11 11 0 0 1-3.74 0z"/>
+        </svg>
+      </span>
+    {% endif %}
+  </div>
+  <span class='error-message {{ name }}'>
+    <svg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'>
+      <path fill="currentColor" d="M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18M1 12C1 5.925 5.925 1 12 1s11 4.925 11 11s-4.925 11-11 11S1 18.075 1 12m12-5.5V14h-2V6.5zm-2 9h2.004v2.004H11z"/>
+    </svg>
+  </span>
+</div>
+
+<script>
+  window.addEventListener('load', () => {
+    const formInput = document.querySelectorAll('.input-field');
+    formInput.forEach(input => {
+      input.addEventListener('focus', () => {
+        input.style.boxShadow = 'none';
+      });
+      input.addEventListener('click', () => {
+        input.style.boxShadow = 'none';
+      });
+    });
+  });
+</script>

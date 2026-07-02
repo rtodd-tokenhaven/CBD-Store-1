@@ -1,0 +1,45 @@
+{{ 'component-swatch.css' | asset_url | stylesheet_tag }}
+{% liquid
+  assign sort_label = 'products.facets.sort_button' | t
+%}
+<div class="drawer-sort_wraper">
+  <form id="FacetDrawerSortForm">
+    {% assign matchedSort = sort_options | where: 'value', default_sort_by %}
+    {% capture content %}
+      {% for option in sort_options %}
+        {% liquid
+          assign active = false
+          if option.value == default_sort_by
+            assign active = true
+          endif
+        %}
+        <li onclick="changeSortBy('{{ option.value }}')">
+          {% render 'genstore-swatch-input',
+            input_id: forloop.index,
+            input_name: 'sort_by_drawer',
+            form_id: '',
+            type: 'radio',
+            label: option.name,
+            value: option.value,
+            selected: active
+          %}
+        </li>
+      {% endfor %}
+    {% endcapture %}
+    <input type="hidden" id="SortBy" name="sort_by_drawer" value="{{ matchedSort[0].value }}">
+    {% render 'genstore-popup-base', popup_text: sort_label, popup_content: content, layout: 'drawer' %}
+  </form>
+</div>
+
+<script>
+  function changeSortBy(value) {
+    const sort = document.querySelector('#SortBy');
+    if (sort) {
+      sort.value = value;
+    }
+    const facetForm = document.querySelector('facet-filters-form');
+    if (facetForm) {
+      facetForm.onSubmitHandler(event);
+    }
+  }
+</script>

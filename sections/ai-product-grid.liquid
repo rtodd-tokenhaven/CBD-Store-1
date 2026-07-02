@@ -1,0 +1,161 @@
+<style>
+  #genstore-section-{{ section.id }} {
+    {% render 'ai-color-tokens' %}
+    background: var(--background);
+    color: var(--foreground);
+    max-width: 100vw;
+  }
+
+  #genstore-section-{{ section.id }} .spg-wrapper {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 72px 24px;
+  }
+
+  #genstore-section-{{ section.id }} .spg-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+
+  #genstore-section-{{ section.id }} .spg-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--foreground);
+    opacity: 0.55;
+    font-weight: 500;
+  }
+
+  #genstore-section-{{ section.id }} .spg-heading {
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--foreground);
+    margin: 0;
+  }
+
+  #genstore-section-{{ section.id }} .spg-subheading {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--foreground);
+    opacity: 0.7;
+    max-width: 560px;
+    margin: 0;
+  }
+
+  #genstore-section-{{ section.id }} .spg-divider {
+    width: 40px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.25;
+    margin-top: 8px;
+  }
+
+  #genstore-section-{{ section.id }} .spg-list-area {
+    width: 100%;
+  }
+
+  @media (min-width: 768px) {
+    #genstore-section-{{ section.id }} .spg-header {
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    #genstore-section-{{ section.id }} .spg-header-text {
+      flex: 1;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    #genstore-section-{{ section.id }} .spg-wrapper {
+      padding: 96px 48px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #genstore-section-{{ section.id }} * {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="spg-outer section-mark">
+  <div class="spg-wrapper">
+    <div class="spg-header">
+      <div class="spg-header-text">
+        <p class="spg-eyebrow">Our Products</p>
+        <h2 class="spg-heading" {{ '' | genstore_vkey: key:'heading' }}>
+          {{ section.settings.heading | default: "The Full Range" }}
+        </h2>
+        {% if section.settings.subheading != blank %}
+          <p class="spg-subheading" {{ '' | genstore_vkey: key:'subheading' }}>
+            {{ section.settings.subheading | default: "Third-party tested. Zero compromise." }}
+          </p>
+        {% endif %}
+        <div class="spg-divider"></div>
+      </div>
+    </div>
+
+    <div class="spg-list-area">
+      {% render 'ai-product-list',
+        products: section.settings.collection.products,
+        layout: 'grid',
+        limit: section.settings.products_to_show
+      %}
+    </div>
+  </div>
+</div>
+
+<script src="{{ 'ai-product-card.js' | asset_url }}" defer></script>
+<script src="{{ 'ai-variant-selector.js' | asset_url }}" defer></script>
+<script src="{{ 'ai-quantity-input.js' | asset_url }}" defer></script>
+<script src="{{ 'ai-quick-add-cart.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Product Grid",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "The Full Range"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Third-party tested. Zero compromise."
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "label": "Products to show",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 8
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Grid",
+      "settings": {
+        "heading": "The Full Range",
+        "subheading": "Third-party tested. Zero compromise.",
+        "products_to_show": 8
+      }
+    }
+  ]
+}
+{% endschema %}

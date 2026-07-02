@@ -1,0 +1,84 @@
+{% comment %}
+  Renders cart drawer
+
+  Usage:
+  {% render 'cart-drawer' %}
+{% endcomment %}
+
+{{ 'quantity-popover.css' | asset_url | stylesheet_tag }}
+{{ 'component-card.css' | asset_url | stylesheet_tag }}
+
+<script src="{{ 'genstore-cart.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'genstore-cart-drawer.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'quantity-popover.js' | asset_url }}" defer="defer"></script>
+{% liquid
+  assign continue_shopping = 'general.continue_shopping' | t
+%}
+<style>
+  .drawer {
+    visibility: hidden;
+  }
+</style>
+
+<cart-drawer class="drawer">
+  <div id="CartDrawer-Overlay" class="cart-drawer__overlay"></div>
+  {% capture content %}
+    <div
+      class="drawer__inner bg-{{ settings.cart_color_scheme }} {% if cart.items.size == 0 %} is-empty{% endif %}"
+      role="dialog"
+      aria-modal="true"
+      aria-label="{{ 'sections.cart.title' | t }}"
+      tabindex="-1"
+    >
+      <div class="drawer__header">
+        <h2 class="drawer__heading">{{ 'sections.cart.title' | t }}</h2>
+        <button
+          class="drawer__close"
+          type="button"
+          onclick="this.closest('cart-drawer').close()"
+          aria-label="{{ 'accessibility.close' | t }}"
+        >
+          {% render 'genstore-svg', icon_name: 'icon-close' %}
+        </button>
+      </div>
+      {%- if cart.items.size == 0 -%}
+        <div class="drawer__inner-empty">
+          <div
+            class="cart-drawer__warnings center{% if settings.cart_drawer_collection != blank %} cart-drawer__warnings--has-collection{% endif %}">
+            <div class="cart-drawer__empty-content">
+              <h2 class="cart__empty-title genstore-not-letter-spacing">{{ 'sections.cart.empty' | t }}</h2>
+              <a class="genstore-btn primary xl genstore-not-letter-spacing"
+                 href="{{ routes.all_products_collection_url }}">{{ continue_shopping }}</a>
+
+
+              {%- if customer == blank -%}
+                <p class="cart__login-title h3">{{ 'sections.cart.login.title' | t }}</p>
+                <p class="cart__login-paragraph">
+                  {{ 'sections.cart.login.paragraph_html' | t: link: routes.account_login_url }}
+                </p>
+              {%- endif -%}
+            </div>
+          </div>
+          {%- if settings.cart_drawer_collection != blank -%}
+            <div class="cart-drawer__collection">
+              {% render 'card-collection', card_collection: settings.cart_drawer_collection, columns: 1 %}
+            </div>
+          {%- endif -%}
+        </div>
+      {%- else -%}
+        <div id="cart-drawer-container" class="js_contents {% if cart.groups.size == 1 %} is-one-group {% endif %}">
+          {% render 'genstore-cart-items', type: "cart-drawer", layout: 'vertical', cart: cart, className: "genstore-cart-drawer", show_footer: true %}
+        </div>
+      {% endif %}
+    </div>
+  {% endcapture %}
+  {% render 'genstore-container'
+    , color_scheme: settings.cart_color_scheme
+    , enable_padding_top: false
+    , enable_padding_bottom: false
+    , color_mode: settings.cart_color_mode
+    , color_style: settings.cart_color_style
+    , id: "CartDrawer"
+    , className: "cart-drawer"
+    , content: content %}
+</cart-drawer>

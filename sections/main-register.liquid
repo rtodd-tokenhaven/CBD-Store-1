@@ -1,0 +1,457 @@
+{{ 'login.css' | asset_url | stylesheet_tag }}
+{%- liquid
+  assign section_id = section.id
+  assign layout = section.settings.layout_position
+  assign enable_card = section.settings.enable_card
+  assign button_style = section.settings.button_style
+  assign scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign get_code_t = 'customer.login_page.get_login_code' | t
+  assign email_t = 'customer.login_page.email' | t
+  assign password_t = 'customer.login_page.password' | t
+  assign code_t = 'customer.login_page.code' | t
+  assign first_name_t = 'customer.register.first_name' | t
+  assign last_name_t = 'customer.register.last_name' | t
+  assign subscribe_t = 'customer.register.subscribe' | t
+  assign be_invited_t = 'customer.register.be_invited' | t
+-%}
+{%- style -%}
+  .section-{{ section_id }} {}
+{%- endstyle -%}
+
+{% assign shopGroupName = '' | shop_group: 'name' %}
+
+{% capture content %}
+  <div class="card-{{ enable_card }} login-container">
+    <section class="loginBox {{ layout }}" id="login">
+      <div class="title">{{ 'customer.register.title' | t }}</div>
+      <div class="to-be-invited  visually-hidden">
+        {{ be_invited_t }}
+      </div>
+      <div class="v-space-600">
+        {% if shopGroupName == 'genstore' %}
+          <div class="thirdBox">
+            <div onclick="onThirdLogin('google')" class="genstore-btn xl default neutral thirdBtn genstore-not-letter-spacing">
+              <img src="{{ '/web/static/storefront/password/google_icon.png' | shop_group: 'assets_cdn' }}"
+                  alt=""
+                  style="width: 16px; margin-inline-end: 6px">
+              <span>{{ 'customer.register.sign_up_google' | t }}</span>
+            </div>
+            <div onclick="onThirdLogin('facebook')" class="genstore-btn xl default neutral thirdBtn genstore-not-letter-spacing">
+              <img src="{{ '/web/static/storefront/password/facebook_icon.png' | shop_group: 'assets_cdn' }}"
+                  alt=""
+                  style="width: 18px; margin-inline-end: 6px">
+              <span>{{ 'customer.register.sign_up_facebook' | t }}</span>
+            </div>
+          </div>
+          <div class="or h-center">
+            <div class="line"></div>
+            <span>{{ 'customer.login_page.or' | t }}</span>
+            <div class="line"></div>
+          </div>
+        {% endif %}
+        <div class="main-register-name_input-box">
+          {% render 'genstore-input-1', label: first_name_t, className: "first_name_input s_input_row", input_id: "CustomerFirstName", input_name: "first_name" %}
+          {% render 'genstore-input-1', label: last_name_t, className: "last_name_input s_input_row", input_id: "CustomerLastName", input_name: "last_name" %}
+        </div>
+        {% render 'genstore-input-1', label: email_t, className: "s_input email_input", input_id: "CustomerEmail", input_name: "email", input_mode: "email" %}
+        <div class="password_input password_section">
+          {% render 'genstore-input-1', label: password_t, className: "s_input", input_id: "CustomerPassword", input_name: "password" input_type: "password" %}
+          {% render 'password-eye', input_id: 'CustomerPassword', class: 'eye' %}
+        </div>
+      </div>
+      <div class='v-space-400'>
+        <div class="v-space-800">
+          <div class="register-subscribe">
+            <input type="checkbox" id="customerSubscribe"/>
+            <span>{{ subscribe_t }}</span>
+          </div>
+          <div class="genstore-btn xl primary brand genstore-not-letter-spacing" onclick="onRegister(event)">
+            {{ 'customer.register.submit' | t }}
+          </div>
+          <span class="tips">
+            {{ 'customer.register.registered' | t }} <a class="s_link"
+                                                        href="{{ routes.account_login_url }}">{{ 'customer.login_page.sign_in' | t }}</a>
+          </span>
+        </div>
+        <div class="policy-tips">
+          {{ 'customer.register.policy_tips' | t }}
+          <a href="{{ shop.pathPrefix }}/policies/privacy-policy" target="_blank" class="link">
+            {{ 'general.policy' | t }}
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+{% endcapture %}
+{% render 'genstore-container',
+  color_scheme: settings.theme_color_scheme,
+  color_mode: section.settings.color_mode,
+  color_style: section.settings.color_style,
+  section: section,
+  content: content
+%}
+
+<script>
+  let email_input = document.querySelector('.email_input');
+  let password_input = document.querySelector('.password_input .s_input');
+  let first_name_input = document.querySelector('.first_name_input');
+  let last_name_input = document.querySelector('.last_name_input');
+
+  async function onRegister() {
+    const email = document.querySelector('#CustomerEmail').value;
+    const password = document.querySelector('#CustomerPassword').value;
+    const fistName = document.querySelector('#CustomerFirstName').value;
+    const lastName = document.querySelector('#CustomerLastName').value;
+    const subscribed = document.querySelector('#customerSubscribe').checked;
+    const invitedDom = document.querySelector('.to-be-invited');
+    const invitedText = invitedDom.textContent;
+    let checkResult = await beforeValidate();
+    if (!checkResult) {
+      return;
+    }
+    if (!invitedDom.classList.contains('visually-hidden')) {
+      invitedDom.classList.add('visually-hidden');
+    }
+    const obj = { email, password };
+    if (fistName) obj.firstName = fistName;
+    if (lastName) obj.lastName = lastName;
+    if (subscribed) obj.subscribed = subscribed;
+    invitedDom.textContent = invitedText.replace('${email}', email);
+    fetch('{{ shop.routesRoot }}account/register/ajax', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(obj),
+    })
+      .then(res => res.json())
+      .then(res => {
+        if (res.errcode == 2011001509) {
+          window.location.href = '/register-callback?email=' + email;
+          return;
+        }
+        if (res.errcode == 2011001506) {
+          email_input.showError(res.errmsg);
+          return;
+        }
+        if (res.errcode != 0) {
+          password_input.showError(res.errmsg);
+        } else {
+          onEnter();
+        }
+      });
+  }
+
+  async function beforeValidate() {
+    hideAllErrors();
+    const fistName = document.querySelector('#CustomerFirstName').value;
+    const lastName = document.querySelector('#CustomerLastName').value;
+    const email = document.querySelector('#CustomerEmail').value;
+    const password = document.querySelector('#CustomerPassword').value;
+    if (fistName.length > 200) {
+      first_name_input.showError('{{ "customer.register.first_name_error" | t }}');
+      return false;
+    }
+    if (lastName.length > 200) {
+      last_name_input.showError('{{ "customer.register.last_name_error" | t }}');
+      return false;
+    }
+    let result = true;
+    if (!email) {
+      email_input.showError('{{ "customer.login_page.email_required" | t }}');
+      result = false;
+    } else {
+      if (!isEmail(email)) {
+        email_input.showError('{{ "customer.login_page.email_invalid" | t }}');
+        result = false;
+        return false;
+      }
+    }
+    if (!password) {
+      password_input.showError('{{ "customer.login_page.password_required" | t }}');
+      result = false;
+    } else if (password.length < 6) {
+      password_input.showError('{{ "customer.reigster_pwd_short" | t }}');
+      result = false;
+    } else if (password.length > 100) {
+      password_input.showError('{{ "customer.reigster_pwd_long" | t }}');
+      result = false;
+    } else {
+      if (!correctPwd(password)) {
+        password_input.showError('{{ "customer.register.invalid_password" | t }}');
+        result = false;
+      }
+    }
+    return result;
+  }
+
+  async function checkEmail() {
+    try {
+      const email = document.querySelector('#CustomerEmail').value;
+      let res = await fetch('{{ shop.routesRoot }}account/checkEmail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(email),
+      });
+      res = await res.json();
+      if (res.errcode != 0) {
+        email_input.showError(res.errmsg);
+        return false;
+      } else {
+        if (res.data) {
+          // exist
+          window.location.href = '/register-callback?email=' + email;
+          return false;
+        } else {
+          return true;
+        }
+      }
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function isEmail(email) {
+    return /^(?=.{1,64}@)(?:[a-zA-Z0-9!#$%&'*+\-\/=?^_`{|}~]+(?:\.[a-zA-Z0-9!#$%&'*+\-\/=?^_`{|}~]+)*)@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+(?!\d+$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/.test(
+      email,
+    );
+  }
+
+  function correctPwd(password) {
+    return /^[a-zA-Z0-9!@#$%^&*()\-_=+\[\]{}|;:'",.<>/?]*$/.test(password);
+  }
+
+  function hideAllErrors() {
+    first_name_input.hiddenError();
+    last_name_input.hiddenError();
+    email_input.hiddenError();
+    password_input.hiddenError();
+  }
+
+  async function onThirdLogin(platform) {
+    const popup = window.open('', 'OAuth', 'left=80,top=0,width=600,height=600,toolbar=0,scrollbars=0,status=0');
+    const url = {
+      google: '{{ shop.routesRoot }}account/get-google-login-params',
+      facebook: '{{ shop.routesRoot }}account/get-facebook-login-params',
+    }[platform];
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    let result = await response.json();
+    result = result.data;
+    console.log('onThirdLogin params', result);
+
+    const width = 600;
+    const height = 600;
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+    const targetOrigin = 'https://oauth.genmystore.com';
+
+    popup.location.href = `${targetOrigin}/index.html?state=${result.state}&clientId=${result.clientId}&platform=${platform}&source=${location.origin}`;
+
+    window.addEventListener('message', function (event) {
+      // Ensure message is from the expected origin
+      if (event.origin === targetOrigin) {
+        const data = event.data;
+        console.log('Received data from websiteB:', data);
+
+        if (data.code) {
+          const subscribed = document.querySelector('#customerSubscribe').checked;
+          if (subscribed) data.subscribed = subscribed;
+          if (platform == 'google') {
+            triggerGoogleLogin(data);
+          } else if (platform == 'facebook') {
+            triggerFacebookLogin(data);
+          }
+
+          if (popup && !popup.closed) {
+            popup.close();
+          }
+        }
+      }
+    });
+  }
+
+  function triggerGoogleLogin(params) {
+    fetch('{{ shop.routesRoot }}account/login-google', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        parameter: params,
+      }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log('data1', data);
+        if (data.errcode == 0) {
+          onEnter();
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  }
+
+  function triggerFacebookLogin(params) {
+    fetch('{{ shop.routesRoot }}account/login-facebook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        parameter: params,
+      }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log('data1', data);
+        if (data.errcode == 0) {
+          onEnter();
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  }
+
+  function onEnter() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectUrl = urlParams.get('redirect');
+    if (redirectUrl) {
+      location.replace(redirectUrl);
+    } else {
+      location.replace('{{ shop.pathPrefix }}/account');
+    }
+  }
+</script>
+
+{% schema %}
+{
+  "name": "t:sections.main-login.register_name",
+  "settings": [
+    {
+      "default": "left",
+      "options": [
+        {
+          "label": "t:sections.header.settings.logo_position.options__2.label",
+          "value": "left"
+        },
+        {
+          "label": "t:sections.header.settings.logo_position.options__1.label",
+          "value": "center"
+        }
+      ],
+      "id": "layout_position",
+      "label": "t:sections.header.settings.logo_position.label",
+      "type": "select"
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "default": "button",
+      "label": "t:sections.main-login.settings.button_style.label",
+      "options": [
+        {
+          "label": "t:sections.main-login.settings.button_style.options__1.label",
+          "value": "button"
+        },
+        {
+          "label": "t:sections.main-login.settings.button_style.options__2.label",
+          "value": "icon"
+        }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_card",
+      "default": false,
+      "label": "t:sections.all.card_mode.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.design.name"
+    },
+    {
+      "options": [
+        {
+          "label": "t:sections.all.padding.options__1.label",
+          "value": "none"
+        },
+        {
+          "label": "t:sections.all.padding.options__2.label",
+          "value": "xxs"
+        },
+        {
+          "label": "t:sections.all.padding.options__3.label",
+          "value": "xs"
+        },
+        {
+          "label": "t:sections.all.padding.options__4.label",
+          "value": "s"
+        },
+        {
+          "label": "t:sections.all.padding.options__5.label",
+          "value": "m"
+        },
+        {
+          "label": "t:sections.all.padding.options__6.label",
+          "value": "l"
+        },
+        {
+          "label": "t:sections.all.padding.options__7.label",
+          "value": "xl"
+        }
+      ],
+      "default": "l",
+      "id": "padding_top",
+      "label": "t:sections.all.padding.padding_top",
+      "type": "select"
+    },
+    {
+      "options": [
+        {
+          "label": "t:sections.all.padding.options__1.label",
+          "value": "none"
+        },
+        {
+          "label": "t:sections.all.padding.options__2.label",
+          "value": "xxs"
+        },
+        {
+          "label": "t:sections.all.padding.options__3.label",
+          "value": "xs"
+        },
+        {
+          "label": "t:sections.all.padding.options__4.label",
+          "value": "s"
+        },
+        {
+          "label": "t:sections.all.padding.options__5.label",
+          "value": "m"
+        },
+        {
+          "label": "t:sections.all.padding.options__6.label",
+          "value": "l"
+        },
+        {
+          "label": "t:sections.all.padding.options__7.label",
+          "value": "xl"
+        }
+      ],
+      "default": "l",
+      "id": "padding_bottom",
+      "label": "t:sections.all.padding.padding_bottom",
+      "type": "select"
+    }
+  ]
+}
+{% endschema %}

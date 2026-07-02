@@ -1,0 +1,84 @@
+{% comment %}
+  渲染一个按钮组件
+
+  组件用途:
+  该组件用于在页面中创建一个可点击的按钮元素，支持多种样式、大小、颜色类型，
+  可以自定义宽度和字体大小，并允许在链接样式时添加箭头图标。
+
+  参数说明:
+  - props: {Object} 按钮的属性对象
+  - props.label: 按钮的文本内容
+  - props.url: 按钮的链接地址，当按钮点击时跳转的URL
+  - props.style: 按钮的样式类型，可选值如 'primary'、'secondary'、'link' 等
+  - props.size: 按钮的大小，默认为 'medium'，可选值如 'small'、'large' 等
+  - props.color_style: 按钮的颜色样式，默认为 'brand'
+  - props.fontSize: 按钮的字体大小，对应CSS变量，例如 '300' 将使用 --genstore-fontSize-300
+  - props.enableIcon: 是否显示图标，当style为'link'时有效，显示箭头图标
+  - props.width: 按钮的宽度，默认为 'auto'
+  - id: 可选的按钮元素的ID属性
+
+  其他设置:
+  - settings.buttons_is_rounded: 全局设置，决定按钮是否使用圆角样式
+
+  使用示例:
+  {% render 'button', props: {
+  label: '购买现在',
+  url: product.url,
+  style: 'primary',
+  size: 'medium',
+  color_style: 'brand',
+  fontSize: '300',
+  enableIcon: false,
+  width: '100%'
+  } %}
+
+  {% assign link_button = {
+  label: '查看更多',
+  url: collection.url,
+  style: 'link',
+  enableIcon: true
+  } %}
+  {% render 'button', props: link_button, id: 'view-more-button' %}
+{% endcomment %}
+{% liquid
+  assign link = '#'
+  assign empty_link = true
+  if props.style == 'link' or props.url
+    assign link = props.url
+    assign empty_link = false
+  endif
+  if props.url == blank
+    assign empty_link = true
+  else
+    assign empty_link = false
+  endif
+  assign link_fontSize = '--genstore-fontSize-300'
+  if props.fontSize
+    assign link_fontSize = '--genstore-fontSize-' | append: props.fontSize
+  endif
+  assign is_round = false
+  if settings.buttons_is_rounded == true
+    assign is_round = true
+  endif
+  assign visual_block = ''
+  if block != blank
+    assign visual_block = block
+  endif
+%}
+<a
+  class="genstore-btn {{ props.style }} {% if props.style=='link' %} xl_16 {% else %} {{ props.size | default: 'medium' }} {% endif %} {{ props.color_style | default: 'brand' }}   {% if is_round == true %} rounded{% endif %} {% if empty_link %} prevent-click {% endif %}"
+  href="{{ link }}"
+  {% if id != blank %}
+    id="{{ id }}"
+  {% endif %}
+  {% if empty_link %}
+    onclick="event.preventDefault();"
+  {% endif %}
+  style="--link-fontSize: var({{ link_fontSize }});width:{{ props.width | default: 'auto' }};max-width: {{props.max_width | default: '100%'}};"
+  {{ '' | genstore_vkey: key:props.visual_text_key, block:visual_block | genstore_vkey: key:props.visual_link_key, block:visual_block }}
+>
+  {{ props.label }}
+  {% if props.style == 'link' and props.enableIcon == true %}
+    {{- 'icon-arrow.svg' | inline_asset_content -}}
+  {% endif %}
+</a>

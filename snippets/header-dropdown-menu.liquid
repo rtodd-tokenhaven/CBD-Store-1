@@ -1,0 +1,11 @@
+<nav class="header__inline-menu" aria-label="{{ 'sections.header.menu' | t }}">
+  <ul class="list-menu list-menu--inline" role="list">
+    {%- for link in section.settings.menu.links -%}
+      <li>
+        <a href="{{ link.url }}" class="header__menu-item header__menu-item--link link link--text focus-inset"{% if link.current %} aria-current="page"{% endif %}>
+          {{ link.title | escape }}
+        </a>
+      </li>
+    {%- endfor -%}
+  </ul>
+</nav>

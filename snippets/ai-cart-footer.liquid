@@ -1,0 +1,108 @@
+{%- comment -%}
+  snippets/ai-cart-footer.liquid — 购物车底部（小计 + 结账按钮）
+
+  参数:
+    cart                  — Cart 对象
+    type                  — "page" | "drawer"
+    enable_sub_total      — Boolean
+    enable_buy_buttons    — Boolean
+    show_dynamic_checkout — Boolean
+    content_alignment     — "left" | "right"
+    button_size           — 按钮尺寸
+    button_style_secondary — 按钮样式
+    color_style_button    — 按钮配色
+    block_attributes      — block.shopify_attributes
+
+  CSS 类前缀：.cf-*
+{%- endcomment -%}
+
+{%- liquid
+  if type == 'drawer'
+    assign form_id = 'cart-drawer-items'
+  else
+    assign form_id = 'cart-items'
+  endif
+-%}
+
+<div
+  class="cf-footer {% if cart == empty %}hidden{% endif %}"
+  {{ block_attributes | default: '' }}
+  {% if enable_sub_total == false and enable_buy_buttons == false and show_dynamic_checkout == false %}
+    hidden
+  {% endif %}
+  id="main-cart-footer"
+  data-id="main-cart-footer"
+>
+  <div class="cf-inner isolate">
+    {%- if cart.items.size > 0 -%}
+      <div class="cf-blocks">
+
+        {%- comment -%} 小计 + 税费说明 {%- endcomment -%}
+        {% if enable_sub_total %}
+          <div class="js-contents {{ content_alignment | default: '' }}">
+            <div class="cf-totals">
+              <div class="cf-subtotal">
+                <span class="cf-subtotal-label">Estimated total</span>
+                <p class="cf-subtotal-price">{{ cart.total_price | money_with_currency }}</p>
+              </div>
+              <div class="cf-tax-note">
+                <small>
+                  {%- if cart.duties_included and cart.taxes_included -%}
+                    {%- if shop.shipping_policy.body == blank -%}
+                      Duties and taxes included. Discounts and shipping calculated at checkout.
+                    {%- else -%}
+                      Duties and taxes included. Discounts and <a href="{{ shop.shipping_policy.url }}">shipping</a> calculated at checkout.
+                    {%- endif -%}
+                  {%- elsif cart.duties_included == false and cart.taxes_included -%}
+                    {%- if shop.shipping_policy.body == blank -%}
+                      Taxes included. Discounts and shipping calculated at checkout.
+                    {%- else -%}
+                      Taxes included. Discounts and <a href="{{ shop.shipping_policy.url }}">shipping</a> calculated at checkout.
+                    {%- endif -%}
+                  {%- elsif cart.duties_included and cart.taxes_included == false -%}
+                    {%- if shop.shipping_policy.body == blank -%}
+                      Duties included. Taxes, discounts and shipping calculated at checkout.
+                    {%- else -%}
+                      Duties included. Taxes, discounts and <a href="{{ shop.shipping_policy.url }}">shipping</a> calculated at checkout.
+                    {%- endif -%}
+                  {%- elsif cart.duties_included == false and cart.taxes_included == false -%}
+                    {%- if shop.shipping_policy.body == blank -%}
+                      Taxes, discounts and shipping calculated at checkout.
+                    {%- else -%}
+                      Taxes, discounts and <a href="{{ shop.shipping_policy.url }}">shipping</a> calculated at checkout.
+                    {%- endif -%}
+                  {%- endif -%}
+                </small>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+        {%- comment -%} 结账按钮 {%- endcomment -%}
+        {% if enable_buy_buttons %}
+          <div class="cf-error"></div>
+          <div class="cf-ctas">
+            <button
+              type="submit"
+              id="checkout"
+              form="{{ form_id }}"
+              class="cf-checkout-btn {{ color_style_button | default: 'brand' }} {{ button_style_secondary | default: 'primary' }} {{ button_size | default: 'large' }}"
+              name="checkout"
+              {% if cart == empty %}disabled{% endif %}
+            >
+              Check out
+            </button>
+          </div>
+        {% endif %}
+
+        {%- comment -%} Dynamic checkout buttons (PayPal, Google Pay, etc.) {%- endcomment -%}
+        {% if additional_checkout_buttons and show_dynamic_checkout %}
+          <div class="cf-dynamic-checkout">
+            {{ content_for_additional_checkout_buttons }}
+          </div>
+        {% endif %}
+
+      </div>
+    {%- endif -%}
+  </div>
+</div>

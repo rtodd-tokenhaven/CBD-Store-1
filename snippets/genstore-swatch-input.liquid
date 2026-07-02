@@ -1,0 +1,86 @@
+{% assign input_picker_type = picker_type | default: type %}
+{% if input_picker_type == 'radio' or input_picker_type == 'image' or input_picker_type == 'button' or input_picker_type == 'color'
+%}
+  {% assign input_type = 'radio' %}
+{% else %}
+  {% assign input_type = 'checkbox' %}
+{% endif %}
+
+<div class='genstore-swatch-input {{ input_picker_type }}  f-row align-center gap-200' style='
+    {{ style }}
+    --inputs-radius: {{ settings.inputs_radius }}px;
+  '>
+  <input
+    type='{{ input_type }}'
+    id='{{ input_id }}'
+    name='{{ input_name | escape }}'
+    value='{{ value | escape }}'
+    form='{{ form_id }}'
+    {% if selected %}
+    checked
+    {% endif %}
+    {% if option_disabled %}
+    class='disabled'
+    {% endif %}
+    {% if option_disabled %}
+    class='disabled'
+    {% endif %}
+    {{ input_dataset }}>
+  {% if input_picker_type == 'button' %}
+    <label for='{{ input_id }}' class='swatch-input-button'>
+      {{ value -}}
+      {{ label_unavailable }}
+    </label>
+  {% elsif input_picker_type == 'color' %}
+    <label
+      for='{{ input_id }}'
+      class='swatch-input-color {{ shape }}'
+      style='--background: {{ value.swatch.color }}'>
+      {{ label_unavailable }}
+    </label>
+  {% elsif input_picker_type == 'image' %}
+    <label
+      for='{{ input_id }}'
+      class='swatch-input-image {{ shape }}'
+      title='{{ value.name }}'
+      style="background: url('{{ value.swatch.image | image_url: width:100 }}');background-size:cover">
+      {{ label_unavailable }}
+    </label>
+  {% elsif input_picker_type == 'swatch' %}
+    <label
+      for='{{ input_id }}'
+      class='swatch-input-color'
+      style='--background: {{ swatch.color }}'>
+      {{ label_unavailable }}
+    </label>
+  {% elsif input_picker_type == 'text' %}
+    <label for='{{ input_id }}' class='swatch-input-checkbox'>
+      <span class='checkmark'></span>
+    </label>
+    <label for='{{ input_id }}' class='swatch-input-label'>{{ label }}</label>
+  {% elsif input_picker_type == 'radio' %}
+    <label for='{{ input_id }}' class='swatch-input-radio'>
+      <span class='checkmark'></span>
+    </label>
+    <label for='{{ input_id }}' class='swatch-input-label'>{{ label }}</label>
+  {% elsif input_picker_type == 'box_rectangle' %}
+    <label for='{{ input_id }}' class='swatch-input-box-rectangle'>
+      {{ label -}}
+    </label>
+  {% elsif input_picker_type == 'swatch_text' %}
+    <label for='{{ input_id }}' class='swatch-input-box-rectangle'>
+      <span class='color' style='--background: {{ swatch.color }}'></span>
+      {{ label -}}
+    </label>
+  {% elsif input_picker_type == 'swatch_text_vertical' %}
+    <label
+      for='{{ input_id }}'
+      class='swatch-input-color'
+      style='--background: {{ swatch.color }}'>
+      {{ label_unavailable }}
+    </label>
+    <label for='{{ input_id }}' class='swatch-input-swatch_text'>
+      {{- label -}}
+    </label>
+  {% endif %}
+</div>

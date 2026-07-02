@@ -1,0 +1,120 @@
+{% comment %}
+  -- products: Product[] 产品列表
+  -- settings: object 装修配置
+  -- sale_badge_color_scheme 折扣标签颜色方案
+  -- card_badge_position 标签位置
+  -- card_color_scheme 配色方案
+  -- drawer 抽屉模式
+  -- card_text_limit 产品标题最大行数
+{% endcomment %}
+{{ 'header-product-list.css' | asset_url | stylesheet_tag }}
+{% liquid
+  assign list_content_class = 'header__product-list-container'
+  assign list_item_content_class = ''
+  assign color_scheme = ''
+
+  if settings.full_width == false
+    assign list_content_class = list_content_class | append: ' page-width'
+  else
+    assign list_item_content_class = 'full-width'
+  endif
+
+  if card_color_scheme
+    assign color_scheme = ' color-' | append: card_color_scheme
+  endif
+%}
+{% capture list_content %}
+  {%- for product in products -%}
+
+    {% comment %} 产品信息 {% endcomment %}
+    {% capture product_content %}
+      <div class="card-content f-column gap-300"  data-text-limit="{{ card_text_limit }}"
+      style="--card-text-limit:{{ card_text_limit }};">
+
+      {% comment %} 产品标题 {% endcomment %}
+        <div class="card-link">
+          <a href="{{ product.url }}" class="title">
+            {% liquid
+              assign title = product.title
+              if title == blank
+                assign title = 'onboarding.product_title' | t
+              endif
+            %}
+            {% render 'genstore-text-block', text: title %}
+          </a>
+        </div>
+      {% comment %} 产品价格 {% endcomment %}
+        <div class="card-information">
+          {% if settings.show_product_placeholder %}
+            {{ shop.symbol }} 20
+          {% else %}
+            {% render 'price', product: product, price_class: '', show_compare_at_price: true, show_price_type: 'min' %}
+          {% endif %}
+        </div>
+      </div>
+    {% endcapture %}
+
+    {% comment %} 产品标签&折扣标签 {% endcomment %}
+    {% capture badges %}
+      {% if product.productDiscounts.size > 0 and settings.show_discount %}
+        {% assign label = 'products.product.on_sale' | t %}
+        <div class="badges-container {{card_badge_position}}">
+          {% render 'genstore-badge', label: label, extra_class: 'badge-radius' %}
+        </div>
+      {% elsif product.filterTags.size > 0 %}
+        <div class="badges-container {{card_badge_position}}">
+          {% for tags in product.filterTags %}
+            {% render 'genstore-badge', label: tags, extra_class: 'badge-radius' %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endcapture %}
+
+    {% comment %} 渲染产品卡 {% endcomment %}
+    {% render 'genstore-card',
+    id: product.id,
+    url: product.url,
+    badges: badges,
+    media: product.media,
+    image_ratio: settings.image_ratio,
+    show_secondary_image: settings.show_secondary_image,
+    content: product_content,
+    index: index,
+    show_product_placeholder: settings.show_product_placeholder,
+    class_name: "f-column content-between",
+    %}
+  {%- endfor -%}
+{% endcapture %}
+
+{% if drawer %}
+  <div class='header__product-list__item__drawer__scroll__box header_product-list_drawer_box'>
+    {% render 'genstore-cart-list-container',
+      id: section_id,
+      columns_desktop: 2,
+      columns_mobile: 2,
+      enable_desktop_slider: false,
+      enable_mobile_slider: false,
+      content: list_content,
+      gap: 's',
+      className: list_content_class
+    %}
+  </div>
+{% else %}
+  <div class='header-product-wrapper'>
+    <div class='product-list-wrapper'>
+      <div class='product-list-wrapper-content'>
+        {% comment %} 渲染产品卡列表 {% endcomment %}
+        {% render 'genstore-cart-list-container',
+          id: section_id,
+          columns_desktop: settings.columns_desktop,
+          columns_mobile: 2,
+          enable_desktop_slider: false,
+          enable_mobile_slider: false,
+          content: list_content,
+          gap: 's',
+          className: list_content_class
+        %}
+      </div>
+    </div>
+  </div>
+{% endif %}

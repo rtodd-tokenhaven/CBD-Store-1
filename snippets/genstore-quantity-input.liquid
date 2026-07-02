@@ -1,0 +1,78 @@
+{% comment %}
+  Quantity input
+
+  Accepts:
+  - value: {Number} Value (optional)
+  - min: {Number} Min (optional)
+  - max: {Number} Max (optional)
+  - increment: {Number} Increment (optional)
+  - product_form_id: {String} Product form ID (optional)
+  - data_index: {String} Data index (optional)
+  - quantity_variant_id: {String} Quantity variant ID (optional)
+  - product_id: {String} Product ID (optional)
+  - data_id: {String} Data ID (optional)
+  - input_name: {String} Input name (optional)
+  - input_size: {String} Input size (optional)
+  - enable_loading: {Boolean} Enable loading (optional)
+  - extra_remove_button: {Boolean} Extra remove button (optional) 是否需要额外的删除按钮
+  - index: {Number} Index (optional)
+  Usage:
+  {% render 'genstore-quantity-input' value: value, min: min, max: max, increment: increment %}
+{% endcomment %}
+<div
+  id="Quantity-Form-{{ section.id }}"
+  class="product-form__input product-form__quantity"
+  {{ block.genstore_attributes }}>
+  <quantity-input
+    class="quantity  {{ input_size | default: '' }}"
+    quantity="{{ value }}"
+    {% if enable_loading %}
+    enable-loading="true"
+    {% endif %}>
+
+    {% if extra_remove_button %}
+      <cart-remove-button
+        id='Remove-{{ index }}-mobile-del'
+        data-index='{{ data_index }}'
+        data-variant-id='{{ quantity_variant_id }}'
+        data-product-id='{{ product_id }}'>
+        {% render 'genstore-svg', icon_name: "icon-trash" %}
+      </cart-remove-button>
+    {% endif %}
+    <button
+      class="quantity__button"
+      name="minus"
+      type="button">
+      {% render 'genstore-svg'
+        , icon_name: 'icon-minus' %}
+    </button>
+    <input
+      class="quantity__input "
+      type="number"
+      name="{{ input_name | default: 'quantity' }}"
+      data-min="{{ min | default: 1 }}"
+      min="{{ min | default: 1 }}"
+      data-max="{{ max | default: 99999 }}"
+      max="{{ max | default: 99999 }}"
+      step="{{ increment | default: 1 }}"
+      value="{{ value }}"
+      {% if product_form_id %}
+      form="{{ product_form_id }}"
+      {% endif %}
+      data-index="{{ data_index }}"
+      {% if data_key %}
+      data-key="{{ data_key }}"
+      {% endif %}
+      data-quantity-variant-id="{{ quantity_variant_id }}"
+      data-product-id="{{ product_id }}"
+      data-id="{{ data_id }}">
+    <button
+      class="quantity__button"
+      name="plus"
+      type="button">
+      {% render 'genstore-svg'
+        , icon_name: 'icon-plus' %}
+    </button>
+    {%- render 'progress-bar' -%}
+  </quantity-input>
+</div>

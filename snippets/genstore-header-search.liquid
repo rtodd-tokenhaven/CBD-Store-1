@@ -1,0 +1,127 @@
+{% comment %}
+  Renders a header search modal. Should be used with 'header.liquid'
+
+  Accepts:
+  - input_id: {String} Id for the search input element (required)
+
+  Usage:
+  {% render 'header-search', input_id: 'My-Id'%}
+{% endcomment %}
+{%- liquid
+  assign input_value = search.terms | escape
+  assign className = className | default: ''
+-%}
+{% capture label_content %}
+  {% render 'genstore-svg', icon_name: 'icon-search', className: 'header-icon-search' icon_weight: 'thiner' %}
+{% endcapture %}
+{% capture search_attributes %}
+  {%- if settings.predictive_search_enabled -%}
+    role="combobox"
+    aria-expanded="false"
+    aria-owns="predictive-search-results"
+    aria-controls="predictive-search-results"
+    aria-haspopup="listbox"
+    aria-autocomplete="list"
+    autocorrect="off"
+    autocomplete="off"
+    autocapitalize="off"
+    spellcheck="false"
+  {%- endif -%}
+{% endcapture %}
+{% capture extra_content %}
+  <button
+  type="reset"
+  class="reset__button field__button{% if search.terms == blank %} hidden{% endif %}"
+  aria-label="{{ 'general.search.reset' | t }}">
+  <span class="svg-wrapper">
+    {{- 'icon-close.svg' | inline_asset_content -}}
+  </span>
+</button>
+{% endcapture %}
+<details-modal class="header__search {{ className }}">
+  <details>
+    <summary
+      class="header__icon header__icon--search header__icon--summary link focus-inset modal__toggle"
+      aria-haspopup="dialog"
+      aria-label="{{ 'general.search.search' | t }}"
+    >
+      <span>
+        {% render 'genstore-svg', icon_name: 'icon-search' %}
+        <span class="svg-wrapper header__icon-close">
+          {{- 'icon-close.svg' | inline_asset_content -}}
+        </span>
+      </span>
+    </summary>
+    {% capture content %}
+      <div class="modal-overlay"></div>
+      <div
+        class="search-modal__content{% if settings.inputs_shadow_vertical_offset != 0 and settings.inputs_shadow_vertical_offset < 0 %} search-modal__content-top{% else %} search-modal__content-bottom{% endif %}"
+        tabindex="-1"
+      >
+      {%- if settings.predictive_search_enabled -%}
+        <predictive-search class="search-modal__form header_search_content" data-loading-text="{{ 'accessibility.loading' | t }}">
+          {%- else -%}
+          <search-form class="search-modal__form">
+            {%- endif -%}
+            {% assign search_t = 'general.search.search' | t %}
+            <form action="{{ routes.search_url }}" method="get" role="search" class="search search-modal__form">
+              {% render 'genstore-input-1'
+              , value: input_value
+              , label: label_content
+              , className: 'header-genstore-input'
+              , input_id: input_id
+              , additional_attributes: search_attributes
+              , extra_content: extra_content
+              , placeholder: search_t
+              , input_name: "q" input_type: "search" %}
+              <div class="predictive-search__close">{% render 'genstore-icon', icon_name: 'search-model-close', icon_size: 'medium' %}</div>
+              <div class="predictive-search__tips">
+                <div id="predictive-search__preload">
+                  <div class="predictive-search__tip-wrapper predictive-search__keys-wrapper">
+                    <div class="predictive-search__tips-head">
+                      <div class="predictive-search__tips-title">{{ 'templates.search.recently_searched' | t }}</div>
+                      <div class="predictive-search__tips-remove">{{ 'products.facets.clear_all' | t -}}</div>
+                    </div>
+                    <div class="predictive-search__keys"></div>
+                  </div>
+                  <div class="predictive-search__tip-wrapper predictive-search__product-wrapper">
+                    <div class="predictive-search__tips-head">
+                      <div class="predictive-search__tips-title">{{ 'templates.search.recently_viewed' | t }}</div>
+                      <div class="predictive-search__tips-remove">{{ 'products.facets.clear_all' | t -}}</div>
+                    </div>
+                    <ul class="predictive-search__products"></ul>
+                  </div>
+                </div>
+
+                {%- if settings.predictive_search_enabled -%}
+                  <div class="predictive-search predictive-search--header" tabindex="-1" data-predictive-search></div>
+
+                  <span class="predictive-search-status visually-hidden" role="status" aria-hidden="true"></span>
+                {%- endif -%}
+              </div>
+            </form>
+            {%- if settings.predictive_search_enabled -%}
+        </predictive-search>
+      {%- else -%}
+        </search-form>
+        {%- endif -%}
+      </div>
+    {% endcapture %}
+    {% liquid
+      assign color_style = section.settings.color_style
+      if color_style == 'transparent'
+        assign color_style = 'pure'
+      endif
+    %}
+    {% render 'genstore-container',
+      section: section,
+      color_scheme: settings.theme_color_scheme,
+      enable_padding_top: false,
+      enable_padding_bottom: false,
+      color_mode: section.settings.color_mode,
+      color_style: color_style,
+      content: content,
+      className: 'search-modal modal__content full-screen-padding'
+    %}
+  </details>
+</details-modal>

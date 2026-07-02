@@ -1,0 +1,326 @@
+{% liquid
+  assign filter_status = request.query.status | split: ','
+  assign sort_filed = request.query.sortField
+  assign sort_order = request.query.sortOrder
+  assign date_type = request.query.dateType
+
+  assign sort_label = ''
+  assign sort_value = ''
+
+  assign pending_label = 'customer.order.status.pending' | t
+  assign confirmed_label = 'customer.order.status.confirmed' | t
+  assign shipping_label = 'customer.order.status.shipping' | t
+  assign pickup_label = 'customer.order.status.pickup' | t
+  assign canceled_label = 'customer.order.status.canceled' | t
+
+  assign newest_label = 'customer.orders.filter_orderSorting_newest' | t
+  assign oldest_label = 'customer.orders.filter_orderSorting_oldest' | t
+  assign amount_asc_label = 'customer.orders.filter_orderSorting_amount_asc' | t
+  assign amount_desc_label = 'customer.orders.filter_orderSorting_amount_desc' | t
+
+  assign today_label = 'customer.orders.filter_orderTime_today' | t
+  assign seven_days_label = 'customer.orders.filter_orderTime_7days' | t
+  assign thirty_days_label = 'customer.orders.filter_orderTime_30days' | t
+  assign custom_label = 'customer.orders.filter_orderTime_custom' | t
+
+  assign custom_start_label = 'customer.orders.filter_orderTime_custom_start' | t
+  assign custom_end_label = 'customer.orders.filter_orderTime_custom_end' | t
+  assign date_label = 'customer.orders.filter_orderTime' | t
+  if date_type == 'today'
+    assign date_filter_label = today_label
+  elsif date_type == 'seven_days'
+    assign date_filter_label = seven_days_label
+  elsif date_type == 'fifteen_days'
+    assign date_filter_label = fifteen_days_label
+  elsif date_type == 'thirty_days'
+    assign date_filter_label = thirty_days_label
+  elsif date_type == 'custom'
+    assign date_filter_label = custom_label
+  endif
+
+  if sort_filed == 'createTime' and sort_order == 'desc'
+    assign sort_value = 'newest'
+    assign sort_label = 'customer.orders.filter_orderSorting_newest' | t
+  elsif sort_filed == 'createTime' and sort_order == 'asc'
+    assign sort_value = 'oldest'
+    assign sort_label = 'customer.orders.filter_orderSorting_oldest' | t
+  elsif sort_filed == 'paymentAmount' and sort_order == 'desc'
+    assign sort_value = 'desc'
+    assign sort_label = 'customer.orders.filter_orderSorting_amount_desc' | t
+  elsif sort_filed == 'paymentAmount' and sort_order == 'asc'
+    assign sort_value = 'asc'
+    assign sort_label = 'customer.orders.filter_orderSorting_amount_asc' | t
+  endif
+  assign order_status_label = 'customer.orders.order_status' | t
+  assign order_sorting_label = 'customer.orders.filter_orderSorting' | t
+%}
+
+<customer-account
+  data-query-status="{{ request.query.status  }}"
+  data-buy-again-success-message="{{ 'customer.order.add_cart_success' | t }}"
+  data-buy-again-error-message="{{ 'customer.order.add_cart_error' | t }}"
+  data-buy-again-part-success="{{ 'customer.order.add_cart_part_success' | t }}"
+>
+  <input type="radio" name="view" id="view-table" value="table" checked>
+  <input type="radio" name="view" id="view-grid" value="grid">
+  <div class="order-header-wrapper">
+    {% assign title = 'customer.account.my_orders' | t %}
+    {% render 'genstore-heading', title: title, heading_size: 's', className: 'flex-1', no_letter_spacing: true %}
+
+    {% capture label %}
+      {% render 'genstore-svg', icon_name: 'icon-search', className: 'header-icon-search' icon_weight: 'thiner' %}
+      {%  assign label_text =  'general.search.search' | t %}
+      <span>{{ label_text }}</span>
+    {% endcapture %}
+    {% capture attributes %}
+      data-scope="search"
+    {% endcapture %}
+    {% render 'genstore-input-1',
+      label: label,
+      input_id: 'search',
+      input_name: 'search',
+      value: request.query.order_filter,
+      type: 'text',
+      input_size: 'medium',
+      className: 'search-order-input',
+      additional_attributes: attributes
+    %}
+    <div class="view-switcher">
+      <label class="layout_icon view-btn" for="view-table">
+        {% render 'genstore-svg', icon_name: 'icon-hamburger', icon_style: 'general', icon_weight: 'normal' %}
+      </label>
+      <label class="layout_icon view-btn" for="view-grid">
+        {% render 'genstore-svg', icon_name: 'icon-grid', icon_style: 'general', icon_weight: 'normal' %}
+      </label>
+    </div>
+  </div>
+  <div class="order-filter m-t-1200 f-column gap-400">
+    <div class="order-history-filter f-row align-center gap-400">
+      <div class=" f-row align-center">
+        {% render 'genstore-svg',
+          icon_name: 'icon-filter',
+          className: 'icon-filter',
+          icon_style: 'general',
+          icon_weight: 'normal'
+        %}
+        <span class="filter-title">{{ 'customer.orders.filters' | t }}</span>
+      </div>
+      {% liquid
+        assign date_options = today_label | append: ':today,' | append: seven_days_label | append: ':seven_days,' | append: thirty_days_label | append: ':thirty_days,' | append: custom_label | append: ':custom'
+      %}
+      {% capture content_date %}
+        {% render 'genstore-radio-group',
+          selected_id:request.query.dateType,
+          scope: 'date',
+          options: date_options
+        %}
+        <div class="date-container">
+          {% render 'genstore-input-1',
+            label: custom_start_label,
+            input_id: 'start-date',
+            input_name: 'start-date',
+            value: request.query.startTime,
+            type: 'text',
+            input_size: 'medium',
+            className: 'date-input'
+          %}
+          {% render 'genstore-input-1',
+            label: custom_end_label,
+            input_id: 'end-date',
+            input_name: 'end-date',
+            value: request.query.endTime,
+            type: 'text',
+            input_size: 'medium',
+            className: 'date-input'
+          %}
+        </div>
+       {% endcapture %}
+      {% render 'genstore-dropdown', dropdown_label: date_label, content: content_date %}
+      {% liquid
+        assign status_options = pending_label | append: ':pending,' | append: confirmed_label | append: ':confirmed,' | append: shipping_label | append: ':shipping,' | append: pickup_label | append: ':pickup,' | append: canceled_label | append: ':canceled'
+      %}
+      {% capture content_status %}
+        {% render 'genstore-checkbox-group',
+          enable_all: true,
+          selected_ids:request.query.status,
+          scope: 'status',
+          options: status_options,
+          group_class: 'shipping-status-checkbox-group'
+        %}
+      {% endcapture %}
+      {% render 'genstore-dropdown', dropdown_label: order_status_label, content: content_status %}
+      {% liquid
+        assign sort_options = newest_label | append: ':newest,' | append: oldest_label | append: ':oldest,' | append: amount_asc_label | append: ':asc,' | append: amount_desc_label | append: ':desc'
+      %}
+      {% capture content_order %}
+        {% render 'genstore-radio-group',
+          selected_id:sort_value,
+          scope: 'sort',
+          options: sort_options,
+          radio_name: 'sort',
+          group_class: 'order-sorting-radio-group'
+        %}
+      {% endcapture %}
+      {% render 'genstore-dropdown', dropdown_label: order_sorting_label, content: content_order %}
+    </div>
+    <div class="filter-tags">
+      {% if filter_status.size > 0 %}
+        <div class="filter-status-container f-row gap-8 f-row-wrap">
+          {% for status in filter_status %}
+            {% if status == 'pending' %}
+              {% assign status_label = pending_label %}
+            {% elsif status == 'confirmed' %}
+              {% assign status_label = confirmed_label %}
+            {% elsif status == 'shipping' %}
+              {% assign status_label = shipping_label %}
+            {% elsif status == 'pickup' %}
+              {% assign status_label = pickup_label %}
+            {% elsif status == 'canceled' %}
+              {% assign status_label = canceled_label %}
+            {% endif %}
+            {% render 'genstore-tag', text: status_label, value: status, scope: 'status' %}
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if sort_filed and sort_order %}
+        {% render 'genstore-tag', text: sort_label, value: sort_value, scope: 'sort' %}
+      {% endif %}
+      {% if date_filter_label != blank %}
+        {% if date_type == 'custom' %}
+          {% capture custom_attributes %}
+            data-start-time="{{ request.query.startTime |default: ''}}"
+            data-end-time="{{ request.query.endTime |default: ''}}"
+          {% endcapture %}
+          {% render 'genstore-tag',
+            text: date_filter_label,
+            value: date_type,
+            scope: 'date',
+            attributes: custom_attributes
+          %}
+        {% else %}
+          {% render 'genstore-tag', text: date_filter_label, value: date_type, scope: 'date' %}
+        {% endif %}
+      {% endif %}
+      {% if sort_filed == blank and sort_order == blank and date_type == blank and filter_status.size == 0 %}
+      {% else %}
+        {% assign clear_all_filters_label = 'customer.orders.clear_all_filters' | t %}
+        {% render 'genstore-text-link', text: clear_all_filters_label, url: routes.account_url %}
+      {% endif %}
+    </div>
+  </div>
+  {% paginate customer.orders by 20 %}
+    <div class="orders-container-wrapper">
+      <div class="orders-container m-t-1200 {%  if customer.orders.size == 0 %} empty{% endif %}">
+        {%- if customer.orders.size > 0 -%}
+          <div class="order-header">
+            <div></div>
+            <div>{{ 'customer.orders.order_number' | t }}</div>
+            <div>{{ 'customer.orders.order_status' | t }}</div>
+            <div>{{ 'customer.orders.total' | t }}</div>
+          </div>
+          {% for order in customer.orders %}
+            <div class="order-row">
+              <a href="{{ order.customer_url }}" class="order-face-wrapper">
+                <div class="order-face">
+                  {% assign has_image = false %}
+                  {% for item in order.line_items limit: 4 %}
+                    {% if item.image_url != blank %}
+                      {% assign has_image = true %}
+                      <img
+                        src="{{ item.image_url | image_url: width: 200 }}"
+                        width="200"
+                        height="200"
+                        loading="lazy"
+                        alt="{{ item.title }}"
+                      >
+                    {% endif %}
+                  {% endfor %}
+                  {% unless has_image %}
+                    {% render 'genstore-placeholder', icon_name: 'icon-img' %}
+                  {% endunless %}
+                </div>
+              </a>
+              <div class="order-info">
+                <a
+                  href="{{ order.customer_url }}"
+                  aria-label="{{ 'customer.orders.order_number_link' | t: number: order.name }}"
+                  class="order-number"
+                >
+                  #{{ order.name }}
+                </a>
+                <div class="date">{{ order.created_at | time_tag: format: 'date' }}</div>
+                <div class="price-quantity">
+                  <span class="price">{{ order.total_net_amount | money: order.currency_code }}</span>
+                  <span>x {{ order.product_quanity }}</span>
+                </div>
+              </div>
+              <div class="order-status-wrapper">
+                <div class="order-status">
+                  {% if order.genstore_order_status == 'pending' %}
+                    {% render 'genstore-svg',
+                      icon_name: 'icon-card',
+                      className: 'icon-card',
+                      icon_style: 'general',
+                      icon_weight: 'normal'
+                    %}
+                    <span class="payment-status"> {{ pending_label }}</span>
+                  {% elsif order.genstore_order_status == 'confirmed' %}
+                    {% render 'genstore-svg',
+                      icon_name: 'icon-success',
+                      className: 'icon-success',
+                      icon_style: 'general',
+                      icon_weight: 'normal'
+                    %}
+                    <span class="payment-status"> {{ confirmed_label }}</span>
+                  {% elsif order.genstore_order_status == 'shipping' %}
+                    {% render 'genstore-svg', icon_name: 'icon-truck', icon_style: 'general', icon_weight: 'normal' %}
+                    <span class="payment-status"> {{ shipping_label }}</span>
+                  {% elsif order.genstore_order_status == 'canceled' %}
+                    {% render 'genstore-svg', icon_name: 'icon-cancel', icon_style: 'general', icon_weight: 'normal' %}
+                    <span class="payment-status"> {{ canceled_label }}</span>
+                  {% elsif order.genstore_order_status == 'pickup' %}
+                    {% render 'genstore-svg', icon_name: 'icon-store', icon_style: 'general', icon_weight: 'normal' %}
+                    <span class="payment-status"> {{ pickup_label }}</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="f-row align-center  content-between order-price-wrapper">
+                <span class="order-price"> {{ order.total_net_amount | money: order.currency_code }}</span>
+                <div class="f-row align-center buy-again gap-200" data-order-id="{{ order.id }}">
+                  {% render 'genstore-svg',
+                    icon_name: 'icon-wallet',
+                    className: 'icon-wallet',
+                    icon_style: 'general',
+                    icon_weight: 'normal'
+                  %}
+                  <span>{{ 'customer.orders.buy_again' | t }}</span>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="f-column align-center  full-width gap-1200 full-height content-center">
+            {% if sort_filed == blank and sort_order == blank and date_type == blank and filter_status.size == 0 %}
+              <div class="order-empty-text">{{ 'customer.orders.empty' | t }}</div>
+              <a
+                class="genstore-btn primary medium genstore-not-letter-spacing"
+                href="{{ routes.all_products_collection_url }}"
+              >
+                {{- 'customer.orders.go_shopping' | t -}}
+              </a>
+            {% else %}
+              <div class="order-empty">
+                <div class="order-empty-text">
+                  {{ 'customer.orders.none' | t }}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+      {%- if paginate.pages > 1 and customer.orders.size > 0 -%}
+        {% render 'pagination', paginate: paginate, anchor: '' %}
+      {%- endif -%}
+    </div>
+  {% endpaginate %}
+</customer-account>

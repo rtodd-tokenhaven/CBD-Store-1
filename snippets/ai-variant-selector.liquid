@@ -1,0 +1,55 @@
+{%- comment -%}
+  snippets/ai-variant-selector.liquid — variant-selector 统一骨架
+
+  参数：
+    product          — Shopify product 对象
+    selected_variant — 已选变体对象（默认 product.selected_or_first_available_variant）
+    show_price       — 是否显示 selector 内部价格（默认 false；PDP 使用主 price block）
+
+  输出固定 DOM 契约，PDP 场景由服务端预渲染，JS 以 hydrate 模式接管。
+{%- endcomment -%}
+
+{%- liquid
+  assign current_variant = selected_variant | default: product.selected_or_first_available_variant
+-%}
+
+{%- unless product.has_only_default_variant -%}
+  <ai-variant-selector class="block" selected-variant-id="{{ current_variant.id }}" {% unless show_price %}data-hide-price{% endunless %}>
+    {%- for option in product.options_with_values -%}
+      {%- assign option_index0 = forloop.index0 -%}
+      <div class="vs-option-group mb-4" data-option-name="{{ option.name }}" data-option-id="{{ option.id }}">
+        <span class="vs-option-label block font-semibold mb-2">{{ option.name }}</span>
+        <div class="vs-option-values flex flex-wrap gap-2">
+          {%- for val in option.values -%}
+            {%- liquid
+              if val.swatch.image
+                assign swatch_type = 'image'
+              elsif val.swatch.color
+                assign swatch_type = 'color'
+              else
+                assign swatch_type = 'text'
+              endif
+              assign is_selected = false
+              if val.name == current_variant.options[option_index0]
+                assign is_selected = true
+              endif
+            -%}
+            <button class="vs-option-btn{% if is_selected %} vs-option-btn--active{% endif %}" type="button"
+                    data-swatch-type="{{ swatch_type }}"
+                    data-option-id="{{ option.id }}" data-value-id="{{ val.id }}"
+                    aria-pressed="{% if is_selected %}true{% else %}false{% endif %}"
+                    title="{{ val.name | escape }}">
+              {%- if swatch_type == 'image' -%}
+                <img class="vs-swatch-img" src="{{ val.swatch.image | image_url: width: 64 }}" alt="{{ val.name | escape }}" loading="lazy">
+              {%- elsif swatch_type == 'color' -%}
+                <span class="vs-swatch-color" style="background-color:{{ val.swatch.color }}"></span>
+              {%- else -%}
+                {{ val.name }}
+              {%- endif -%}
+            </button>
+          {%- endfor -%}
+        </div>
+      </div>
+    {%- endfor -%}
+  </ai-variant-selector>
+{%- endunless -%}

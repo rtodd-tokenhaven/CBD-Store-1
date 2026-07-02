@@ -1,0 +1,496 @@
+{% comment %}
+  - compare_direction 目前只有水平的 所以配置项里面看不到
+{% endcomment %}
+{{ 'section-image-compare.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign color_mode = section.settings.color_mode | default: 'light'
+  assign color_style = section.settings.color_style | default: 'brand'
+  assign compare_direction = 'horizontal'
+
+  assign compare_block = null
+  for block in section.blocks
+    if block.type == 'compare-block'
+      assign compare_block = block
+    endif
+  endfor
+
+  assign slider_position = 50
+  if compare_block != null
+    assign slider_position = compare_block.settings.slider_position | default: 50
+  endif
+
+  assign scroll_trigger_class = ''
+  if settings.animations_reveal_on_scroll
+    assign scroll_trigger_class = 'scroll-trigger'
+  endif
+-%}
+
+{% capture container_content %}
+  <genstore-image-compare
+    class="image-compare-box f-column gap-1800 page-width direction-{{ compare_direction }} {{ scroll_trigger_class }}"
+    data-direction="{{ compare_direction }}"
+    data-initial-position="{{ slider_position }}"
+  >
+    <div class="image-compare-title {{ section.settings.content_alignment }} f-column gap-4 isolate">
+      {%- if section.settings.heading != blank -%}
+        {% render 'genstore-heading',
+          title: section.settings.heading,
+          heading_size: section.settings.heading_size,
+          visual_text_key: 'heading'
+        %}
+      {%- endif -%}
+      {%- if section.settings.sub_heading != blank -%}
+        {% render 'genstore-text-block',
+          className: 'rich-text-content section-reset',
+          text: section.settings.sub_heading,
+          text_size: section.settings.sub_heading_size,
+          visual_text_key: 'sub_heading'
+        %}
+      {%- endif -%}
+    </div>
+
+    {%- if compare_block -%}
+      <div class="image-compare__wrapper" style="--slider-position: {{ slider_position }}%;" {{ compare_block.shopify_attributes }}>
+        {%- liquid
+          assign desktop_before_image = 'desktop_before_image'
+          assign before_image_text = 'before_image_text'
+          assign before_image_button_text = 'before_image_button_text'
+          assign before_image_button_link = 'before_image_button_link'
+          assign desktop_after_image = 'desktop_after_image'
+          assign after_image_text = 'after_image_text'
+          assign after_button_text_key = 'after_image_button_text'
+          assign after_button_link_key = 'after_image_button_link'
+          assign before_image = compare_block.settings[desktop_before_image]
+          assign before_text = compare_block.settings[before_image_text]
+          assign before_button_text = compare_block.settings[before_image_button_text]
+          assign before_button_link = compare_block.settings[before_image_button_link]
+
+          assign after_image = compare_block.settings[desktop_after_image]
+          assign after_text = compare_block.settings[after_image_text]
+          assign after_button_text = compare_block.settings[after_button_text_key]
+          assign after_button_link = compare_block.settings[after_button_link_key]
+        -%}
+
+        <div class="image-compare__image image-compare__image--before">
+          <div class="image-compare__image-inner">
+            {%- if before_image == blank -%}
+              {% render 'genstore-placeholder',
+                show_product_placeholder: true,
+                icon_name: 'section-placeholder-1',
+                image_ratio: section.settings.image_ratio,
+                visual_image_key: desktop_before_image,
+                block: compare_block
+              %}
+            {%- else -%}
+              {{ before_image | image_url: width: 1500 | image_tag: alt: before_text, loading: 'lazy', class: 'image-compare__img', sizes: '100vw', widths: '375, 550, 750, 1100, 1500' | genstore_vkey: key: desktop_before_image, block: compare_block }}
+            {%- endif -%}
+          </div>
+          <div class="image-compare__content f-column gap-200">
+            {%- if before_text != blank -%}
+              {% render 'genstore-text-block', text: before_text, text_size: 's', visual_text_key: before_image_text, block: compare_block %}
+            {%- endif -%}
+            {%- if before_button_text != blank -%}
+              {% capture button_props %}
+                {"url":"{{ before_button_link }}","label":"{{ before_button_text }}","style":"link","fontSize":"300","enableIcon":false,"width":"fit-content","visual_text_key":"{{ before_image_button_text }}","visual_link_key":"{{ before_image_button_link }}"}
+              {% endcapture %}
+              {% assign button_props = button_props | parse_json %}
+              <div class="genstore-text-link">
+                {% render 'button', props: button_props, block: compare_block %}
+              </div>
+            {%- endif -%}
+          </div>
+        </div>
+
+        <div class="image-compare__image image-compare__image--after">
+          <div class="image-compare__image-inner">
+            {%- if after_image == blank -%}
+              {% render 'genstore-placeholder',
+                show_product_placeholder: true,
+                icon_name: 'section-placeholder-2',
+                image_ratio: section.settings.image_ratio,
+                visual_image_key: desktop_after_image,
+                block: compare_block
+              %}
+            {%- else -%}
+              {{ after_image | image_url: width: 1500 | image_tag: alt: after_text, loading: 'lazy', class: 'image-compare__img', sizes: '100vw', widths: '375, 550, 750, 1100, 1500' | genstore_vkey: key: desktop_after_image, block: compare_block }}
+            {%- endif -%}
+          </div>
+          <div class="image-compare__content f-column gap-200">
+            {%- if after_text != blank -%}
+              {% render 'genstore-text-block', text: after_text, text_size: 's', visual_text_key: after_image_text, block: compare_block %}
+            {%- endif -%}
+            {%- if after_button_text != blank -%}
+              {% capture button_props %}
+                {"url":"{{ after_button_link }}","label":"{{ after_button_text }}","style":"link","style":"link","fontSize":"300","enableIcon":false,"width":"fit-content","visual_text_key":"{{ after_button_text_key }}","visual_link_key":"{{ after_button_link_key }}"}
+              {% endcapture %}
+              {% assign button_props = button_props | parse_json %}
+              <div class="genstore-text-link">
+                {% render 'button', props: button_props, block: compare_block %}
+              </div>
+            {%- endif -%}
+          </div>
+        </div>
+
+        <div class="image-compare__slider">
+          <div class="image-compare__slider-line"></div>
+          <button class="image-compare__handle" type="button">
+            <span class="image-compare__arrows">
+              {% render 'genstore-svg', icon_name: 'icon-compare' %}
+            </span>
+          </button>
+        </div>
+      </div>
+    {%- endif -%}
+  </genstore-image-compare>
+{% endcapture %}
+
+{% render 'genstore-container',
+  color_scheme: settings.theme_color_scheme,
+  color_mode: color_mode,
+  color_style: color_style,
+  section: section,
+  className: 'image-compare-container',
+  content: container_content
+%}
+
+{% schema %}
+{
+  "name": "t:sections.image-compare.name",
+  "tag": "section",
+  "class": "section image-compare-section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "label": "t:sections.all.heading.label",
+      "default": "t:sections.image-compare.settings.heading.default"
+    },
+    {
+      "default": "l",
+      "options": [
+        { "label": "t:sections.all.size.xxs", "value": "xxs" },
+        { "label": "t:sections.all.size.xs", "value": "xs" },
+        { "label": "t:sections.all.size.s", "value": "s" },
+        { "label": "t:sections.all.size.m", "value": "m" },
+        { "label": "t:sections.all.size.l", "value": "l" },
+        { "label": "t:sections.all.size.xl", "value": "xl" },
+        { "label": "t:sections.all.size.xxl", "value": "xxl" }
+      ],
+      "id": "heading_size",
+      "label": "t:sections.all.heading_size.label",
+      "type": "select"
+    },
+    {
+      "type": "richtext",
+      "id": "sub_heading",
+      "label": "t:sections.all.sub_heading.label",
+      "default": "t:sections.image-compare.settings.sub_heading.default"
+    },
+    {
+      "default": "s",
+      "options": [
+        { "label": "t:sections.all.size.none", "value": "none" },
+        { "label": "t:sections.all.size.xxs", "value": "xxs" },
+        { "label": "t:sections.all.size.xs", "value": "xs" },
+        { "label": "t:sections.all.size.s", "value": "s" },
+        { "label": "t:sections.all.size.m", "value": "m" },
+        { "label": "t:sections.all.size.l", "value": "l" },
+        { "label": "t:sections.all.size.xl", "value": "xl" }
+      ],
+      "id": "sub_heading_size",
+      "label": "t:sections.all.sub_heading_size.label",
+      "type": "select"
+    },
+    {
+      "type": "text_alignment",
+      "id": "content_alignment",
+      "default": "left",
+      "label": "t:sections.all.alignment.label",
+      "options": [
+        { "label": "t:sections.all.alignment.left", "value": "left" },
+        { "label": "t:sections.all.alignment.center", "value": "center" },
+        { "label": "t:sections.all.alignment.right", "value": "right" }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.design.name"
+    },
+    {
+      "default": "light",
+      "options": [
+        { "label": "t:sections.all.color_mode.options__1.label", "value": "light" },
+        { "label": "t:sections.all.color_mode.options__2.label", "value": "dark" }
+      ],
+      "id": "color_mode",
+      "label": "t:sections.all.color_mode.label",
+      "type": "select"
+    },
+    {
+      "id": "color_style",
+      "label": "t:sections.all.color_style.label",
+      "type": "select_draw",
+      "default": "pure",
+      "visible_if": "{{ section.settings.color_mode == 'dark' }}",
+      "options": [
+        { "label": "t:sections.all.color_style.transparent.label", "value": "transparent" },
+        {
+          "label": "t:sections.all.color_style.pure.label",
+          "value": "pure",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.dark-background}}",
+            "text": "#fff"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.neutral.label",
+          "value": "neutral",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.dark-neutral}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.dark-neutral}}",
+              20,
+              "{{settings.theme_color_scheme.dark-neutral}}",
+              20,
+              "#141414",
+              100
+            ],
+            "text": "#fff"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.brand.label",
+          "value": "brand",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.dark-brand}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.dark-brand}}",
+              70,
+              "{{settings.theme_color_scheme.dark-brand}}",
+              70,
+              "#141414",
+              100
+            ],
+            "text": "#fff"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.secondary.label",
+          "value": "secondary",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.dark-secondary}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.dark-secondary}}",
+              70,
+              "{{settings.theme_color_scheme.dark-secondary}}",
+              70,
+              "#141414",
+              100
+            ],
+            "text": "#fff"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.striking.label",
+          "value": "striking",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.dark-striking}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.dark-striking}}",
+              70,
+              "{{settings.theme_color_scheme.dark-striking}}",
+              70,
+              "#141414",
+              100
+            ],
+            "text": "#fff"
+          }
+        }
+      ]
+    },
+    {
+      "id": "color_style",
+      "label": "t:sections.all.color_style.label",
+      "type": "select_draw",
+      "default": "pure",
+      "visible_if": "{{ section.settings.color_mode == 'light' }}",
+      "options": [
+        { "label": "t:sections.all.color_style.transparent.label", "value": "transparent" },
+        {
+          "label": "t:sections.all.color_style.pure.label",
+          "value": "pure",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.light-background}}",
+            "text": "#141414"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.neutral.label",
+          "value": "neutral",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.light-neutral}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.light-neutral}}",
+              40,
+              "{{settings.theme_color_scheme.light-neutral}}",
+              40,
+              "#fff",
+              100
+            ],
+            "text": "#141414"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.brand.label",
+          "value": "brand",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.light-brand}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.light-brand}}",
+              10,
+              "{{settings.theme_color_scheme.light-brand}}",
+              10,
+              "#fff",
+              100
+            ],
+            "text": "#141414"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.secondary.label",
+          "value": "secondary",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.light-secondary}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.light-secondary}}",
+              10,
+              "{{settings.theme_color_scheme.light-secondary}}",
+              10,
+              "#fff",
+              100
+            ],
+            "text": "#141414"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.striking.label",
+          "value": "striking",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.light-striking}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.light-striking}}",
+              10,
+              "{{settings.theme_color_scheme.light-striking}}",
+              10,
+              "#fff",
+              100
+            ],
+            "text": "#141414"
+          }
+        }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "options": [
+        { "label": "t:sections.all.padding.options__1.label", "value": "none" },
+        { "label": "t:sections.all.padding.options__2.label", "value": "xxs" },
+        { "label": "t:sections.all.padding.options__3.label", "value": "xs" },
+        { "label": "t:sections.all.padding.options__4.label", "value": "s" },
+        { "label": "t:sections.all.padding.options__5.label", "value": "m" },
+        { "label": "t:sections.all.padding.options__6.label", "value": "l" },
+        { "label": "t:sections.all.padding.options__7.label", "value": "xl" }
+      ],
+      "default": "m",
+      "id": "padding_top",
+      "label": "t:sections.all.padding.padding_top",
+      "type": "select"
+    },
+    {
+      "options": [
+        { "label": "t:sections.all.padding.options__1.label", "value": "none" },
+        { "label": "t:sections.all.padding.options__2.label", "value": "xxs" },
+        { "label": "t:sections.all.padding.options__3.label", "value": "xs" },
+        { "label": "t:sections.all.padding.options__4.label", "value": "s" },
+        { "label": "t:sections.all.padding.options__5.label", "value": "m" },
+        { "label": "t:sections.all.padding.options__6.label", "value": "l" },
+        { "label": "t:sections.all.padding.options__7.label", "value": "xl" }
+      ],
+      "default": "m",
+      "id": "padding_bottom",
+      "label": "t:sections.all.padding.padding_bottom",
+      "type": "select"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "compare-block",
+      "name": "t:sections.image-compare.blocks.compare-block.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "range",
+          "id": "slider_position",
+          "label": "t:sections.image-compare.settings.slider_position.label",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "default": 50
+        },
+        {
+          "type": "header",
+          "content": "t:sections.image-compare.blocks.compare-block.settings.before_image.label"
+        },
+        { "type": "image_picker", "id": "desktop_before_image" },
+        {
+          "type": "text",
+          "id": "before_image_text",
+          "label": "t:sections.all.text.label",
+          "default": "t:sections.image-compare.blocks.compare-block.settings.before_image.text.default"
+        },
+        {
+          "type": "text",
+          "id": "before_image_button_text",
+          "label": "t:sections.all.button.content.label",
+          "default": "t:sections.all.button.content.default",
+          "info": "t:sections.image-compare.blocks.compare-block.settings.before_image_button_text.info"
+        },
+        { "type": "url", "id": "before_image_button_link", "label": "t:sections.all.button_link.link.label" },
+        {
+          "type": "header",
+          "content": "t:sections.image-compare.blocks.compare-block.settings.after_image.label"
+        },
+        { "type": "image_picker", "id": "desktop_after_image" },
+        {
+          "type": "text",
+          "id": "after_image_text",
+          "label": "t:sections.all.text.label",
+          "default": "t:sections.image-compare.blocks.compare-block.settings.after_image.text.default"
+        },
+        {
+          "type": "text",
+          "id": "after_image_button_text",
+          "label": "t:sections.all.button.content.label",
+          "default": "t:sections.all.button.content.default",
+          "info": "t:sections.image-compare.blocks.compare-block.settings.before_image_button_text.info"
+        },
+        { "type": "url", "id": "after_image_button_link", "label": "t:sections.all.button_link.link.label" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.image-compare.presets.name",
+      "blocks": [{ "type": "compare-block" }]
+    }
+  ]
+}
+{% endschema %}

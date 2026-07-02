@@ -1,0 +1,126 @@
+{% comment %}
+  -- 通用下拉选择组件 (基于 genstore-input-1 扩展)
+
+  参数说明：
+  -- api_url: API 接口地址 (可选，如果不提供则使用 options)
+  -- options: 静态选项数组 JSON字符串 (可选)
+  -- value_field: 数据中作为 value 的字段名 (默认: 'value')
+  -- label_field: 数据中作为显示文本的字段名 (默认: 'label')
+  -- search_fields: 可搜索的字段名，逗号分隔 (默认: label_field)
+  -- enable_search: 是否启用搜索 (默认: true)
+  -- search_placeholder: 搜索框占位符 (默认: 'Search...')
+  -- selected_value: 默认选中的值
+  -- selected_label: 默认选中的显示文本
+  -- option_template: 自定义选项模板类型 (可选: 'default', 'phone-code', 'country')
+  -- 其他参数同 genstore-input-1
+{% endcomment %}
+
+{% liquid
+  assign border_radius = settings.inputs_radius | default: 0
+  if settings.inputs_is_rounded == true
+    assign border_radius = 999
+  endif
+  assign is_readonly = is_readonly | default: false
+  assign enable_search = enable_search | default: true
+  assign search_placeholder = search_placeholder | default: 'Search...'
+  assign value_field = value_field | default: 'value'
+  assign label_field = label_field | default: 'label'
+  assign search_fields = search_fields | default: label_field
+  assign option_template = option_template | default: 'default'
+  assign selected_label = selected_label | default: 'customer.account.select' | t
+%}
+
+<genstore-select
+  class='{{ className }} genstore-input-container genstore-select-container f-column gap-200 {% if is_readonly %}readonly{% endif %}'
+  style='
+    --inputs-border-radius:{{ border_radius }}px;
+    --inputs-border-width:{{ settings.inputs_border_thickness }}px;
+    --inputs-shadow-horizontal-offset:{{ settings.inputs_shadow_horizontal_offset }}px;
+    --inputs-shadow-vertical-offset:{{ settings.inputs_shadow_vertical_offset }}px;
+    --inputs-shadow-blur:{{ settings.inputs_shadow_blur }}px;
+    --inputs-shadow-opacity:{{ settings.inputs_shadow_opacity }}
+  '
+  data-genstore-select
+  data-api-url='{{ api_url }}'
+  data-options='{{ options }}'
+  data-value-field='{{ value_field }}'
+  data-label-field='{{ label_field }}'
+  data-search-fields='{{ search_fields }}'
+  data-option-template='{{ option_template }}'
+>
+  <div class='genstore-input genstore-select f-row align-center xl {% if disabled %}disabled{% endif %}'>
+    <!-- 选择器触发按钮 -->
+    <button
+      type='button'
+      class='select-trigger f-row align-center justify-between'
+      {% if is_readonly %}
+        disabled
+      {% endif %}
+    >
+      <span class='selected-label'>{{ selected_label }}</span>
+      <svg
+        class='dropdown-arrow'
+        width='12'
+        height='12'
+        viewBox='0 0 12 12'
+        fill='none'
+        xmlns='http://www.w3.org/2000/svg'
+      >
+        <path d="M5.99994 7.74765L9.63269 5.07088L9.23722 4.53418L5.99994 6.91955L2.76265 4.53418L2.36719 5.07088L5.99994 7.74765Z" fill="currentColor"/>
+      </svg>
+    </button>
+
+    <!-- 下拉面板 -->
+    <div class='select-dropdown hidden'>
+      {% if enable_search %}
+        <div class='select-search'>
+          <input
+            type='text'
+            class='search-input'
+            placeholder='{{ search_placeholder }}'
+            autocomplete='off'
+          >
+        </div>
+      {% endif %}
+
+      <div class='select-options'>
+        <!-- 通过 JS 动态渲染 -->
+        <div class='loading-state'>Loading...</div>
+      </div>
+    </div>
+
+    <!-- 隐藏的真实 input -->
+    <input
+      type='hidden'
+      id='{{ input_id }}'
+      name='{{ input_name | escape }}'
+      value='{{ selected_value }}'
+      {% if is_readonly %}
+        readonly
+      {% endif %}
+      {{ additional_attributes }}
+    >
+
+    <label>
+      {%- if is_required == true %}
+        <i>*</i>
+      {% endif %}
+      {{ label -}}
+    </label>
+
+    {% if extra_content != blank %}
+      {{ extra_content }}
+    {% elsif is_readonly == false %}
+
+    {% endif %}
+  </div>
+
+  <div class='input-error f-row align-center hidden'>
+    {% render 'genstore-svg', icon_name: 'icon-error' %}
+    <span class='error-message'></span>
+  </div>
+  <div class='input-success f-row align-center hidden'>
+    {% render 'genstore-svg', icon_name: 'icon-success' %}
+    <span class='success-message'></span>
+  </div>
+</genstore-select>

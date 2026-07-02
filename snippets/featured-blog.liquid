@@ -1,0 +1,151 @@
+{{ 'section-featured-blog.css' | asset_url | stylesheet_tag }}
+  {% comment %} section.settings.blog.articles_count 在博客文章页面为空 {% endcomment %}
+{%- liquid
+  assign blog_color_scheme = settings.theme_color_scheme
+  assign blog_color_style = settings.blog_card_color_style
+  assign blog_color_mode = settings.blog_card_color_mode
+
+  assign container_color_scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign container_color_style = section.settings.color_style
+  assign container_color_mode = section.settings.color_mode
+  assign card_style = settings.blog_card_style
+  assign text_alignment = settings.blog_card_text_alignment
+  assign show_placeholder = false
+  assign posts_displayed = section.settings.blog.articles_count
+  if section.settings.post_limit <= section.settings.blog.articles_count or section.settings.blog.articles_count == blank
+    assign posts_exceed_limit = true
+    assign posts_displayed = section.settings.post_limit
+  endif
+  if articles == blank
+    assign show_placeholder = true
+    if section.settings.post_limit > section.settings.blog.articles_count
+        assign posts_displayed = section.settings.post_limit
+    endif 
+    assign articles = (1..posts_displayed)
+  endif
+  assign animate_slide_in = ''
+  if settings.animations_reveal_on_scroll
+    assign animate_slide_in = 'scroll-trigger animate--slide-in'
+  endif
+  assign blog_obj = section.settings.blog
+-%}
+{% capture content %}
+  <div class="page-width f-column gap-1800">
+    <div class="text-heading-wrap">
+    {% liquid
+      assign heading_class_name = section.settings.heading_alignment | default: 'center'
+    %}
+    {% if section.settings.introduction %}
+   {% render 'genstore-text-block',  
+      text: section.settings.introduction,
+      text_size: section.settings.introduction_size,
+      className: heading_class_name,
+      visual_text_key:'introduction' 
+    %}
+    {% endif %}
+    {% render 'genstore-heading', title: title, heading_size: section.settings.heading_size, className: heading_class_name,visual_text_key:heading_key %}
+    </div>
+    {% capture blog_doms %}
+      {% for post in articles limit: posts_displayed %}
+        {% capture card_content %}
+          <a href="{{ post.url }}" {% if post == blank or post.url == blank %} class="prevent-click"  onclick="event.preventDefault();" {% endif %}>
+            <div class="blog-content"
+                 data-text-limit="{{ settings.blog_card_text_limit }}"
+                 style="--card-text-limit:{{ settings.blog_card_text_limit }};"
+            >
+              {% liquid
+                assign title = post.title
+                assign text = post.excerpt
+                assign _index = forloop.index
+                if show_placeholder == true
+                  assign _index = _index | modulo: 3
+                  if _index == 0
+                    assign _index = 3
+                  endif
+                  assign title = 'sections.featured_blog.onboarding_title' | t
+                  assign text = 'sections.featured_blog.onboarding_content' | t
+                endif
+              %}
+              {% render 'genstore-heading', title: title, heading_size: section.settings.post_heading_size %}
+              <p class="post-excerpt genstore-text-letter-spacing" {% if section.settings.show_author or section.settings.show_date  %} style="padding-bottom: 12px" {% endif %}>
+                {% render 'genstore-text', text: text, text_size: 'small', color_from_props: 'var(--genstore-neutral-texticon-700)' %}
+              </p>
+              {% if section.settings.show_author %}<p class="blog-tip genstore-text-letter-spacing"> {%if show_placeholder %} {{ 'sections.featured_blog.auth' | t }} {% else %}{{ post.author }}{% endif %}</p>{% endif %}
+              {% if section.settings.show_date %} 
+                <!-- 博客日期 -->
+                <p class="blog-tip genstore-text-letter-spacing"> {%if show_placeholder %} {{ 'sections.featured_blog.publish_date' | t }} {% elsif post.published_at != blank %}{{ post.published_at | date: "%Y-%m-%d %H:%M" }}{% endif%}</p>
+              {% endif %}
+            </div>
+            
+          </a>
+        {% endcapture %}
+        {% capture image_content %}
+          {% if show_placeholder == true %}
+            {% assign icon_name = 'section-placeholder-blog-' | append: _index | append: '.png' | asset_url %}
+            {% render 'banner-media', image: icon_name, accept_ratio: section.settings.blog_image_ratio %}
+          {% else %}
+            {% if post.image != blank %}
+              {%- assign widths = '165, 360, 535, 750, 1070, 1500' -%}
+              {% render 'banner-media',widths: widths,sizes:'50vw', image: post.image, accept_ratio: section.settings.blog_image_ratio, show_placeholder: true %}
+            {% else %}
+              {% render 'genstore-placeholder', image_ratio: section.settings.blog_image_ratio %}
+            {% endif %}
+          {% endif %}
+
+        {% endcapture %}
+        {% assign index = forloop.index %}
+        {% render 'genstore-card-container',
+          color_mode: blog_color_mode,
+          color_style: blog_color_style,
+          color_scheme: blog_color_scheme,
+          card_style: card_style,
+          card_index: index,
+          text_alignment: text_alignment,
+          show_image: section.settings.show_image,
+          card_content: card_content,
+          content_wrapper_class_name: 'blog-card-content-wrapper',
+          image_content: image_content,
+          url: post.url,
+
+          shadow_opacity: settings.blog_card_shadow_opacity,
+          shadow_horizontal_offset: settings.blog_card_shadow_horizontal_offset,
+          shadow_vertical_offset: settings.blog_card_shadow_vertical_offset,
+          shadow_blur_radius: settings.blog_card_shadow_blur,
+          image_padding: settings.blog_card_image_padding,
+          border_thickness: settings.blog_card_border_thickness
+        %}
+      {% endfor %}
+    {% endcapture %}
+    {% render 'genstore-cart-list-container',
+      columns_desktop: section.settings.columns_desktop,
+      content: blog_doms,
+      layout: 'normal',
+      gap: section.settings.gap
+    %}
+    {% if section.settings.show_view_all and blog_obj != blank and blog_obj.url != blank %}
+      <div class="center {{ animate_slide_in }}">
+        {% assign view_all = 'sections.featured_blog.view_all' | t %}
+        {% if section.settings.button_style  != 'link'%}
+        <a
+          class="genstore-btn {{ section.settings.button_color_style | default: "brand" }} {{ section.settings.button_style | default: "default" }} {{ section.settings.button_size | default: "xl" }} {% if blog_obj == blank or blog_obj.url == blank %} prevent-click {% endif %}"
+          style="width: 200px"
+          href="{{ section.settings.blog.url }}"
+          {% if blog_obj == blank or blog_obj.url == blank %} onclick="event.preventDefault();" {% endif %}  
+        >
+          {{ view_all }}
+        </a>
+      {% else %}
+        {% render 'genstore-text-link', text: view_all, url: blog_obj.url,text_size:'m_16' %}
+      {% endif %}
+      </div>
+    {% endif %}
+  </div>
+{% endcapture %}
+{% render 'genstore-container',
+  section: section,
+  content: content,
+  id: id,
+  color_mode: container_color_mode,
+  color_style: container_color_style,
+  color_scheme: container_color_scheme
+%}

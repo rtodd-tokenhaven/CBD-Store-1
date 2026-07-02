@@ -1,0 +1,43 @@
+{%- liquid
+  assign _cs = color_scheme | default: settings.theme_color_scheme | default: 'scheme-1'
+  assign _settings = settings.color_schemes[_cs].settings
+
+  assign _background = _settings.background_color | default: '#F8F5EF'
+  assign _foreground = _settings.text_color | default: '#111111'
+  assign _brand = _settings.brand_color | default: '#802A30'
+  assign _secondary = _settings.secondary_color | default: '#CDA440'
+  assign _striking = _settings.striking_color | default: '#33526C'
+  assign _accent = _settings.accent_color | default: '#6D28D9'
+-%}
+{%- capture _brand_foreground -%}
+  {%- render 'ai-readable-foreground', surface: _brand, foreground: _foreground, background: _background -%}
+{%- endcapture -%}
+{%- assign _brand_foreground = _brand_foreground | strip -%}
+
+{%- capture _secondary_foreground -%}
+  {%- render 'ai-readable-foreground', surface: _secondary, foreground: _foreground, background: _background -%}
+{%- endcapture -%}
+{%- assign _secondary_foreground = _secondary_foreground | strip -%}
+
+{%- capture _striking_foreground -%}
+  {%- render 'ai-readable-foreground', surface: _striking, foreground: _foreground, background: _background -%}
+{%- endcapture -%}
+{%- assign _striking_foreground = _striking_foreground | strip -%}
+
+{%- capture _accent_foreground -%}
+  {%- render 'ai-readable-foreground', surface: _accent, foreground: _foreground, background: _background -%}
+{%- endcapture -%}
+{%- assign _accent_foreground = _accent_foreground | strip -%}
+
+--background:{{ _background }};
+--foreground:{{ _foreground }};
+--brand:{{ _brand }};
+--brand-foreground:{{ _brand_foreground }};
+--secondary:{{ _secondary }};
+--secondary-foreground:{{ _secondary_foreground }};
+--striking:{{ _striking }};
+--striking-foreground:{{ _striking_foreground }};
+--accent:{{ _accent }};
+--accent-foreground:{{ _accent_foreground }};
+--cta:{{ _striking }};
+--cta-foreground:{{ _striking_foreground }};

@@ -1,0 +1,24 @@
+{% comment %}
+  -- dropdown_label 下拉标签
+  -- dropdown_arrow 下拉箭头
+  -- dropdown_panel 下拉面板
+  -- content 下拉内容
+{% endcomment %}
+
+<genstore-dropdown-select>
+  <div class='dropdown-trigger'>
+    {% if dropdown_label != blank %}
+      <div class='dropdown-label'>{{ dropdown_label }}</div>
+    {% else %}
+      <div class='dropdown-label'>选择选项</div>
+    {% endif %}
+    {% if dropdown_arrow != blank %}
+      {{ dropdown_arrow }}
+    {% else %}
+      {% render 'genstore-svg', icon_name: 'icon-down', className: 'icon-arrow' %}
+    {% endif %}
+  </div>
+  <div class='dropdown-panel position-right'>
+    {{ content }}
+  </div>
+</genstore-dropdown-select>

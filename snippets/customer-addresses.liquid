@@ -1,0 +1,233 @@
+{% liquid
+  assign cancel_text = 'customer.addresses.cancel' | t
+  assign delete_text = 'customer.addresses.delete' | t
+  assign delete_success_text = 'customer.addresses.delete_success' | t
+  assign success_text = 'customer.addresses.success' | t
+  assign default_text = 'customer.address.set_default_success' | t
+  assign add_text = 'customer.addresses.add' | t
+  assign edit_text = 'customer.addresses.edit' | t
+%}
+<customer-addresses
+  class='gradient color-{{ section.settings.color_scheme }} light pure'
+  data-delete-success-text='{{ delete_success_text }}'
+  data-success-text='{{ success_text }}'
+  data-default-text='{{ default_text }}'
+  data-add-text='{{ add_text }}'
+  data-edit-text='{{ edit_text }}'
+>
+  <script type='application/json' data-customer>
+    {{ customer | json }}
+  </script>
+  <div class='customer addresses {% if customer.addresses.size == 0 %}empty{% endif %}' data-customer-addresses>
+    <div class='addresses-con  '>
+      <div style='display:none'>
+        <div class='delete_success_txt'>
+          {{ 'customer.addresses.delete_success' | t }}
+        </div>
+      </div>
+      <h1 class='address-list-title f-row content-between genstore-not-letter-spacing' id='add-new-address'>
+        <span>
+          {{ 'customer.account.my_address' | t }}
+        </span>
+        {% capture content %}
+          {% render 'genstore-svg', icon_name: 'icon-plus' ,icon_style: 'general', icon_weight: 'normal'%}
+        {% endcapture %}
+        {% render 'genstore-text-link', text: add_text, pre_content: content, tag_type: 'div', no_letter_spacing:true %}
+      </h1>
+      {% if customer.addresses.size > 0 %}
+        <ul role='list'>
+          {%- for address in customer.addresses -%}
+            <li data-address class='address-li' data-id='{{ address.id }}'>
+              <div class='address_info_con'>
+                {% for item in address.showArr %}
+                  {% if item.value %}
+                    {% assign translation_key = 'customer.account.' | append: item.key %}
+                    <div>
+                      <span class='customer_top_address_info_key'>
+                        {{ translation_key | t }}
+                      </span>
+                      <span class='customer_top_address_info_value'>
+                        {{ item.value }}
+                      </span>
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+              <div class='divider'></div>
+              <div class='bottom_action'>
+                {%- if address.isDefaultAddress -%}
+                  <div class='default_tag m-r-auto f-row align-center'>
+                    <svg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'>
+                      <path fill="currentColor" d="m9 19.414l-6.707-6.707l1.414-1.414L9 16.586L20.293 5.293l1.414 1.414z"/>
+                    </svg>
+                    {{ 'customer.addresses.default' | t }}
+                  </div>
+                {% else %}
+                  <button
+                    data-name='set-default'
+                    class='make_as_default m-r-auto'
+                    type='button'
+                    data-id='{{ address.id }}'
+                    aria-label='{{ 'customer.addresses.delete' | t }} {{ forloop.index }}'
+                  >
+                    <svg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'>
+                      <path fill="currentColor" d="M5 21q-.825 0-1.4121-.587T3 19V5q0-.825.588-1.412T5 3h14q.825 0 1.413.588T21 5v14q0 .825-.587 1.413T19 21zm0-2h14V5H5zm0 0V5z"/>
+                    </svg>
+                    {{ 'customer.addresses.make_default' | t }}
+                  </button>
+                {%- endif -%}
+          {% liquid
+            assign  edit_id = 'EditFormButton_' | append:address.id
+            assign  aria_label = 'customer.addresses.edit_address' | t | append: ' ' | append: forloop.index
+            assign  data_address_id = address.id
+            assign  aria_url = address.editUrl
+            assign  aria_controls = 'EditAddress_' | append: address.id
+            assign  aria_expanded = false
+            assign  disabled = false
+            assign aria_label_delete = 'customer.addresses.delete' | t | append: ' ' | append: forloop.index
+            assign data_target = address.url
+            assign data_confirm_message = 'customer.addresses.delete_confirm' | t
+          %} 
+           {% if address.isDefaultAddress and customer.addresses.size > 1 %}
+            {% assign  disabled = true %}
+          {% else %}
+              {% assign disabled = false %}
+          {% endif %}
+          {% if form.errors %}
+            {% assign aria_expanded = true %}
+          {% else %}
+              {% assign aria_expanded = false %}
+          {% endif %} 
+          {% capture extra_attrs_delete %}
+        {% if disabled  %} disabled="{{ disabled }}" {% endif %}
+                    data-name="delete"
+                    data-id="{{ address.id }}"
+        {% if aria_label_delete != nil %} aria-label="{{ aria_label_delete }}"{% endif %}
+        {% if data_target !=nil %} data-target="{{ data_target }}" {% endif %}
+        {% if data_confirm_message != nil %} data-confirm-message="{{ data_confirm_message }}" {% endif %}
+          {% endcapture %}
+        {% capture extra_attrs_edit %}
+                   data-name="edit" 
+                  data-id="{{ address.id}}"
+        {% if area_label != nil %} area-label="{{ area_label }}" {% endif %}
+        {% if aria_controls != nil %} aria-controls="{{ aria_controls }}" {% endif %}
+        {% if data_address_id != nil %} data-address-id="{{ data_address_id }}" {%  endif %}
+        {% if aria_url != nil %} aria-url="{{ aria_url }}" {% endif %}
+        {% if aria_expanded != nil %} aria-expanded="{{ aria_expanded }}" {% endif %}
+          {% endcapture %}
+            {% render 'genstore-button',
+              icon_name: 'icon-trash' ,
+              icon_style:"general",
+              icon_weight:"normal",
+              btn_title:delete_text,
+              data_type:'trash',
+              btn_style_type: '',
+              other_class: 'address_delete_btn',
+              btn_size: 'large',
+              extra_attrs:extra_attrs_delete,
+              no_letter_spacing:true
+              %} 
+           {% render 'genstore-button',
+              icon_name: 'icon-edit' ,
+              icon_style:"general",
+              icon_weight:"normal",
+              btn_title:edit_text,
+              data_type:'edit',
+              btn_style_type: '',
+              other_class: 'address_edit_btn',
+              btn_size: 'large',
+              btn_id : edit_id,
+              extra_attrs:extra_attrs_edit,
+              no_letter_spacing:true
+              %}
+              </div>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {% else %}
+        <div class='empty-address-container f-column content-center align-center'>
+          <span>
+            {{ 'customer.address.no_add' | t }}
+          </span>
+        </div>
+      {% endif %}
+    </div>
+
+    {%- if paginate.pages > 1 -%}
+      {%- if paginate.parts.size > 0 -%}
+        <nav class='pagination' role='navigation' aria-label='{{ 'general.pagination.label' | t }}'>
+          <ul role='list'>
+            {%- if paginate.previous -%}
+              <li>
+                <a href='{{ paginate.previous.url }}' aria-label='{{ 'general.pagination.previous' | t }}'>
+                  <span class='svg-wrapper'>
+                    {{- 'icon-caret.svg' | inline_asset_content -}}
+                  </span>
+                </a>
+              </li>
+            {%- endif -%}
+
+            {%- for part in paginate.parts -%}
+              <li>
+                {%- if part.is_link -%}
+                  <a href='{{ part.url }}' aria-label='{{ 'general.pagination.page' | t: number: part.title }}'>
+                    {{- part.title -}}
+                  </a>
+                {%- else -%}
+                  {%- if part.title == paginate.current_page -%}
+                    <span aria-current='page' aria-label='{{ 'general.pagination.page' | t: number: part.title }}'>
+                      {{- part.title -}}
+                    </span>
+                  {%- else -%}
+                    <span>{{ part.title }}</span>
+                  {%- endif -%}
+                {%- endif -%}
+              </li>
+            {%- endfor -%}
+
+            {%- if paginate.next -%}
+              <li>
+                <a href='{{ paginate.next.url }}' aria-label='{{ 'general.pagination.next' | t }}'>
+                  <span class='svg-wrapper'>
+                    {{- 'icon-caret.svg' | inline_asset_content -}}
+                  </span>
+                </a>
+              </li>
+            {%- endif -%}
+          </ul>
+        </nav>
+      {%- endif -%}
+    {%- endif -%}
+    {% capture dialog_content %}
+      <p>{{ 'customer.addresses.delete_confirm' | t }}</p>
+    {% endcapture %}
+    {% capture footer_content %}
+      <div class='genstore-dialog-footer address-dialog-footer f-row content-end gap-600'>
+        {% render 'genstore-button',
+           data_type: 'cancel-btn',
+           btn_title: cancel_text,
+           extra_attrs:'data-dialog-cancel',
+           btn_style_type: '',
+           other_class: 'secondary',
+           btn_size: 'xl',
+           no_letter_spacing:true
+        %}
+        {% render 'genstore-button',
+           data_type: 'delete-btn',
+           btn_title: delete_text,
+           btn_style_type:'primary',
+           extra_attrs:'data-dialog-save',
+           other_class: 'secondary',
+           btn_size: 'xl',
+           no_letter_spacing:true
+        %}
+      </div>
+    {% endcapture %}
+    {% render 'genstore-common-dialog',
+      dialog_id: 'address-dialog-confirm',
+      dialog_title: '',
+      dialog_content: dialog_content,
+      footer_content: footer_content
+    %}
+  </div>
+</customer-addresses>

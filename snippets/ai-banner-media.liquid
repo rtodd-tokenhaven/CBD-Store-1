@@ -1,0 +1,99 @@
+{%- comment -%}
+  纯渲染的 banner-media 组件
+  组件用途:
+  该组件用于展示横幅媒体内容，支持响应式图片展示，可以根据不同设备显示不同图片，
+  并且支持hover效果显示第二张图片。组件支持多种宽高比设置，适用于各种布局场景。
+
+  参数说明:
+  - visual_image_key
+  - vkey_group
+  - block
+  - image: 图片对象，主要展示图片
+  - image_2: 第二张图片对象，当启用hover_type为secondary时显示（常用于鼠标悬停效果）
+  - image_class: 图片的类名（由父组件计算和传入）
+  - sizes: 响应式尺寸设置（由父组件计算和传入），控制图片在不同断点下的显示尺寸
+  - widths: 响应式宽度设置，指定图片在不同尺寸下的宽度
+  - fetch_priority: 图片加载优先级，可选值如'high'、'low'、'auto'
+  - show_placeholder: 是否显示占位图，当图片未加载完成时显示
+  - className: 图片容器的类名，用于自定义样式
+  - aspect_ratio: 图片的宽高比，可选值：'portrait'（竖向，0.75）、'adapt'（自适应）、'square'（正方形，1）
+  - hover_type: scale | secondary
+  - width: 图片容器宽度
+  - height: 图片容器高度
+  - mobile_image: 移动端显示的图片，当设备为移动端时优先显示
+  - accept_ratio: 自定义宽高比，会覆盖aspect_ratio设置
+  - style: 自定义内联样式
+
+  使用示例:
+  {% render 'banner-media',
+  image: section.settings.image,
+  image_2: section.settings.hover_image,
+  sizes: '(min-width: 750px) 100vw',
+  widths: '375, 550, 750, 1100, 1500, 1780, 2000, 3000, 3840',
+  fetch_priority: 'high',
+  className: 'banner-image',
+  aspect_ratio: 'adapt',
+  hover_type: 'scale'
+  %}
+{%- endcomment -%}
+{%- liquid
+  assign ratio = 1
+  assign media_hover_type = blank
+  if hover_type == 'secondary'
+    if image_2 != blank
+      assign media_hover_type = 'hover-type-secondary'
+    endif
+  elsif hover_type == 'scale'
+    assign media_hover_type = 'hover-type-scale'
+  endif
+  if aspect_ratio == 'portrait'
+    assign ratio = 0.75
+  elsif aspect_ratio == 'adapt'
+    assign ratio = 'auto'
+  elsif aspect_ratio == 'square'
+    assign ratio = 1
+  endif
+  if accept_ratio != blank
+    assign ratio = accept_ratio
+  endif
+  assign width = width | default: 1920
+  assign visual_block = ''
+  if block !=blank
+    assign visual_block = block
+  endif
+-%}
+<div
+  class="
+    {{ className }} image-gallery-wrapper {% if mobile_image != blank %} adapt-mobile {% endif %}
+    {{ media_hover_type }}
+  "
+  {% if data_role != blank %}
+    data-role="{{ data_role }}"
+  {% endif %}
+  data-aspect-ratio="{{ ratio }}"
+  style="--aspect-ratio: {{ ratio }}; --aspect-padding: calc(100% /(var(--aspect-ratio))); {{ style }}"
+> 
+  {%- if image != blank -%}
+    {%- assign image_height = image.width | divided_by: image.aspect_ratio -%}
+    {{
+      image
+      | image_url: width: width
+      | image_tag:
+        width: image.width,
+        height: image.height,
+        sizes: sizes,
+        widths: widths,
+        fetchpriority: fetch_priority,
+        class: 'desktop-image'
+      | genstore_vkey: key:visual_image_key,block:visual_block,placeholderValue:image_value_placeholder 
+    }}
+  {%- endif -%}
+  {%- if image_2 != blank and hover_type == 'secondary' -%}
+    <img {{ '' | genstore_vkey: key:visual_image_key,block:visual_block  }} src="{{ image_2 | image_url: width: width }}" class="secondary_image desktop-image" loading="lazy">
+  {% endif %}
+  {%- if mobile_image != blank -%}
+    <img   {{ '' | genstore_vkey: key:visual_image_mobile_key,block:visual_block  }}  src="{{ mobile_image | image_url: width: 750 }}" class="media-mobile-image" loading="lazy">
+  {% endif %}
+  {{ badges }}
+  {{ extra_content | default: '' }}
+</div>

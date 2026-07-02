@@ -1,0 +1,122 @@
+{%- comment -%}
+  snippets/ai-blog-card.liquid — 博客卡片固定骨架
+
+  所有 HTML 结构由系统提供，AI 只需为 .ai-blog-* class 编写 CSS。
+  不需要的元素通过 CSS display:none 隐藏即可（默认已隐藏）。
+
+  参数:
+    article       — 必填，article 对象
+    index         — 可选，用于动画延迟（forloop.index）
+    show_image    — 可选，是否显示图片（默认 true）
+    show_date     — 可选，是否显示日期（默认 false）
+    show_author   — 可选，是否显示作者（默认 false）
+    show_excerpt  — 可选，是否显示摘要（默认 true）
+    image_ratio   — 可选，图片宽高比（默认 1.5）
+    placeholder   — 可选，是否为占位模式（默认 false）
+    block         — 可选，block 对象（用于 genstore_vkey）
+{%- endcomment -%}
+
+{%- liquid
+  assign show_image = show_image | default: true
+  assign show_date = show_date | default: false
+  assign show_author = show_author | default: false
+  assign show_excerpt = show_excerpt | default: true
+  assign image_ratio = image_ratio | default: 1.5
+  assign placeholder = placeholder | default: false
+-%}
+
+<ai-blog-card style="display:block;min-width:0">
+  <article
+    class="ai-blog"
+    style="height:100%; {% if index %}--card-index: {{ index }}{% endif %}"
+  >
+    {%- comment -%} ===== 图片区 ===== {%- endcomment -%}
+    {%- if show_image -%}
+      <div class="ai-blog__media" {{ '' | genstore_vkey: key:'image', block:block }}>
+        <a class="ai-blog__media-link" href="{{ article.url }}" {% if placeholder %} onclick="event.preventDefault();" {% endif %}>
+          {%- if placeholder -%}
+            <img
+              class="ai-blog__img"
+              src="https://assets-cdn.genstore.ai/web/ai-chat/static/221627f4-6050-4d8a-aee0-6d9e9299b3a0/Mock-01.png"
+              alt="Blog placeholder"
+              loading="lazy"
+            >
+          {%- elsif article.image != blank -%}
+            <img
+              class="ai-blog__img"
+              src="{{ article.image | image_url: width: 800 }}"
+              alt="{{ article.image.alt | default: article.title }}"
+              loading="lazy"
+            >
+          {%- else -%}
+            <img
+              class="ai-blog__img"
+              src="https://assets-cdn.genstore.ai/web/ai-chat/static/221627f4-6050-4d8a-aee0-6d9e9299b3a0/Mock-01.png"
+              alt="Blog placeholder"
+              loading="lazy"
+            >
+          {%- endif -%}
+        </a>
+
+        {%- comment -%} 分类标签（默认隐藏，AI 按需点亮） {%- endcomment -%}
+        {%- if article.tags.size > 0 and placeholder == false -%}
+          <span class="ai-blog__tag">{{ article.tags | first }}</span>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- comment -%} ===== 信息区 ===== {%- endcomment -%}
+    <div class="ai-blog__info">
+      {%- comment -%} 元信息区（日期 + 作者） {%- endcomment -%}
+      <div class="ai-blog__meta">
+        {%- if show_date -%}
+          <time class="ai-blog__date" {% if placeholder == false and article.published_at != blank %} datetime="{{ article.published_at | date: '%Y-%m-%d' }}" {% endif %}>
+            {%- if placeholder -%}
+              Jan 01, 2025
+            {%- elsif article.published_at != blank -%}
+              {{ article.published_at | date: "%b %d, %Y" }}
+            {%- endif -%}
+          </time>
+        {%- endif -%}
+        {%- if show_author -%}
+          <span class="ai-blog__author">
+            {%- if placeholder -%}
+              Author
+            {%- else -%}
+              {{ article.author }}
+            {%- endif -%}
+          </span>
+        {%- endif -%}
+      </div>
+
+      {%- comment -%} 标题 {%- endcomment -%}
+      <a class="ai-blog__title-link" href="{{ article.url }}" {% if placeholder %} onclick="event.preventDefault();" {% endif %} {{ '' | genstore_vkey: key:'title', block:block }}>
+        <h3 class="ai-blog__title">
+          {%- if placeholder -%}
+            Blog Post Title
+          {%- else -%}
+            {{ article.title }}
+          {%- endif -%}
+        </h3>
+      </a>
+
+      {%- comment -%} 摘要 {%- endcomment -%}
+      {%- if show_excerpt -%}
+        <p class="ai-blog__excerpt">
+          {%- if placeholder -%}
+            This is a placeholder excerpt for the blog post. It gives readers a brief preview of the content.
+          {%- elsif article.excerpt != blank -%}
+            {{ article.excerpt | strip_html | truncate: 80 }}
+          {%- else -%}
+            {{ article.content | strip_html | truncate: 80 }}
+          {%- endif -%}
+        </p>
+      {%- endif -%}
+
+      {%- comment -%} "阅读更多"链接（默认隐藏，AI 按需点亮） {%- endcomment -%}
+      <a class="ai-blog__read-more" href="{{ article.url }}" {% if placeholder %} onclick="event.preventDefault();" {% endif %}>
+        Read More
+      </a>
+    </div>
+  </article>
+</ai-blog-card>

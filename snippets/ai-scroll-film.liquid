@@ -1,0 +1,214 @@
+{%- comment -%}
+  ai-scroll-film - reusable runtime skeleton for scroll-film hero sections.
+
+  Parameters:
+    section_id    (string, required) Current section.id.
+    root_class    (string) Root class list. Defaults to ai-scroll-film.
+    height        (string) Scroll track height. Defaults to 220svh.
+    stage_top     (string) Sticky stage top offset. Defaults to 0.
+    media_html    (capture) Media layers rendered inside the sticky stage.
+    overlays_html (capture) Decorative overlays rendered inside the sticky stage.
+    frames_html   (capture, required) 3+ narrative frames with data-ai-hero-frame.
+{%- endcomment -%}
+
+{%- liquid
+  assign _section_id = section_id | default: ''
+  assign _root_class = root_class | default: 'ai-scroll-film'
+  assign _height = height | default: '220svh'
+  assign _stage_top = stage_top | default: '0'
+-%}
+
+<style>
+  #genstore-section-{{ _section_id | escape }} {
+    overflow: visible;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film {
+    --ai-sff-p: var(--ai-scroll-film-progress, 0);
+    --ai-scroll-film-frame-safe-block: clamp(96px, 14svh, 168px);
+    --ai-scroll-film-frame-travel: 16vh;
+    --ai-scroll-film-frame-max-width: 1180px;
+    --ai-scroll-film-frame-copy-width: 720px;
+    --ai-scroll-film-media-travel: -4svh;
+    --ai-scroll-film-media-overscan: max(6svh, 48px);
+    --ai-scroll-film-media-scale-start: 1.03;
+    --ai-scroll-film-media-scale-end: 1.01;
+    display: block;
+    position: relative;
+    overflow: visible;
+    isolation: isolate;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__stage {
+    position: sticky;
+    top: var(--ai-scroll-film-stage-top, 0);
+    height: 100svh;
+    min-height: 100svh;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__media {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__media:empty::before {
+    content: "";
+    position: absolute;
+    inset: -8%;
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 42%),
+      linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.44));
+    transform: translate3d(0, calc(var(--ai-sff-p) * -12svh), 0) scale(1.05);
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__media > * {
+    position: absolute;
+    inset-inline: 0;
+    top: calc(var(--ai-scroll-film-media-overscan) * -1);
+    bottom: auto;
+    inset-block-end: auto;
+    width: 100%;
+    height: calc(100% + var(--ai-scroll-film-media-overscan) + var(--ai-scroll-film-media-overscan));
+    transform: translate3d(0, calc(var(--ai-sff-p) * var(--ai-scroll-film-media-travel)), 0)
+      scale(calc(var(--ai-scroll-film-media-scale-start) - (var(--ai-sff-p) * (var(--ai-scroll-film-media-scale-start) - var(--ai-scroll-film-media-scale-end)))));
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__media > *[data-ai-scroll-film-media-active] {
+    opacity: 1;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__media img,
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__media picture,
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__media video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.48));
+    opacity: var(--ai-scroll-film-veil-opacity, calc(0.58 - (var(--ai-sff-p) * 0.18)));
+    pointer-events: none;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__frames {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    width: min(100% - 40px, var(--ai-scroll-film-frame-max-width));
+    margin: 0 auto;
+    padding-block: var(--ai-scroll-film-frame-safe-block);
+    padding-inline: clamp(20px, 5vw, 72px);
+    display: grid;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__frame {
+    grid-area: 1 / 1;
+    justify-self: var(--ai-frame-justify, var(--ai-frame-default-justify, var(--ai-scroll-film-frame-justify, start)));
+    align-self: var(--ai-frame-align, var(--ai-frame-default-align, var(--ai-scroll-film-frame-align, center)));
+    width: min(var(--ai-scroll-film-frame-copy-width), 100%);
+    position: relative;
+    inset: auto;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    opacity: 0;
+    transform: translate3d(
+      0,
+      calc(var(--ai-frame-distance, 1) * var(--ai-scroll-film-frame-travel)),
+      0
+    );
+    transition: opacity 160ms linear, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+    pointer-events: auto;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__frame:nth-child(3n + 1) {
+    --ai-frame-default-justify: start;
+    --ai-frame-default-align: end;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__frame:nth-child(3n + 2) {
+    --ai-frame-default-justify: end;
+    --ai-frame-default-align: center;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__frame:nth-child(3n) {
+    --ai-frame-default-justify: center;
+    --ai-frame-default-align: start;
+  }
+
+  #genstore-section-{{ _section_id | escape }} .ai-scroll-film__frame[data-ai-hero-active] {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #genstore-section-{{ _section_id | escape }} .ai-scroll-film,
+    #genstore-section-{{ _section_id | escape }} .ai-scroll-film__stage {
+      height: auto !important;
+      min-height: 74svh !important;
+    }
+
+    #genstore-section-{{ _section_id | escape }} .ai-scroll-film__stage,
+    #genstore-section-{{ _section_id | escape }} .ai-scroll-film__media,
+    #genstore-section-{{ _section_id | escape }} .ai-scroll-film__frames,
+    #genstore-section-{{ _section_id | escape }} .ai-scroll-film__frame {
+      position: relative !important;
+      inset: auto !important;
+    }
+
+    #genstore-section-{{ _section_id | escape }} .ai-scroll-film__media > *,
+    #genstore-section-{{ _section_id | escape }} .ai-scroll-film__media:empty::before,
+    #genstore-section-{{ _section_id | escape }} .ai-scroll-film__frame {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+
+    #genstore-section-{{ _section_id | escape }} .ai-scroll-film__frames {
+      display: grid;
+      gap: clamp(16px, 4vw, 32px);
+    }
+
+    #genstore-section-{{ _section_id | escape }} .ai-scroll-film__frame {
+      grid-area: auto;
+    }
+  }
+</style>
+
+<ai-hero
+  type="scroll-film"
+  class="{{ _root_class | escape }} section-mark"
+  data-ai-homepage-motion
+  data-ai-scroll-film
+  data-section-id="{{ _section_id | escape }}"
+  style="--ai-scroll-film-height: {{ _height | escape }}; --ai-scroll-film-stage-top: {{ _stage_top | escape }};"
+>
+  <div data-ai-hero-part="stage" class="ai-scroll-film__stage">
+    <div class="ai-scroll-film__media" aria-hidden="true">
+      {{ media_html }}
+    </div>
+    {{ overlays_html }}
+    <div class="ai-scroll-film__frames">
+      {{ frames_html }}
+    </div>
+  </div>
+</ai-hero>
+
+<script src="{{ 'ai-base.js' | asset_url }}" defer></script>

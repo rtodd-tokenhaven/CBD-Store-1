@@ -1,0 +1,88 @@
+{% liquid
+  assign form_by_type = 'cart-items'
+  if type == 'cart-drawer'
+    assign form_by_type = 'cart-drawer-items'
+  endif
+%}
+<div
+  class='{% if cart == empty %} is-empty{% endif %}'
+  {{ genstore_attributes | default: '' }}
+  {% if enable_sub_total == false and enable_buy_buttons == false and show_dynamic_checkout == false %}
+    hidden
+  {% endif %}
+  id='main-cart-footer'
+  data-id='main-cart-footer'>
+  <div class='cart__footer isolate'>
+    {%- if cart.items.length > 0 %}
+      <div class='cart__blocks'>
+        {% if enable_sub_total %}
+          <div class='js-contents  {{ content_alignment | default: '' }}'>
+            <div class='totals f-column gap-100'>
+              <div class="sub-total-container">
+                <span class='genstore-text medium'>{{ 'sections.cart.estimated_total' | t }}</span>
+                <p class='genstore-text medium'>{{ cart.total_price | money_with_currency }}</p>
+              </div>
+              <div class="tax-note-container">
+                <small class='tax-note genstore-text small'>
+                  {%- if cart.duties_included and cart.taxes_included -%}
+                    {%- if shop.shipping_policy.body == blank -%}
+                      {{ 'sections.cart.duties_and_taxes_included_shipping_at_checkout_without_policy' | t }}
+                    {%- else -%}
+                      {{
+                      'sections.cart.duties_and_taxes_included_shipping_at_checkout_with_policy_html' | t: link: shop.shipping_policy.url
+                      }}
+                    {%- endif -%}
+                  {%- elsif cart.duties_included == false and cart.taxes_included -%}
+                    {%- if shop.shipping_policy.body == blank -%}
+                      {{ 'sections.cart.taxes_included_shipping_at_checkout_without_policy' | t }}
+                    {%- else -%}
+                      {{
+                      'sections.cart.taxes_included_shipping_at_checkout_with_policy_html' | t: link: shop.shipping_policy.url
+                      }}
+                    {%- endif -%}
+                  {%- elsif cart.duties_included and cart.taxes_included == false -%}
+                    {%- if shop.shipping_policy.body == blank -%}
+                      {{ 'sections.cart.duties_included_taxes_at_checkout_shipping_at_checkout_without_policy' | t }}
+                    {%- else -%}
+                      {{
+                      'sections.cart.duties_included_taxes_at_checkout_shipping_at_checkout_with_policy_html' | t: link: shop.shipping_policy.url
+                      }}
+                    {%- endif -%}
+                  {%- elsif cart.duties_included == false and cart.taxes_included == false -%}
+                    {%- if shop.shipping_policy.body == blank -%}
+                      {{ 'sections.cart.taxes_at_checkout_shipping_at_checkout_without_policy' | t }}
+                    {%- else -%}
+                      {{
+                      'sections.cart.taxes_at_checkout_shipping_at_checkout_with_policy_html' | t: link: shop.shipping_policy.url
+                      }}
+                    {%- endif -%}
+                  {%- endif -%}
+                </small>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+        {% if enable_buy_buttons %}
+          <div class="cart-footer-error"></div>
+          <div class='cart__ctas'>
+            <button
+              type='submit'
+              id='checkout'
+              form="{{ form_by_type }}"
+              class="genstore-btn genstore-not-letter-spacing {{ color_style_button | default: 'brand' }} {{ button_style_secondary | default: 'primary' }} {{ button_size | default: 'large' }}"
+              name='checkout'
+            {% if cart == empty %}
+              disabled
+              {% endif %}>
+              {{ 'sections.cart.checkout' | t }}
+            </button>
+          </div>
+        {% endif %}
+        {% if additional_checkout_buttons %}
+          {{ content_for_additional_checkout_buttons }}
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </div>
+</div>

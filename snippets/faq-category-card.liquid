@@ -1,0 +1,44 @@
+{%- comment -%}
+  文件名：snippets/faq-category-card.liquid
+  参数说明：
+    - img: 图片对象/URL
+    - alt: 图片alt文本
+    - category_name: 分类名称
+    - filled: 是否使用填充样式（布尔值）
+    - color_mode
+    - color_style
+    - block
+    - visual_image_key
+    - visual_text_key
+{%- endcomment -%}
+
+{% liquid
+  assign width = width | default: 48
+  assign height = height | default: 48
+  assign img = img | default: ''
+  assign alt = alt | default: ''
+  assign category_name = category_name | default: ''
+  assign filled = filled | default: false
+  assign color_mode = color_mode | default: 'light'
+  assign color_style = color_style | default: 'brand'
+  assign color_scheme = color_scheme | default: 'color-scheme-1'
+  assign category_color =  category_color | default: 'neutral'
+  assign visual_block = ''
+  if block != blank
+     assign visual_block = block
+  endif
+%}
+<div class="faq-category-card  {% if filled %} {{ color_scheme }} {{ color_mode }} {{ color_style }} {% else %} faq-category-card-bordered {% endif %}" {{genstore_attributes | default: ''}}>
+  {% if img != blank %}
+    {% assign image_width = img.width | default: 100 %}
+    <img
+      {{ '' | genstore_vkey: key:visual_image_key,block:visual_block}} 
+      width="{{width}}"
+      height="{{height}}"
+      src="{{ img | image_url: width: image_width }}"
+      alt="{{ alt | escape }}"
+      loading="lazy"
+    >
+  {% endif %}
+  <div  {{ '' | genstore_vkey: key:visual_text_key,block:visual_block}}  class="genstore-text-block genstore-text-{{ category_color }}">{{ category_name }}</div>
+</div>

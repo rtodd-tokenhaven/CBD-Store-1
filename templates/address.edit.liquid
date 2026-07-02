@@ -1,0 +1,69 @@
+<link rel='stylesheet' href='/static/checkout/ext-address-form.app.css'>
+{{ 'address-edit.css' | asset_url | stylesheet_tag }}
+
+<script src="/static/checkout/ext-address-form.app.js" defer="defer"></script>
+
+{% capture content %}
+<div class='gradient color-{{ section.settings.color_scheme }}'>
+  <div class='customer addresses section-{{ section.id }}-padding' data-customer-addresses>
+    <div style="display:none">
+      <div class="save_success">
+        {{ 'customer.addresses.success' | t }}
+      </div>
+    </div>
+
+   <h1 class="address-edit-title">
+      {% if customer.address.id == 'add' %}
+        {{ 'customer.addresses.add' | t }}
+      {% else %}
+        {{ 'customer.addresses.update' | t }}
+      {% endif %}
+    </h1>
+    <div class='address-edit-form'>
+      <div class="address-edit-form-main">
+        <div style='display:none' address-id='{{ customer.address.id }}' class='address_id_data'></div>
+        {% comment %} <div style="display:none" address-data = '{{ address.dataString }}'></div> {% endcomment %}
+        <div id='common-address-form'></div>
+        {% comment %} <div class="address-form-loading"></div> {% endcomment %}
+        {% if customer.address.id == 'add' and customer.addresses.size > 0 %}
+          <div class='address_as_default'>
+            <div class='address_as_default_checkbox'>
+              {% render 'genstore-swatch-input',
+                input_id: 'address_as_default_input'
+                input_name: 'sort_by',
+                form_id: '',
+                type: 'radio',
+                label: "",
+                value: '1',
+                selected: false
+              %}
+            </div>
+            {% comment %} <input type='checkbox' id='address_as_default_input' name='terms' value='1'> {% endcomment %}
+            {{ 'customer.addresses.set_default' | t }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class='address_action'>
+        <div class='address_action_btn'>
+          <button class='address_submit_cancel'>{{ 'customer.addresses.cancel' | t }}</button>
+          <button class='address_submit_btn'>
+            {{ 'customer.addresses.save' | t }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endcapture %}
+
+{% render 'genstore-container', 
+  section: section,
+  content: content,
+  className: "card-transparent order-main"
+%}
+<script>
+  window.addEventListener('load', () => {
+    typeof AddressEdit !== 'undefined' && new AddressEdit();
+  });
+</script>

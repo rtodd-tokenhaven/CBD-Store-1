@@ -1,0 +1,57 @@
+{% comment %}
+   -- border_color 底色
+   -- color_mode
+   -- color_style
+   -- line_height
+   -- padding_top
+   -- padding_bottom
+   -- enable_scheme 是否启用外部传进来的scheme
+{% endcomment %}
+{% liquid
+  assign enable_scheme = enable_scheme | default: false
+  assign color_scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign color_mode = color_mode | default: 'light'
+  assign index = color_scheme | split: 'scheme-' | last
+  if color_mode == 'dark'
+    assign index = index | times: 2
+  else
+    assign index = index | times: 2 | minus: 1
+  endif
+  assign color_style = color_style | default: 'brand'
+  assign color_scheme = 'color-scheme-' | append: index
+  assign width_avaible = 'full-width'
+  if enable_scheme == true and full_width == false
+    assign width_avaible = 'page-width'
+  endif
+  assign split_line_height = line_height
+  if split_line_height != blank
+    assign split_line_height = split_line_height | split: 'px' | first
+  endif
+%}
+<div
+  class="genstore-split-line-container {{ line_mode | default: 'solid' }}
+  {% if enable_scheme == true %}    {{ color_scheme }} {{ color_mode }} {{ color_style }}{% endif %}
+   padding-top-{{ padding_top }} padding-bottom-{{ padding_bottom }}">
+  <div
+    class="genstore-split-line {{ width_avaible }}"
+    style="
+    {% if border_color != blank %} --split-border-color: {{ border_color }}; {% endif %}
+    {% if line_mode == 'dashed' %}
+      {% if split_line_height < 6 %}
+        --split-line-background-size: 8px;
+        --split-line-background-width: 4px;
+        --split-line-background-gap: 2px;
+
+      {% elsif split_line_height >= 6 and split_line_height < 12 %}
+        --split-line-background-size: 18px;
+        --split-line-background-width: 12px;
+        --split-line-background-gap: 6px;
+      {% else %}
+        --split-line-background-size: 24px;
+        --split-line-background-width: 20px;
+        --split-line-background-gap: 12px;
+      {% endif %}
+    {% endif %}
+      --split-line-height: {{ line_height }};"
+  ></div>
+</div>

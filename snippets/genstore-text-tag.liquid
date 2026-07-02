@@ -1,0 +1,34 @@
+{% comment %}
+   -- text 文本
+   -- tag_size 文本标签大小
+
+{% endcomment %}
+
+{% liquid
+  assign suffix_slot_content = suffix_content | default: ''
+  assign pre_slot_content = pre_content | default: ''
+  assign is_disabled = is_disabled | default: false
+  assign key_group = ''
+  if vkey_group != blank
+      assign key_group = vkey_group
+  endif 
+  assign  visual_block = ''
+  if block != blank
+    assign  visual_block = block
+  endif    
+
+%}
+<div
+  class="genstore-text-tag {{ className }} {{ tag_size | default: 's' }} {{ text_style | default: 'normal' }} {% if is_active == true %}active{% endif %} {% if is_disabled == true %}disabled{% endif %}">
+  {% if pre_slot_content != blank %}
+    {{ pre_slot_content }}
+  {% endif %}
+  {% if url != blank %}
+    <a href="{{ url }}" {{ '' | genstore_vkey: key:visual_text_key, block:visual_block,group:key_group | genstore_vkey: key:visual_link_key, block:visual_block,group:key_group }} >{{ text }}</a>
+  {% else %}
+    <span {{ '' | genstore_vkey: key:visual_text_key, block:visual_block,group:key_group }}>{{ text }}</span>
+  {% endif %}
+  {% if slot_content != blank %}
+    {{ slot_content }}
+  {% endif %}
+</div>

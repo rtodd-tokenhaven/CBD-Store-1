@@ -1,0 +1,23 @@
+{% comment %}
+  -- columns_desktop: 0-10
+  -- gap
+  -- className
+  -- id
+  -- content
+  -- enable_coursel
+  -- section_id
+{% endcomment %}
+{% liquid
+  assign card_layout = layout | default: 'normal'
+%}
+<div
+  class='card-list-container {{ className }} {% if show_slider_btn == true %}  slider{% endif %} {% if enable_desktop_slider %}  desktop-slider{% endif %} {% if enable_mobile_slider %}  mobile-slider{% endif %} {{ card_layout }} card-gap-{{ gap }} flex-1 {% if section.settings.grid_layout_control%} switch-grid {% endif %}'
+  id='{{ id }}'
+  data-id='{{ data_id }}'
+  {% if id != blank %}
+    id='{{ id }}'
+  {% endif %}
+  style='--grid-columns: {{ columns_desktop }};--grid-mobile-columns:{{ columns_mobile }}'
+>
+  {{ content }}
+</div>

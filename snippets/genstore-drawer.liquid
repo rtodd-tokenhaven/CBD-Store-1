@@ -1,0 +1,47 @@
+<div class="genstore-drawer-overlay" onclick="switchDrawer()"></div>
+<div class="genstore-drawer transparent_color_origin">
+  <div class="genstore-drawer__header f-row align-center content-between">
+    <div class="drawer-title">{{ title }}</div>
+    <label for="drawer-toggle">
+      {% render 'genstore-icon', icon_name: 'icon-close' %}
+    </label>
+  </div>
+  <div class="genstore-drawer__content">
+    {{ content }}
+  </div>
+  <div class="genstore-drawer__footer f-row align-center">
+    {% capture props1 %}
+      { "label": "Apply", "size":"large", "style": "primary","fontSize":400,"enableIcon":false,"width":"162px" }
+    {% endcapture %}
+    {% assign applyProps = props1 | parse_json %}
+    {% capture props2 %}
+      { "label": "Reset", "size":"large", "style": "default","fontSize":400,"enableIcon":false,"width":"162px" }
+    {% endcapture %}
+    {% assign applyProps = props1 | parse_json %}
+    {% assign resetProps = props2 | parse_json %}
+    <label for="drawer-toggle" onclick="reset(event)">
+      <div class="genstore-btn default large neutral ">{{ 'products.facets.reset' | t }}</div>
+      {% comment %} {% render 'button', props: resetProps %} {% endcomment %}
+    </label>
+    <label for="drawer-toggle">
+      <div class="genstore-btn primary large brand ">{{ 'products.facets.apply' | t }}</div>
+      {% comment %} {% render 'button', props: applyProps %} {% endcomment %}
+    </label>
+  </div>
+</div>
+
+<script>
+  function reset(e) {
+    const query = new URLSearchParams(location.search);
+    const sort = query.get('sort_by');
+    const newQuery = new URLSearchParams();
+    newQuery.set('sort_by', sort);
+    const searchParams = newQuery.toString();
+    FacetFiltersForm.renderPage(searchParams, e);
+  }
+  function switchDrawer() {
+    const drawerToggle = document.querySelector('#drawer-toggle');
+    if (!drawerToggle) return;
+    drawerToggle.click();
+  }
+</script>

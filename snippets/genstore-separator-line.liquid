@@ -1,0 +1,26 @@
+{% comment %}
+  Renders a separator line
+  settings
+    border-psition  {String} position of the separator line (top, bottom, left, right)
+  border_color {String} color of the separator line
+{% endcomment %}
+{% liquid
+  assign border_position = border_position | default: 'bottom'
+  assign border_color = border_color | default: "--genstore-neutral-border-900"
+  if border_color == blank
+    assign border_color = '--genstore-neutral-border-900'
+  endif
+%}
+<div class="genstore-separator-line" {{ genstore_attributes }}
+     style="
+       --genstore-separator-line-padding-top:var( {{ padding_top | default: 0 }});
+       --genstore-separator-line-padding-bottom:var( {{ padding_bottom | default: 0 }});
+       "
+>
+  <div class="line" style="
+  {% if border_position != 'none' %} border-{{ border_position }}:1px solid var({{ border_color }}); {% endif %}
+    --genstore-separator-line-width: {{ width | default: "2rem" }};
+    --genstore-separator-line-height: {{ height | default: "1rem" }};
+    background:var({{ background_color | default: 'transparent' }});
+    "></div>
+</div>

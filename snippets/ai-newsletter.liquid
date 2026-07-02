@@ -1,0 +1,81 @@
+{%- comment -%}
+  snippets/ai-newsletter.liquid — 邮件订阅表单固定骨架
+
+  所有 HTML 结构由系统提供，AI 只需为 .ai-nl-* class 编写 CSS。
+  不需要的元素通过 CSS display:none 隐藏即可。
+
+  参数:
+    heading       — 可选，标题文案
+    heading_tag   — 可选，标题标签（默认 h2）
+    subheading    — 可选，副标题/描述文案
+    button_text   — 可选，按钮文案（默认 "Subscribe"）
+    placeholder   — 可选，输入框占位符（默认 "Enter your email"）
+    success_tip   — 可选，订阅成功提示
+    section_id    — 可选，section id
+    block         — 可选，block 对象（用于 genstore_vkey）
+{%- endcomment -%}
+
+{%- liquid
+  assign heading_tag = heading_tag | default: 'h2'
+  assign button_text = button_text | default: 'Subscribe'
+  assign placeholder = placeholder | default: 'Enter your email'
+  assign success_tip = success_tip | default: ''
+-%}
+
+<ai-newsletter
+  class="ai-nl"
+  data-success-tip="{{ success_tip | escape }}"
+>
+  <form class="ai-nl__form" action="/account/subscribedByEmail" method="post" novalidate>
+    {%- comment -%} 文案区 {%- endcomment -%}
+    <div class="ai-nl__content">
+      {%- if heading != blank -%}
+        <{{ heading_tag }} class="ai-nl__heading" {{ '' | genstore_vkey: key:'heading', block:block }}>{{ heading }}</{{ heading_tag }}>
+      {%- endif -%}
+
+      {%- if subheading != blank -%}
+        <div class="ai-nl__subheading" {{ '' | genstore_vkey: key:'subheading', block:block }}>{{ subheading }}</div>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%} 输入区 {%- endcomment -%}
+    <div class="ai-nl__field">
+      <input
+        class="ai-nl__input"
+        type="email"
+        name="email"
+        placeholder="{{ placeholder | escape }}"
+        autocomplete="email"
+        required
+        aria-label="{{ placeholder | escape }}"
+      >
+      <button class="ai-nl__submit" type="submit">
+        <span class="ai-nl__submit-text">{{ button_text }}</span>
+        <span class="ai-nl__submit-loading" hidden>
+          <svg class="ai-nl__spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" stroke-dasharray="30 70" stroke-linecap="round">
+              <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </span>
+      </button>
+    </div>
+
+    {%- comment -%} 消息反馈区 {%- endcomment -%}
+    <div class="ai-nl__message ai-nl__message--success" hidden>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      <span></span>
+    </div>
+    <div class="ai-nl__message ai-nl__message--error" hidden>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+      <span></span>
+    </div>
+
+    {%- comment -%} 隐私提示（默认隐藏，AI 可点亮） {%- endcomment -%}
+    <p class="ai-nl__privacy">We respect your privacy. Unsubscribe at any time.</p>
+  </form>
+</ai-newsletter>

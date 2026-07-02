@@ -1,0 +1,517 @@
+{{ 'main-order.css' | asset_url | stylesheet_tag }}
+<script src="/static/business-modal/business-dialogs.umd.js" defer="defer"></script>
+<link rel="stylesheet" href="/static/business-modal/business-dialogs.css">
+<script src="{{ 'main-order.js' | asset_url }}" defer></script>
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+  padding: var(--genstore-spacing-vertical-1200) 0px;
+
+  }
+
+  @media screen and (min-width: 750px) {
+  .section-{{ section.id }}-padding {
+  padding: var(--genstore-spacing-vertical-2400) 0px;
+  }
+  }
+  .genstore-container.order-main{
+    background-color: var(--genstore-neutral-background-40) !important;
+    background: var(--genstore-neutral-background-40) !important;
+    padding-inline-start: 1rem;
+    padding-inline-end: 1rem;
+  }
+{%- endstyle -%}
+{% liquid
+  assign billing_is_empty = true
+  assign shipping_is_empty = true
+  for prop in order.billing_address
+    if prop != blank
+      assign billing_is_empty = false
+    endif
+  endfor
+
+  for prop in order.shipping_address
+    if prop != blank
+      assign shipping_is_empty = false
+    endif
+  endfor
+  assign shipping_title = 'customer.order.shipping_address' | t
+  if order.pickup_site_name != blank
+    assign shipping_title = 'customer.order.pick_up_address' | t
+  endif
+%}
+
+{% capture content %}
+  <div class='customer order section-{{ section.id }}-padding gradient'>
+    <div style="display: none;">
+      <div class="add_cart_success_txt">
+        {{ 'customer.order.add_cart_success' | t }}
+      </div>
+      <div class="add_cart_part_success_txt">
+        {{ 'customer.order.add_cart_part_success' | t }}
+      </div>
+      <div class="add_cart_error_txt">
+        {{ 'customer.order.add_cart_error' | t }}
+      </div>
+    </div>
+    <div class="orderId" style="display:none">{{ order.key }}</div>
+    <div class='customer__top'>
+      {% if order != blank %}
+        <h2>{{ 'customer.order.title' | t: name: order.name }}</h2>
+        {%- assign order_date = order.created_at | time_tag: format: 'date_at_time' -%}
+        <div class='order_detail_info '>
+          <div class='order_detail_info__left '>
+            {% if order.order_status_name %}
+              <span class='order-payment-status' style='padding:5px 8px'>
+                {% comment %} @TODO 暂时没有已完成订单 {% endcomment %}
+                {%- if order.order_status == 4 -%}
+                  <span class='paid'>
+                    <svg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 512 512'>
+                      <path d="M448 71.9c-17.3-13.4-41.5-9.3-54.1 9.1L214 344.2l-99.1-107.3c-14.6-16.6-39.1-17.4-54.7-1.8-15.6 15.5-16.4 41.6-1.7 58.1 0 0 120.4 133.6 137.7 147 17.3 13.4 41.5 9.3 54.1-9.1l206.3-301.7c12.6-18.5 8.7-44.2-8.6-57.5z" fill="currentColor"/>
+                    </svg>
+                  </span>
+                {%- else -%}
+                  <span class='pending'>
+                    <svg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'>
+                      <path fill="currentColor" d="M23 3v18H1V3zm-2 2H3v4h18zm0 6H3v8h18zm-11 5H5v-2h5z"/>
+                    </svg>
+                  </span>
+                {% endif %}
+                <span class='payment-status unpaid'> {{ order.order_status_name }}</span>
+              </span>
+            {% endif %}
+            <span>
+              {{ 'customer.order.date_html' | t: date: order_date }}
+              {{ order.payment.channelTypeName }}
+            </span>
+          </div>
+
+          <div class='order_detail_info__right'>
+            {% if order.operationsType contains 3 %}
+              <div class='pay_now_btn' params={{ order.payNowParams }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M12.3473 2.0415H1.65283V11.9582H12.3473V8.65261H13.1251V5.34706H12.3473V2.0415ZM11.7639 5.34706V2.62484H2.23617V11.3748H11.7639V8.65261H8.26394V5.34706H11.7639ZM8.84728 8.06928V5.93039H12.5417V8.06928H8.84728Z" fill="black" fill-opacity="0.9"/>
+                </svg>
+                {{ 'customer.order.pay_now' | t }}
+              </div>
+              {% if order.operationsType contains 2 or order.operationsType contains 1 %}
+                <div class='order_detail_btn_divider'></div>
+              {% endif %}
+            {% endif %}
+            {% if order.operationsType contains 2 %}
+              <div class='request_return_btn' data-order-id={{ order.key }}>
+                <svg width="15" height="14" viewBox="0 0 15 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9.05555 7.68039H5.94444V7.09706H9.05555V7.68039Z" fill="black" fill-opacity="0.9"/>
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M2.61325 2.0415H12.3867L13.2361 5.01787V11.9582H1.76389V5.01787L2.61325 2.0415ZM2.49852 4.56928H12.5015L11.9466 2.62484H3.05341L2.49852 4.56928ZM12.6528 5.15261H2.34722V11.3748H12.6528V5.15261Z" fill="black" fill-opacity="0.9"/>
+                </svg>
+                {{ 'customer.order.request_return' | t }}
+              </div>
+              {% if order.operationsType contains 1 %}
+                <div class='order_detail_btn_divider'></div>
+              {% endif %}
+            {% endif %}
+            {% if order.operationsType contains 1 %}
+              <div class="order-buy-again-con">
+                <div class="order-buy-again-loader-con">
+                  <div class="order-buy-again-loader"></div>
+                </div>
+                {% if order.own_order == true %}
+                  <div class='buy_again_btn'>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5.54159 4.66661V4.37495H4.95825V4.66661C4.95825 5.71815 5.90558 6.51383 6.99992 6.51383C8.09426 6.51383 9.04159 5.71815 9.04159 4.66661V4.37495H8.45825V4.66661C8.45825 5.33329 7.83858 5.9305 6.99992 5.9305C6.16126 5.9305 5.54159 5.33329 5.54159 4.66661Z" fill="black" fill-opacity="0.9"/>
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M11.9523 1.84717H2.04718L1.84106 12.1527H12.1584L11.5633 11.5694H2.43618Z" fill="black" fill-opacity="0.9"/>
+                    </svg>
+                    {{ 'customer.account.buy_again' | t }}
+                  </div>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        <div class='order_cancel_info'>
+          {%- if order.cancel.reason -%}
+            <p>{{ 'customer.order.cancelled_reason' | t: reason: order.cancel.reason }}</p>
+          {%- endif -%}
+        </div>
+        {% endif %}
+    </div>
+    {% if customer == blank %}
+      {%  if  shop.routeAuth == blank  or shop.routeAuth.isExpired == true %}
+        <div class="p-y-800 p-x-1200 f-row align-center bg-white content-between ">
+          {%  assign tip =  'customer.order.no_login' | t %}
+          {% if shop.routeAuth.isExpired == true %}
+            {%  assign tip =  'customer.order.expired' | t %}
+          {% endif %}
+          {%  render 'genstore-text-block',text_size:"s" , text:tip%}
+          <button class="genstore-btn primary medium brand " onclick="window.location.href='{{ shop.pathPrefix }}/account/login'">
+            {{'customer.log_in' | t}}
+          </button>
+        </div>
+      {% endif %}
+    {% endif %}
+      <div class='order-detail-container'>
+        <div class="order-detail-con-inner">
+          {%  for module in order.group_line_items %}
+            <div class="order-row f-column gap-800 card ">
+               {% liquid
+                 assign  show_trace_no =  true
+                 if   module.rightsBase != blank 
+                    assign  show_trace_no =  false
+                 endif
+               %}
+              {%  for item in module.items %}
+                {% render 'genstore-order', 
+                  item: item ,
+                  fulfillmentStatusName:module.fulfillmentStatusName, 
+                  fulfillmentStatus:module.fulfillmentStatus,
+                  show_trace_no: show_trace_no 
+                %}
+              {%  endfor %}
+              {%  if module.rightsBase != blank %}
+                {%  if module.rightsBase.rightsItems.size > 0 %}
+                  {%  for item in module.rightsBase.rightsItems %}
+                    {% render 'genstore-order', 
+                       item: item ,
+                       fulfillmentStatusName:module.rightsBase.rightsStatusName,
+                       className:"indent"  ,
+                       show_trace_no:true
+                    %}
+                  {% endfor %}
+                {% endif %}
+                {%  if module.rightsBase.exchangeOrder.items.size > 0 %}
+                  {% for item in module.rightsBase.exchangeOrder.items %}
+                    {%  assign exchangeOrderName =  'customer.order.exchange_order' | t %}
+                      {% render 'genstore-order', 
+                        item: item ,
+                        fulfillmentStatusName:exchangeOrderName,
+                        className:"indent",
+                        show_trace_no:true
+                      %}
+                  {% endfor %}
+                {% endif %}
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class='right_con '>
+          <div class="products-info f-column gap-800">
+            {%  for line_item in order.line_items %}
+              <div class="product-info order-row-item  f-row gap-12">
+                 <a href="{{ line_item.url }}">
+                  <div class="order-face">
+                     {% if line_item.image_url != blank %}
+                      <img src="{{ line_item.image_url }}" width="72" height="72" alt="{{ line_item.title }}">
+                      {% else %}
+                      {% render 'genstore-placeholder', icon_name: 'icon-img' %}
+                    {% endif %}
+                  </div>
+                 </a>
+                <div class="order-row-item-content f-row flex-1 content-between flex-start gap-12">
+                  <div class="f-column gap-200">
+                    <div class="row-item-title">{{ line_item.title }}</div>
+                    <div class="row-item-sku">{{ line_item.sku }}</div>
+                    <div class="row-item-discount">
+                      {% render 'genstore-discount', discounts: line_item.discounts %}
+                    </div>
+                  </div>
+                  <div class="row-item-end">
+                    <div class="row-item-quantity">x{{ line_item.quantity }}</div>
+                    <div class="row-item-price">
+                      <span> {{line_item.final_price | money: order.currency_code }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+             {% endfor %}
+          </div>
+          <div class="m-t-800">
+            <div class="f-row content-between">
+              <span class="row-item-title">{{ 'customer.order.subtotal' | t }}</span>
+              <div class="row-item-price">
+                <span> {{order.line_items_subtotal_price | money: order.currency_code }}</span>
+              </div>
+            </div> 
+            {%- for shipping_method in order.shipping_methods -%}
+              {% if shipping_method.price > 0 %}
+                <div class="f-row content-between m-t-400">
+                  <span class="row-item-title"> {{ 'customer.order.shipping' | t }}</span>
+                  <div class="row-item-price">
+                    <span> {{ shipping_method.price | money: order.currency_code  }}</span>
+                  </div>
+                </div> 
+              {% endif %}
+            {%- endfor -%}
+            {% if order.total_discounts > 0 %}
+              <div class="f-row content-between m-t-400">
+                <span class="row-item-title">{{  'customer.order.discount' | t }}</span>
+                <div class="row-item-price">
+                  <span> {{ order.total_discounts | money: order.currency_code  }}</span>
+                </div>
+              </div> 
+            {% endif %}
+            {% comment %} Customs duty {% endcomment %}
+            {% if order.payment.dutyAmount > 0 %}
+              <div class="f-row content-between m-t-400">
+                <span class="row-item-title">
+                  {% if order.taxConfig[2].isActive == 1 and order.taxConfig[2].taxShowName %}
+                    {{ order.taxConfig[2].taxShowName }}
+                  {%  else %}
+                    {{ 'customer.order.duties' | t }}
+                  {% endif %}
+                </span>
+                <div class="row-item-price">
+                  <span> {{ order.payment.dutyAmount | money: order.currency_code }}</span>
+                </div>
+              </div>
+            {% endif %}
+            {% if order.payment.taxAmount > 0 %}
+              <div class="f-row content-between m-t-400">
+                <span class="row-item-title">
+                  {% if order.taxConfig[1].isActive == 1 and order.taxConfig[1].taxShowName %}
+                    {{ order.taxConfig[1].taxShowName }}
+                  {%  else %}
+                    {{ 'customer.order.tax' | t }}
+                  {% endif %}
+                </span>
+                <div class="row-item-price">
+                  <span>  {{ order.payment.taxAmount | money: order.currency_code }}</span>
+                </div>
+              </div>
+            {% endif %}
+            {%- for returnAmount in order.payment.exchangeAmounts -%}
+              <div class='return_detail_con'>
+                <div>
+                  <div class="f-row content-between m-t-400">
+                    <span class="row-item-title">
+                       {{ 'customer.order.exchange_order' | t }}
+                     </span>
+                    <div class="row-item-price">
+                      {{ returnAmount.paymentAmount | money: order.currency_code }}
+                    </div>
+                  </div>
+                  {%- if returnAmount.exchangeOrderId -%}
+                    <div class='td tfoot_return_reason'>
+                      <p>{{ 'customer.order.reason' | t }}: #{{ returnAmount.exchangeOrderId }}</p>
+                    </div>
+                  {%- endif -%}
+                </div>
+              </div>
+            {%- endfor -%}
+           {%- for returnAmount in order.payment.returnAmounts -%}
+              <div class='return_detail_con'>
+                <input type="checkbox" id="return-toggle-{{ forloop.index }}" class="return-toggle-checkbox">
+                <div>
+                  <div class="f-row content-between m-t-400">
+                    <label for="return-toggle-{{ forloop.index }}" class="row-item-title f-row align-center return-toggle-label">
+                      <span>
+                        {% if order.allRefunded %}
+                          {{ 'customer.order.refunded' | t }} 
+                        {% else %}
+                          {{ 'customer.order.refunded_owed' | t }}
+                        {% endif %}
+                      </span>
+                      {% render 'genstore-svg' , icon_name: 'icon-down' %}
+                    </label>
+                    <div class="row-item-price">
+                      -{{ returnAmount.totalAmount | money: order.currency_code }}
+                    </div>
+                  </div>
+                </div>
+                {%- if returnAmount.rightsId -%}
+                  <div class='td tfoot_return_reason'>  
+                    <p>{{ 'customer.order.reason' | t }}: #{{ returnAmount.rightsId }}</p>
+                  </div>
+                {%- endif -%}
+              </div>
+              <div class="return-detail">
+                {%- if returnAmount.itemNum and returnAmount.subtotalAmount -%}
+                  <div class="f-row content-between m-t-400">
+                      <span class="row-item-title">
+                        {{ 'customer.order.return_item' | t }}({{ returnAmount.itemNum }})
+                      </span>
+                      <div class="row-item-price">
+                        -{{ returnAmount.subtotalAmount | money: order.currency_code }}
+                      </div>
+                  </div>
+                {%- endif -%}
+                {%- if returnAmount.shippingAmount -%}
+                    <div class="f-row content-between m-t-400">
+                      <div class='row-item-title'>{{ 'customer.order.shipping' | t }}</div>
+                      <div class='row-item-price'>-{{ returnAmount.shippingAmount | money: order.currency_code }}</div>
+                    </div>
+                {%- endif -%}
+                {%- if returnAmount.taxAmount -%}
+                    <div class="f-row content-between m-t-400">
+                      <div class="row-item-title">
+                        {% if returnAmount.taxCustomName == null %}
+                         {{ 'customer.order.taxes' | t }}
+                        {% else %}
+                         {{ returnAmount.taxCustomName }}
+                        {% endif %}
+                      </div>
+                      <div class="row-item-price">-{{ returnAmount.taxAmount | money: order.currency_code }}</div>
+                    </div>
+                {% endif %}
+                {%- if returnAmount.dutyAmount -%}
+                    <div class="f-row content-between m-t-400">
+                      <div class="row-item-title">
+                        {{ returnAmount.dutyCustomName }}
+                      </div>
+                      <div class="row-item-price">-{{ returnAmount.dutyAmount | money: order.currency_code }}</div>
+                    </div>
+                {%- endif -%}
+                {%- if returnAmount.returnShipping -%}
+                    <div class="f-row content-between m-t-400">
+                      <div class="row-item-title">{{ 'customer.order.return_shipping' | t }}</div>
+                      <div class="row-item-price">-{{ returnAmount.returnShipping | money: order.currency_code }}</div>
+                    </div>
+                {%- endif -%}
+                {%- if returnAmount.restockingFee -%}
+                    <div class="f-row content-between m-t-400">
+                      <div class="row-item-title">{{ 'customer.order.restocking_fee' | t }}</div>
+                      <div class="row-item-price">-{{ returnAmount.restockingFee | money: order.currency_code }}</div>
+                    </div>
+                {%- endif -%}
+               </div>
+            {%- endfor -%}
+          </div>
+          <div class="f-row content-between total m-t-800">
+            <span class="row-item-title large">  {{ 'customer.order.total' | t }}</span>
+            <div class="row-item-price large">
+              <span>    {{ order.total_net_amount | money: order.currency_code }}</span>
+            </div>
+          </div>
+          {% if order.refundTips and order.refundTips.type == 1 %}
+            <div class='return_card_info'>
+              {% if order.refundTips.amount %}
+                <h2>{{ order.refundTips.amount | money: order.currency_code }}</h2>
+              {% endif %}
+              <div>
+                {% if order.refundTips.time %}
+                  <p>
+                    {{ 'customer.order.refunded' | t }}
+                    {{ order.refundTips.time | time_tag: format: 'date_at_time' }}
+                  </p>
+                {% endif %}
+                <p>{{ order.refundTips.text }}</p>
+              </div>
+            </div>
+          {% endif %}
+          {% comment %} 补差价 {% endcomment %}
+          {% if order.refundTips and order.refundTips.type == 2 %}
+            <div class='return_card_info'>
+              {% if order.refundTips.amount %}
+                <h2>{{ order.refundTips.amount | money: order.currency_code }}</h2>
+              {% endif %}
+              <div>
+                <p>{{ order.refundTips.text }}</p>
+              </div>
+            </div>
+          {% endif %}
+          {% if order.refundTips and order.refundTips.type == 3 %}
+            <div class='return_card_info'>
+              {% if order.refundTips.id %}
+                <h2># {{ order.refundTips.id }}</h2>
+              {% endif %}
+              <p>{{ order.refundTips.text }}</p>
+              <div>
+                {% if order.refundTips.time %}
+                  <p>
+                    {{ 'customer.order.reject_time' | t }}
+                    {{ order.refundTips.time | time_tag: format: 'date_at_time'  }}
+                  </p>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+          {% if order.order_status == 5 %}
+            <div class='return_card_info'>
+              {% if order.canceled_at %}
+                <h2>
+                  {{ 'customer.order.canceled' | t }}
+                  {{ order.canceled_at | time_tag: format: 'date_at_time'  }}
+                </h2>
+              {% endif %}
+              <p>{{ 'customer.order.cancel_desc' | t }}</p>
+            </div>
+          {% endif %}
+            <div class="f-column gap-200 m-t-800">
+              <h2>{{ 'customer.order.contact_information' | t }}</h2>
+              {% if order.own_order == true %}
+                <p>
+                  {{ order.contact.name }}
+                </p>
+                <p>
+                  {{ order.contact.email }}
+                </p>
+              {% else %}
+                {% render 'genstore-order-mask' , type: 'contact' %}
+              {% endif %}
+            </div>
+            <div class="f-column gap-200 m-t-800">
+              <h2>{{ 'customer.order.payment_method' | t }}</h2>
+              {% if order.own_order == true %}
+                <p>
+                  {{ order.payment.method -}}
+                  {{- order.total_net_amount | money: order.currency_code }}
+                </p>
+              {% else %}
+                {% render 'genstore-order-mask' , type: 'payment_method' %}
+              {% endif %}
+            </div>
+          {% comment %} shipping_method //todo 这个字段不对，空了要重新处理 {% endcomment %}
+          {% if order.delivery_method_i18n_key %}
+            <div class="f-column gap-200 m-t-800">
+              <h2>{{ 'customer.order.shipping_method' | t }}</h2>
+              {% if order.own_order == true %}
+                <p>
+                  {% capture delivery_method_key %}{{ order.delivery_method_i18n_key }}{% endcapture %}
+                  {{ delivery_method_key | t }}
+                </p>
+              {% else %}
+                {% render 'genstore-order-mask' , type: 'shipping_method' %}
+              {% endif %}
+              </div>
+          {% endif %}
+        
+          {% comment %} 如果不是自己的订单，显示订单马赛克 order-mask {% endcomment %}
+          {% if order.own_order == false %}
+            <div class="f-column gap-200 m-t-800">
+              <h2>{{ 'customer.order.billing_address' | t }}</h2>
+              {%  render 'genstore-order-mask' , type: 'billing' %}
+            </div>
+            <div class="f-column gap-200 m-t-800">
+              <h2>{{ shipping_title}}</h2>
+              {%  render 'genstore-order-mask' , type: 'shipping' %}
+            </div>
+          {% else %}
+            {% comment %} 如果是自己的订单，需要判断订单，账单是否为空 {% endcomment %}
+            {% if billing_is_empty == false %}
+              <div class="f-column gap-200 m-t-800">
+                <h2>{{ 'customer.order.billing_address' | t }}</h2>
+                {{ order.billing_address | format_address }}
+              </div>
+            {% endif %}
+            {% if shipping_is_empty == false %}
+              <div class="f-column gap-200 m-t-800">
+                <h2>{{ shipping_title}}</h2>
+                {% if order.pickup_site_name != blank  %}
+                  <p>{{ order.pickup_site_name }}</p>
+                {% endif %}
+                {{ order.shipping_address | format_address }}
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
+    </div>
+  </div>
+{% endcapture %}
+
+{% render 'genstore-container', section: section, content: content, className: 'card-transparent order-main' %}
+
+<script>
+  window.addEventListener('load', () => {
+    typeof OrderDetail !== 'undefined' && new OrderDetail();
+  });
+</script>

@@ -1,0 +1,14 @@
+{% comment %}
+  -- discounts: array, default: []
+{% endcomment %}
+
+{% if discounts.size > 0 %}
+  <div class='genstore-discount_tag_box'>
+    {% for discount in discounts %}
+      <div class='genstore-discount_tag' title="{{ discount.name }}">
+        {% render 'genstore-svg', icon_name: 'icon-discount' %}
+        <span class='genstore-discount-text'>{{ discount.name }}</span>
+      </div>
+    {%- endfor -%}
+  </div>
+{% endif %}

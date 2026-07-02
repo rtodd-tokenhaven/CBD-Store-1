@@ -1,0 +1,899 @@
+{% comment %}
+  gap: var(--spacing-gap-3600, 72px); width: 56px; height: 56px; heading-l   大
+  gap: var(--spacing-gap-2400, 48px); width: 44px; height: 44px; heading-m   中
+  gap: var(--spacing-gap-1200, 24px);  width: 36px; height: 36px; heading-s  小
+{% endcomment %}
+{{ 'text-scroll.css' | asset_url | stylesheet_tag }}
+
+{% liquid
+  # 参数设置
+  assign scroll_direction = section.settings.scroll_direction | default: 'left'
+  assign hover_pause = section.settings.hover_pause | default: false
+  assign gap_space = section.settings.gap_space
+
+  # 速度映射（像素/秒）
+  case section.settings.scroll_speed
+    when 's'
+      assign speed_px_per_sec = 80
+    when 'm'
+      assign speed_px_per_sec = 160
+    when 'f'
+      assign speed_px_per_sec = 220
+    else
+      assign speed_px_per_sec = 160
+  endcase
+
+  # 计算预估内容宽度（假设平均每个字符≈2px，图标≈36px，间距≈24px）
+  assign estimated_char_width = 2
+  assign estimated_icon_width = 0
+  assign estimated_gap = 24
+
+  # 计算单个内容块的大致宽度
+  assign block_count = section.blocks | size
+  if block_count > 0
+    assign total_text_length = 0
+    for block in section.blocks
+      case block.type
+        when 'text-content'
+          assign total_text_length = total_text_length | plus: block.settings.scroll_text.size
+        when 'image-content'
+          assign estimated_icon_width = estimated_icon_width | plus: block.settings.icon_width
+      endcase
+    endfor
+
+    # 计算平均每个内容块的宽度
+    assign avg_block_width = estimated_icon_width | plus: estimated_gap | plus: total_text_length | times: estimated_char_width | divided_by: block_count
+
+    # 复制次数 = (预估屏幕宽度 * 2) / 平均块宽度 (向上取整)
+    # 假设最大屏幕宽度为3000px，确保至少复制2次
+    assign safe_repeats = 3000 | times: 2 | divided_by: avg_block_width | at_least: 2 | at_most: 30
+  else
+    assign safe_repeats = 2
+  endif
+%}
+
+{% capture content_item %}
+  <div class="marquee-item {{ gap_space }}">
+    {% for i in (1..safe_repeats) %}
+      {% for block in section.blocks %}
+        {%-liquid
+          assign color_style_value = '--genstore-' | append: block.settings.color_style | append: '-1000'
+          if block.settings.color_style == 'neutral'
+            assign color_style_value = '--genstore-neutral-texticon-900'
+          endif
+        -%}
+        <div class="scrolling-item"
+          style="--color-style: var({{ color_style_value }});"
+        >
+          {% case block.type %}
+            {% when "text-content" %}
+              <a href="{{ block.settings.link_url }}"              {{ block.genstore_attributes }}
+  {{ '' | genstore_vkey: key:'link_url', block:block }} class="{% if block.settings.link_url == blank %} prevent-click {% endif %}" {% if block.settings.link_url == blank %} onclick="event.preventDefault();" {% endif %}>
+                {% render 'genstore-heading',
+                  heading_size: block.settings.content_size,
+                  title: block.settings.scroll_text,
+                  visual_text_key:'scroll_text',
+                  block:block
+                %}
+              </a>
+            {% when "image-content" %}
+              {%- liquid
+                assign icon_width = block.settings.icon_width | default: 32
+                assign thumbnail_width = icon_width | times: 2
+              -%}
+              <a href="{{ block.settings.link_url }}"             {{ block.genstore_attributes }}
+   {{ '' | genstore_vkey: key:'link_url', block:block }}  style="width: {{ icon_width }}px;" class="{% if block.settings.link_url == blank %} prevent-click {% endif %}" {% if block.settings.link_url == blank %} onclick="event.preventDefault();" {% endif %}>
+                {%- if block.settings.image != blank -%}
+                  <img
+                    style="height: auto; width: {{ icon_width }}px;"
+                    width="{{ icon_width }}"
+                    height="auto",
+                    src="{{ block.settings.image | image_url: width: thumbnail_width }}"
+                    alt="{{ block.settings.image.alt | escape }}"
+                    loading="lazy"
+                     {{ '' | genstore_vkey: key:'image', block:block  }} 
+                  >
+                {%- endif -%}
+                {%- if block.settings.icon != blank and block.settings.image == blank -%}
+                  {%- assign file = block.settings.icon | replace: '_', '-' | prepend: 'icon-' | append: '.svg' -%}
+                  <span class="svg-wrapper" {{ '' | genstore_vkey: key:'icon',block:block,value: block.settings.icon }}>{{ file | inline_asset_content }}</span>
+                {%- endif -%}
+              </a>
+          {% endcase %}
+        </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+{% endcapture %}
+
+{% capture content %}
+  <div class="marquee-container" data-speed="{{ speed_px_per_sec }}" data-direction="{{ scroll_direction }}" data-hover-pause="{{ hover_pause }}">
+    <div class="marquee-content">
+      <!-- 第一组项目 -->
+      {% render 'only-render', content: content_item %}
+
+      <!-- 第二组相同项目（无缝衔接） -->
+      {% render 'only-render', content: content_item %}
+    </div>
+  </div>
+{% endcapture %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', initTextScroll);
+  function initTextScroll() {
+    const marqueeContainers = document.querySelectorAll('.marquee-container');
+
+    marqueeContainers.forEach(container => {
+      const content = container.querySelector('.marquee-content');
+      const firstItem = container.querySelector('.marquee-item');
+      const speed = parseFloat(container.dataset.speed);
+      const direction = container.dataset.direction;
+      const hoverPause = container.dataset.hoverPause === 'true';
+
+      if (!content || !firstItem) return;
+
+      // 检测是否为RTL布局
+      const isRTL = document.documentElement.dir === 'rtl' || document.body.dir === 'rtl';
+
+      let position = 0;
+      let lastTime;
+      let rafId;
+      const itemWidth = firstItem.scrollWidth;
+
+      function animate(currentTime) {
+        if (!lastTime) lastTime = currentTime;
+        const deltaTime = (currentTime - lastTime) / 1000; // 转换为秒
+        lastTime = currentTime;
+
+        // 根据方向更新位置 - 这里使用精确的速度计算
+        if (direction === 'left') {
+          position -= speed * deltaTime;
+        } else {
+          position += speed * deltaTime;
+        }
+
+        // 循环逻辑
+        if (!isRTL) {
+          if (direction === 'left' && position <= -itemWidth) {
+            position += itemWidth;
+          } else if (direction === 'right' && position >= 0) {
+            position -= itemWidth;
+          }
+        } else {
+          if (direction === 'left' && position <= 0) {
+            position += itemWidth;
+          } else if (direction === 'right' && position >= itemWidth) {
+            position -= itemWidth;
+          }
+        }
+        // 判断content是否还在DOM中, 用于编辑器修改属性时重启动画
+        /**
+          这2个判断太重, 有问题再加
+          !document.contains(content) 判断content是否还在DOM中
+          !content.closest('html') 判断content是否还在html中
+        */
+        if ('isConnected' in content && !content.isConnected) {
+          cancelAnimationFrame(rafId);
+          initTextScroll();
+          return;
+        }
+        content.style.transform = `translateX(${position}px)`;
+        rafId = requestAnimationFrame(animate);
+      }
+
+      // 初始化位置
+      if (!isRTL) {
+        if (direction === 'right') {
+          position = -itemWidth;
+        }
+      } else {
+        if (direction === 'left') {
+          position = itemWidth;
+        }
+      }
+
+      content.style.transform = `translateX(${position}px)`;
+
+      // 开始动画
+      rafId = requestAnimationFrame(animate);
+
+      // 悬停暂停功能
+      if (hoverPause) {
+        container.addEventListener('mouseenter', () => {
+          cancelAnimationFrame(rafId);
+        });
+
+        container.addEventListener('mouseleave', () => {
+          lastTime = null; // 重置时间计算
+          rafId = requestAnimationFrame(animate);
+        });
+      }
+
+      // 响应式调整
+      let resizeTimer;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+          const newItemWidth = firstItem.scrollWidth;
+          if (Math.abs(newItemWidth - itemWidth) > 10) {
+            // 简单的重置位置逻辑，避免计算复杂化
+            if (!isRTL) {
+              position = direction === 'left' ? 0 : -newItemWidth;
+            } else {
+              position = direction === 'left' ? newItemWidth : 0;
+            }
+            content.style.transform = `translateX(${position}px)`;
+          }
+        }, 250);
+      });
+    });
+  }
+</script>
+
+{% render 'genstore-container',
+  color_scheme: settings.theme_color_scheme,
+  color_mode: section.settings.color_mode,
+  color_style: section.settings.color_style,
+  section: section,
+  content: content
+%}
+
+{% schema %}
+{
+  "name": "t:sections.main-text-scroll.name",
+  "disabled_on": {
+    "groups": []
+  },
+  "settings": [
+    {
+      "type": "select",
+      "id": "scroll_direction",
+      "label": "t:sections.main-text-scroll.settings.scroll_direction.label",
+      "options": [
+        {
+          "value": "left",
+          "label": "←"
+        },
+        {
+          "value": "right",
+          "label": "→"
+        }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "select",
+      "id": "scroll_speed",
+      "label": "t:sections.main-text-scroll.settings.scroll_speed.label",
+      "default": "m",
+      "options": [
+        {
+          "label": "t:sections.main-text-scroll.settings.scroll_speed.options.s.label",
+          "value": "s"
+        },
+        {
+          "label": "t:sections.main-text-scroll.settings.scroll_speed.options.m.label",
+          "value": "m"
+        },
+        {
+          "label": "t:sections.main-text-scroll.settings.scroll_speed.options.f.label",
+          "value": "f"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "gap_space",
+      "label": "t:sections.all.gap.label",
+      "default": "m",
+      "options": [
+        {
+          "label": "t:sections.all.size.l",
+          "value": "l"
+        },
+        {
+          "label": "t:sections.all.size.m",
+          "value": "m"
+        },
+        {
+          "label": "t:sections.all.size.s",
+          "value": "s"
+        }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "hover_pause",
+      "label": "t:sections.main-text-scroll.settings.hover_pause.label",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "t:sections.header.settings.header__10.content"
+    },
+    {
+      "type": "select",
+      "id": "color_mode",
+      "label": "t:sections.all.color_mode.label",
+      "default": "light",
+      "options": [
+        {
+          "label": "t:sections.all.color_mode.options__1.label",
+          "value": "light"
+        },
+        {
+          "label": "t:sections.all.color_mode.options__2.label",
+          "value": "dark"
+        }
+      ]
+    },
+    {
+      "id": "color_style",
+      "label": "t:sections.all.color_style.label",
+      "type": "select_draw",
+      "default": "pure",
+      "visible_if": "{{ block.settings.color_mode == 'dark' }}",
+      "options": [
+        {
+          "label": "t:sections.all.color_style.transparent.label",
+          "value": "transparent"
+        },
+        {
+          "label": "t:sections.all.color_style.pure.label",
+          "value": "pure",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.dark-background}}",
+            "text": "#fff"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.neutral.label",
+          "value": "neutral",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.dark-neutral}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.dark-neutral}}",
+              20,
+              "{{settings.theme_color_scheme.dark-neutral}}",
+              20,
+              "#141414",
+              100
+            ],
+            "text": "#fff"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.brand.label",
+          "value": "brand",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.dark-brand}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.dark-brand}}",
+              70,
+              "{{settings.theme_color_scheme.dark-brand}}",
+              70,
+              "#141414",
+              100
+            ],
+            "text": "#fff"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.secondary.label",
+          "value": "secondary",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.dark-secondary}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.dark-secondary}}",
+              70,
+              "{{settings.theme_color_scheme.dark-secondary}}",
+              70,
+              "#141414",
+              100
+            ],
+            "text": "#fff"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.striking.label",
+          "value": "striking",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.dark-striking}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.dark-striking}}",
+              70,
+              "{{settings.theme_color_scheme.dark-striking}}",
+              70,
+              "#141414",
+              100
+            ],
+            "text": "#fff"
+          }
+        }
+      ]
+    },
+    {
+      "id": "color_style",
+      "label": "t:sections.all.color_style.label",
+      "type": "select_draw",
+      "default": "pure",
+      "visible_if": "{{ block.settings.color_mode == 'light' }}",
+      "options": [
+        {
+          "label": "t:sections.all.color_style.transparent.label",
+          "value": "transparent"
+        },
+        {
+          "label": "t:sections.all.color_style.pure.label",
+          "value": "pure",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.light-background}}",
+            "text": "#141414"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.neutral.label",
+          "value": "neutral",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.light-neutral}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.light-neutral}}",
+              40,
+              "{{settings.theme_color_scheme.light-neutral}}",
+              40,
+              "#fff",
+              100
+            ],
+            "text": "#141414"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.brand.label",
+          "value": "brand",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.light-brand}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.light-brand}}",
+              10,
+              "{{settings.theme_color_scheme.light-brand}}",
+              10,
+              "#fff",
+              100
+            ],
+            "text": "#141414"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.secondary.label",
+          "value": "secondary",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.light-secondary}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.light-secondary}}",
+              10,
+              "{{settings.theme_color_scheme.light-secondary}}",
+              10,
+              "#fff",
+              100
+            ],
+            "text": "#141414"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.striking.label",
+          "value": "striking",
+          "definition": {
+            "background": "{{settings.theme_color_scheme.light-striking}}",
+            "background_gradient": [
+              "{{settings.theme_color_scheme.light-striking}}",
+              10,
+              "{{settings.theme_color_scheme.light-striking}}",
+              10,
+              "#fff",
+              100
+            ],
+            "text": "#141414"
+          }
+        }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.gap.label"
+    },
+    {
+      "type": "select",
+      "id": "padding_top",
+      "label": "t:sections.recommendations.recently_viewed.chuiZhiShangBianJu",
+      "options": [
+        {
+          "value": "xl",
+          "label": "t:sections.recommendations.recently_viewed.teDa"
+        },
+        {
+          "value": "l",
+          "label": "t:sections.recommendations.recently_viewed.da"
+        },
+        {
+          "value": "m",
+          "label": "t:sections.recommendations.recently_viewed.zhong"
+        },
+        {
+          "value": "s",
+          "label": "t:sections.recommendations.recently_viewed.xiao"
+        },
+        {
+          "value": "xs",
+          "label": "t:sections.recommendations.recently_viewed.teXiao"
+        },
+        {
+          "value": "xxs",
+          "label": "t:sections.recommendations.recently_viewed.jiXiao"
+        },
+        {
+          "value": "none",
+          "label": "t:sections.recommendations.recently_viewed.no"
+        }
+      ],
+      "default": "m"
+    },
+    {
+      "type": "select",
+      "id": "padding_bottom",
+      "label": "t:sections.recommendations.recently_viewed.chuiZhiXiaBianJu",
+      "options": [
+        {
+          "value": "xl",
+          "label": "t:sections.recommendations.recently_viewed.teDa"
+        },
+        {
+          "value": "l",
+          "label": "t:sections.recommendations.recently_viewed.da"
+        },
+        {
+          "value": "m",
+          "label": "t:sections.recommendations.recently_viewed.zhong"
+        },
+        {
+          "value": "s",
+          "label": "t:sections.recommendations.recently_viewed.xiao"
+        },
+        {
+          "value": "xs",
+          "label": "t:sections.recommendations.recently_viewed.teXiao"
+        },
+        {
+          "value": "xxs",
+          "label": "t:sections.recommendations.recently_viewed.jiXiao"
+        },
+        {
+          "value": "none",
+          "label": "t:sections.recommendations.recently_viewed.no"
+        }
+      ],
+      "default": "m"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "text-content",
+      "name": "t:sections.main-text-scroll.blocks.text-content.name",
+      "limit": 10,
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "scroll_text",
+          "label": "t:sections.main-text-scroll.blocks.text-content.settings.scroll_text.label",
+          "default": "t:sections.main-text-scroll.blocks.text-content.settings.scroll_text.default"
+        },
+        {
+          "type": "select",
+          "id": "content_size",
+          "label": "t:sections.main-text-scroll.blocks.text-content.settings.content_size.label",
+          "default": "m",
+          "options": [
+            {
+              "label": "t:sections.recommendations.recently_viewed.xiao",
+              "value": "s"
+            },
+            {
+              "label": "t:sections.recommendations.recently_viewed.zhong",
+              "value": "m"
+            },
+            {
+              "label": "t:sections.recommendations.recently_viewed.da",
+              "value": "l"
+            },
+            {
+              "label": "t:sections.recommendations.recently_viewed.teDa",
+              "value": "xl"
+            },
+            {
+              "label": "t:sections.recommendations.recently_viewed.teTeDa",
+              "value": "xxl"
+            }
+          ]
+        },
+        {
+          "type": "url",
+          "id": "link_url",
+          "label": "t:sections.main-text-scroll.blocks.text-content.settings.link_url.label"
+        },
+        {
+          "default": "neutral",
+          "id": "color_style",
+          "label": "t:sections.image-banner.blocks.buttons.settings.color_style_button_2.label",
+          "type": "select",
+          "options": [
+            {
+              "label": "t:sections.all.color_style.neutral.label",
+              "value": "neutral"
+            },
+            {
+              "label": "t:sections.all.color_style.brand.label",
+              "value": "brand"
+            },
+            {
+              "label": "t:sections.all.color_style.secondary.label",
+              "value": "secondary"
+            },
+            {
+              "label": "t:sections.all.color_style.striking.label",
+              "value": "striking"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "image-content",
+      "name": "t:sections.all.image.label",
+      "limit": 10,
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "t:sections.main-text-scroll.blocks.text-content.settings.icon.label",
+          "default": "box",
+          "options": [
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__1.label",
+              "value": "none"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__2.label",
+              "value": "apple"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__3.label",
+              "value": "banana"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__4.label",
+              "value": "bottle"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__5.label",
+              "value": "box"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__6.label",
+              "value": "carrot"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__7.label",
+              "value": "chat_bubble"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__8.label",
+              "value": "check_mark"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__9.label",
+              "value": "clipboard"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__10.label",
+              "value": "dairy"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__11.label",
+              "value": "dairy_free"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__12.label",
+              "value": "dryer"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__13.label",
+              "value": "eye"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__14.label",
+              "value": "fire"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__15.label",
+              "value": "gluten_free"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__16.label",
+              "value": "heart"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__17.label",
+              "value": "iron"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__18.label",
+              "value": "leaf"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__19.label",
+              "value": "leather"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__20.label",
+              "value": "lightning_bolt"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__21.label",
+              "value": "lipstick"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__22.label",
+              "value": "lock"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__23.label",
+              "value": "map_pin"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__24.label",
+              "value": "nut_free"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__25.label",
+              "value": "pants"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__26.label",
+              "value": "paw_print"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__27.label",
+              "value": "pepper"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__28.label",
+              "value": "perfume"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__29.label",
+              "value": "plane"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__30.label",
+              "value": "plant"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__31.label",
+              "value": "price_tag"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__32.label",
+              "value": "question_mark"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__33.label",
+              "value": "recycle"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__34.label",
+              "value": "return"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__35.label",
+              "value": "ruler"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__36.label",
+              "value": "serving_dish"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__37.label",
+              "value": "shirt"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__38.label",
+              "value": "shoe"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__39.label",
+              "value": "silhouette"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__40.label",
+              "value": "snowflake"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__41.label",
+              "value": "star"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__42.label",
+              "value": "stopwatch"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__43.label",
+              "value": "truck"
+            },
+            {
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__44.label",
+              "value": "washing"
+            }
+          ]
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.all.image.label",
+          "info": "t:sections.all.image.info"
+        },
+        {
+          "unit": "px",
+          "default": 48,
+          "min": 32,
+          "max": 200,
+          "step": 1,
+          "id": "icon_width",
+          "label": "t:sections.multicolumn.settings.image_width.label",
+          "type": "range"
+        },
+        {
+          "type": "url",
+          "id": "link_url",
+          "label": "t:sections.main-text-scroll.blocks.text-content.settings.link_url.label"
+        },
+        {
+          "default": "neutral",
+          "id": "color_style",
+          "label": "t:sections.image-banner.blocks.buttons.settings.color_style_button_2.label",
+          "type": "select",
+          "options": [
+            {
+              "label": "t:sections.all.color_style.neutral.label",
+              "value": "neutral"
+            },
+            {
+              "label": "t:sections.all.color_style.brand.label",
+              "value": "brand"
+            },
+            {
+              "label": "t:sections.all.color_style.secondary.label",
+              "value": "secondary"
+            },
+            {
+              "label": "t:sections.all.color_style.striking.label",
+              "value": "striking"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.main-text-scroll.blocks.text-content.name",
+      "blocks": [
+        {
+          "type": "image-content"
+        },
+        {
+          "type": "text-content"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

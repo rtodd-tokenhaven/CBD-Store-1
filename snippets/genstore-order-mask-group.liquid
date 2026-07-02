@@ -1,0 +1,15 @@
+{% comment %}
+    -- type 
+{% endcomment %} 
+<div class="order-mask-group f-column gap-8">
+    {% if type == 'billing' or type == 'shipping' %}
+        <div class="order-mask" style="width: 180px"></div>
+        <div class="order-mask" style="width: 100%"></div>
+        <div class="order-mask" style="width: 130px"></div>
+    {% elsif type == 'contact' %}
+        <div class="order-mask" style="width: 120px"></div>
+        <div class="order-mask" style="width: 180px"></div>
+    {% else %} 
+        <div class="order-mask" style="width: 185px"></div>
+    {% endif %} 
+</div>

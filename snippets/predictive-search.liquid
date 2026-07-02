@@ -1,0 +1,124 @@
+{% comment %}theme-check-disable ImgLazyLoading{% endcomment %}
+<div id="genstore-section-predictive-search">
+  {%- liquid
+    assign result_products = predictive_search.resources.products
+    assign result_collections = predictive_search.resources.collections
+    assign result_pages = predictive_search.resources.pages
+    assign result_articles = predictive_search.resources.articles
+    assign first_column_results_size = result_products.size | plus: result_collections.size | plus: result_pages.size | plus: result_articles.size
+  -%}
+  <div id="predictive-search-results" role="listbox">
+    <div
+      id="predictive-search-results-groups-wrapper"
+      class="predictive-search__results-groups-wrapper"
+    >
+      {%- if result_products.size > 0 -%}
+        <div class="predictive-search__tip-wrapper">
+          <div class="predictive-search__tips-head">
+            <div class="predictive-search__tips-title">{{ 'templates.search.products' | t }}</div>
+          </div>
+          <ul class="predictive-search__products">
+            {%- for item in result_products limit: 4 -%}
+              <li class="predictive-search__products-item">
+                <a href="{{ item.url }}" class="predictive-search__products-item-a">
+                  <div class="predictive-search__products-img">
+                    {%- render 'square-img', image: item.featured_image -%}
+                  </div>
+                  <div class="predictive-search__products-info">
+                    <div class="predictive-search__products-title">{{ item.title }}</div>
+                    <div class="predictive-search__products-desc">{{ item.price | money }}</div>
+                  </div>
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endif -%}
+      {%- if result_collections.size > 0 -%}
+        <div class="predictive-search__tip-wrapper">
+          <div class="predictive-search__tips-head">
+            <div class="predictive-search__tips-title">{{ 'templates.search.collections' | t }}</div>
+          </div>
+          <ul class="predictive-search__collections">
+            {%- for item in result_collections limit: 2 -%}
+              <li class="predictive-search__collections-item">
+                <a href="{{ item.url }}" class="predictive-search__collections-item-a">
+                  <ul class="predictive-search__collections-products">
+                    <li class="predictive-search__collections-product-img">
+                      {%- render 'square-img', image: item.products[0].featured_image -%}
+                    </li>
+                    <li class="predictive-search__collections-product-img">
+                      {%- render 'square-img', image: item.products[1].featured_image -%}
+                    </li>
+                  </ul>
+                  <div class="predictive-search__collections-info">
+                    <div class="predictive-search__collections-title">{{ item.title }}</div>
+                    <div class="predictive-search__collections-desc">{{ 'templates.search.results_products_with_count.one' | t : count : item.all_products_count }}</div>
+                  </div>
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endif -%}
+      {%- if result_pages.size > 0 -%}
+        <div class="predictive-search__tip-wrapper">
+          <div class="predictive-search__tips-head">
+            <div class="predictive-search__tips-title">{{ 'templates.search.pages' | t }}</div>
+          </div>
+          <ul class="predictive-search__pages">
+            {%- for item in result_pages limit: 2 -%}
+              <li class="predictive-search__pages-item">
+                <a href="{{ item.url }}" class="predictive-search__pages-item-a">{{ item.title }}</a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endif -%}
+      {%- if result_articles.size > 0 -%}
+        <div class="predictive-search__tip-wrapper">
+          <div class="predictive-search__tips-head">
+            <div class="predictive-search__tips-title">{{ 'templates.search.articles' | t }}</div>
+          </div>
+          <ul class="predictive-search__articles">
+            {%- for item in result_articles limit: 2 -%}
+              <li class="predictive-search__articles-item">
+                <a href="{{ item.url }}" class="predictive-search__articles-item-a">
+                  <div class="predictive-search__articles-img">
+                    {%- assign accept_ratio = 2 | divided_by: 3 -%}
+                    {%- render 'square-img', image: item.image, accept_ratio: accept_ratio -%}
+                  </div>
+                  <div class="predictive-search__articles-info">
+                    <div class="predictive-search__articles-title">{{ item.title }}</div>
+                    <div class="predictive-search__articles-desc">{{ item.content | strip_html | strip }}</div>
+                  </div>
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endif -%}
+      {%- render 'loading-spinner', class: 'predictive-search__loading-state' -%}
+      <div class="split__line"></div>
+      <div id="predictive-search-option-search-keywords" class="predictive-search__search-for-button">
+        <button
+          class="predictive-search__item predictive-search__item__jump predictive-search__item--term link  h5 animate-arrow"
+          tabindex="-1"
+          role="option"
+          aria-selected="false"
+        >
+          <span data-predictive-search-search-for-text>
+            {{- 'templates.search.search_for' | t: terms: predictive_search.terms -}}
+          </span>
+          {% render 'genstore-svg',
+            icon_name: 'icon-down',
+            className: 'predictive-search__item__icon',
+            icon_weight: 'thiner'
+          %}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <span class="hidden" data-predictive-search-live-region-count-value> </span>
+</div>

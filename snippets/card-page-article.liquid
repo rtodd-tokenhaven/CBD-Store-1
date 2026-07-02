@@ -1,0 +1,37 @@
+﻿{% liquid
+	assign item = card
+	assign item_title = item.title | default: 'Untitled'
+	assign item_url = item.url | default: '#'
+	assign item_excerpt = item.excerpt | default: item.content | strip_html | truncatewords: 24
+	assign has_image = false
+	if item.image != blank
+		assign has_image = true
+	endif
+%}
+
+<article class="card-wrapper underline-links-hover">
+	<div class="card card--standard card--text">
+		<div class="card__inner ratio" style="--ratio-percent: 100%;">
+			{% if has_image %}
+				<div class="card__media">
+					{{
+						item.image
+						| image_url: width: 750
+						| image_tag: loading: 'lazy', sizes: '50vw', widths: '165, 360, 533, 750', alt: item_title
+					}}
+				</div>
+			{% endif %}
+			<div class="card__content">
+				<div class="card__information">
+					<h3 class="card__heading">
+						<a href="{{ item_url }}" class="full-unstyled-link">{{ item_title | escape }}</a>
+					</h3>
+					{% if item_excerpt != blank %}
+						<p class="article-card__excerpt rte-width">{{ item_excerpt }}</p>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+	</div>
+</article>
+

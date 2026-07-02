@@ -1,0 +1,87 @@
+{%- liquid
+  assign color_scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign color_mode = section.settings.color_mode | default: 'light'
+  assign color_style = section.settings.color_style | default: 'pure'
+
+  assign index = color_scheme | split: 'scheme-' | last
+  if color_mode == 'dark'
+    assign index = index | times: 2
+  else
+    assign index = index | times: 2 | minus: 1
+  endif
+  assign color_scheme = 'color-scheme-' | append: index
+
+  assign current_variant = product.selected_or_first_available_variant
+  if current_variant.featured_media
+    assign image = current_variant.featured_media
+  else
+    assign image = product.featured_image.src
+  endif
+%}
+<variants-edit-cart
+  data-section='{{ section.id }}'
+  data-product-id='{{ product.id }}'
+  data-update-url='false'
+  data-url='{{ product.url }}'
+  {% if section.settings.image_zoom == 'hover' %}
+    data-zoom-on-hover
+  {% endif %}
+  class='{{ color_scheme }} {{ color_mode }}  {{ color_style }} '>
+   <div class='product-info f-row  isolate gap-1800'>
+    <div class='product-edit-itemLeft'>
+      <img
+        src='{{ image |image_url:width:550  }}'
+        alt='{{ product.title | escape }}'
+        sizes='270px'
+        loading='lazy'>
+    </div>
+    <div class='product__info-wrapper {% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}'>
+      <section
+        id='ProductInfo-{{ section.id }}'
+        class='product__info-container  f-column gap-200'
+        data-section='{{ section.id }}'
+        data-url='{{ product.url }}'>
+        {% render 'genstore-heading'
+          , title: product.title %}
+        <div
+          id='price-{{ section.id }}'
+          role='status'
+          {{ block.genstore_attributes }}
+          class='product-content'>
+          {%- render 'price'
+            , product: product
+            , show_compare_at_price: true
+            , use_variant: true
+          -%}
+        </div>
+        {% assign product_form_id = 'product-form-' | append: section.id %}
+        {% render 'product-variant-picker'
+          , section_id: section.id
+          , product: product
+          , product_form_id: product_form_id
+          , picker_type: 'button'
+        %}
+        {% render 'genstore-quantity-input'
+          , max: 99999
+          , min: 1
+          , value: 1
+          , step: step
+          , product_form_id: product_form_id
+          , input_size: 'xl'
+        %}
+      </section>
+      <div class='product-action'>
+        <a class='genstore-btn primary xl brand cart-edit-btn m-t-800'>
+          <span class='avaliable'> {{ 'products.product.add_to_cart' | t }}</span>
+          <span class='disabled'>
+            {{ 'products.product.sold_out' | t }}
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script type='application/json' data-variants>
+    {{ product.variants | json }}
+  </script>
+</variants-edit-cart>

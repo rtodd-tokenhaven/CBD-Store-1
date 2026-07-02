@@ -1,0 +1,87 @@
+{%- comment -%}
+  组件名称：Accordion Item
+  参数：
+  - block: 区块对象（传递整个 block 或指定字段）
+  - default_open: 是否默认展开
+  - icon: 自定义图标（可选）
+  - container_type: 容器类型
+  - image 图片
+  - visual_image_key
+  - visual_title_key
+  - visual_content_key
+{%- endcomment -%}
+{{ 'component-accordion.css' | asset_url | stylesheet_tag }}
+{% liquid
+  assign width = width | default: 20
+  assign height = height | default: 20
+  assign img = img | default: ''
+  assign alt = alt | default: ''
+%}
+
+<div class="product__accordion accordion quick-add-hidden  {% if container_type == 'row-container' %}row-container
+            {% elsif container_type == 'no-container' %}no-container
+            {% endif %}" {{ block.genstore_attributes }}>
+  <details
+    id="Details-{{ block.id }}-{{ section.id }}"
+    {% if default_open %}
+    open{% endif %}>
+    <summary class="f-row align-center content-between gap-200 ">
+      <div class="summary__title f-row align-center gap-200 ">
+        {%- if icon != blank -%}
+          {% render 'icon-accordion'
+            , icon: icon,block:block,visual_icon_key:visual_icon_key %}
+        {%- endif -%}
+        {%- if icon == 'none' and image != blank -%}
+          <img
+            {{ '' | genstore_vkey: visual_image_key, block:block }}
+            width="{{ width }}"
+            height="{{ height }}"
+            src="{{ image | image_url: width: 100 }}"
+            alt="{{ alt | escape }}"
+            loading="lazy">
+        {%- endif -%}
+        <span class="collapsible-title genstore-text-letter-spacing"  {{ '' | genstore_vkey: key:visual_title_key, block:block }}
+>
+          {{ title }}
+        </span>
+      </div>
+      {% render 'genstore-svg'
+        , icon_name: 'icon-down'
+        , className: 'icon-caret' %}
+    </summary>
+    <div   {{ '' | genstore_vkey: key:visual_content_key, block:block }}
+ class="accordion__content genstore-text-letter-spacing rte {% if container_type == 'row-container' %} with-container {% endif %} " id="ProductAccordion-{{ block.id }}-{{ section.id }}">
+      {{ content }}
+    </div>
+  </details>
+</div>
+
+<style>
+  .accordion {
+    width: 100%;
+    margin: 0
+  }
+
+  .no-container {
+    border-bottom: none;
+  }
+
+  .row-container {
+    border-bottom: none;
+    border-radius: var(--borderRadius-200, 4px);
+    background: var(--color-neutral-background-40, rgba(0, 0, 0, .04));
+    padding: 0 var(--spacing-horizontal-600, 12px);
+    margin-bottom: var(--spacing-gap-400, 8px) !important
+  }
+
+  .faq-unit > .row-container:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  .with-container {
+    padding-bottom: var(--spacing-horizontal-600, 12px) !important;
+    margin-bottom: 0 !important;
+  }
+
+
+</style>

@@ -1,0 +1,33 @@
+{% comment %}
+  -- 电话号码输入组件（基于 genstore-select）
+  -- 这是一个封装好的电话输入组件，使用 /regionInfo API
+  
+  参数：
+  -- label: 标签文本
+  -- input_name: 字段名（电话号码）
+  -- input_id: input ID
+  -- value: 电话号码值
+  -- selected_code: 默认区号 (如 '+86')
+  -- is_required: 是否必填
+  -- is_readonly: 只读模式
+  -- className: 自定义类名
+{% endcomment %}
+
+{% render 'genstore-select',
+  label: label,
+  input_name: input_name,
+  input_id: input_id,
+  value: value,
+  selected_value: selected_code,
+  selected_label: selected_code,
+  api_url: '/regionInfo',
+  value_field: 'phoneNumberPrefix',
+  label_field: 'name',
+  search_fields: 'name,code,phoneNumberPrefix,otherLanguage',
+  search_placeholder: 'Search country...',
+  option_template: 'phone-code',
+  enable_search: true,
+  is_required: is_required,
+  is_readonly: is_readonly,
+  className: className
+%}

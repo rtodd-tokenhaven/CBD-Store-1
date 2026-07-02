@@ -1,0 +1,186 @@
+{%- comment -%}
+  snippets/ai-product-card.liquid — 产品卡片固定骨架
+
+  所有 HTML 结构由系统提供，AI 只需为 .ai-card-* class 编写 CSS。
+  不需要的元素通过 CSS display:none 隐藏即可（默认已隐藏）。
+
+  参数:
+    product  — 必填，产品对象
+    index    — 可选，用于动画延迟（forloop.index）
+    block    — 可选，block 对象（用于 genstore_vkey）
+{%- endcomment -%}
+
+{%- liquid
+  assign current_variant = product.selected_or_first_available_variant
+  assign has_discount = false
+  if current_variant.compare_at_price > current_variant.price
+    assign has_discount = true
+  endif
+  assign has_second_image = false
+  if product.images.size > 1
+    assign has_second_image = true
+  endif
+  assign is_new = false
+  for tag in product.tags
+    if tag == 'new' or tag == 'New'
+      assign is_new = true
+    endif
+  endfor
+-%}
+
+<ai-product-card class="block min-w-0">
+  {%- comment -%} 数据层：供 web component 读取 {%- endcomment -%}
+  <script type="application/json" data-product-variants>
+    {{ product.variants | json }}
+  </script>
+  <script type="application/json" data-product-options>
+    {{ product.options_with_values | json }}
+  </script>
+
+  <div
+    class="ai-card"
+    data-product-id="{{ product.id }}"
+    style="height:100%; {% if index %}--card-index: {{ index }}  {% endif %}"
+  >
+    <div class="ai-card__inner">
+      {%- comment -%} ===== 正面 ===== {%- endcomment -%}
+      <div class="ai-card__front">
+        {%- comment -%} 图片区 {%- endcomment -%}
+        <div class="ai-card__media relative overflow-hidden" {{ '' | genstore_vkey: key:'image', block:block }}>
+          <a class="ai-card__media-link w-full h-full flex" href="{{ product.url }}">
+            <img
+              class="ai-card__img w-full h-full object-cover"
+              src="{{ product.featured_image | image_url: width: 800 }}"
+              alt="{{ product.featured_image.alt | default: product.title }}"
+              loading="lazy"
+            >
+            {%- if has_second_image -%}
+              <img
+                class="ai-card__img--hover absolute inset-0 w-full h-full object-cover"
+                src="{{ product.images[1] | image_url: width: 800 }}"
+                alt="{{ product.title }} - hover"
+                loading="lazy"
+              >
+            {%- endif -%}
+          </a>
+
+          {%- comment -%} 图片上的浮动元素 {%- endcomment -%}
+          {%- if has_discount -%}
+            <span class="ai-card__badge">
+              {%- render 'ai-computed-discount',
+                compare_at_price: current_variant.compare_at_price,
+                price: current_variant.price,
+                badge_type: 'sale',
+                badge_format: 'percentage'
+              -%}
+            </span>
+          {%- endif -%}
+          {%- if is_new -%}
+            <span class="ai-card__badge--new">New</span>
+          {%- endif -%}
+
+          <button class="ai-card__wishlist" aria-label="Add to wishlist" type="button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </button>
+
+          {%- comment -%} 悬停操作层 {%- endcomment -%}
+          <div class="ai-card__overlay absolute inset-x-0 bottom-0">
+            <ai-quick-add-cart
+              product-id="{{ product.id }}"
+              variant-id="{{ current_variant.id }}"
+              variant-mode="modal"
+              product-title="{{ product.title | escape }}"
+              product-image="{{ product.featured_image | image_url: width: 600 }}"
+            >
+              <button class="ai-card__overlay-btn" slot="add-btn" type="button">Add to Cart</button>
+            </ai-quick-add-cart>
+          </div>
+        </div>
+
+        {%- comment -%} 信息区 {%- endcomment -%}
+        <div class="ai-card__info flex flex-col">
+          <a class="ai-card__info-link" href="{{ product.url }}">
+            {%- if product.vendor != blank -%}
+              <span class="ai-card__vendor">{{ product.vendor }}</span>
+            {%- endif -%}
+
+            <span class="ai-card__title" {{ '' | genstore_vkey: key:'title', block:block }}>{{ product.title }}</span>
+
+            {% render 'ai-price', product: product, use_variant: true, show_compare_at_price: true %}
+          </a>
+
+          {%- comment -%} 色卡 {%- endcomment -%}
+          {%- if product.options_by_name.Color -%}
+            <div class="ai-card__swatches flex flex-wrap gap-1">
+              {%- for value in product.options_by_name.Color.values limit: 5 -%}
+                <span class="ai-card__swatch" title="{{ value }}">
+                  <span class="ai-card__swatch-dot" style="background-color: {{ value | downcase }}"></span>
+                </span>
+              {%- endfor -%}
+              {%- if product.options_by_name.Color.values.size > 5 -%}
+                <span class="ai-card__swatch-more">+{{ product.options_by_name.Color.values.size | minus: 5 }}</span>
+              {%- endif -%}
+            </div>
+          {%- endif -%}
+
+          {%- comment -%} 评分 {%- endcomment -%}
+          {%- if product.metafields.reviews.rating.value -%}
+            <div class="ai-card__rating flex items-center gap-1">
+              <span class="ai-card__stars" aria-label="{{ product.metafields.reviews.rating.value }} out of 5">
+                {%- assign rating_value = product.metafields.reviews.rating.value | round -%}
+                {%- for i in (1..5) -%}
+                  {%- if i <= rating_value -%}★{%- else -%}☆{%- endif -%}
+                {%- endfor -%}
+              </span>
+              {%- if product.metafields.reviews.rating_count -%}
+                <span class="ai-card__reviews-count">({{ product.metafields.reviews.rating_count }})</span>
+              {%- endif -%}
+            </div>
+          {%- endif -%}
+
+          {%- comment -%} 信息区内的加购按钮（与 overlay 版二选一，AI 通过 CSS 控制显隐） {%- endcomment -%}
+          <div class="ai-card__add-wrap">
+            <ai-quick-add-cart
+              product-id="{{ product.id }}"
+              variant-id="{{ current_variant.id }}"
+              variant-mode="modal"
+              product-title="{{ product.title | escape }}"
+              product-image="{{ product.featured_image | image_url: width: 600 }}"
+            >
+              <button class="ai-card__add-btn" slot="add-btn" type="button">Add to Cart</button>
+            </ai-quick-add-cart>
+          </div>
+        </div>
+      </div>
+
+      {%- comment -%} ===== 背面（翻转卡片时显示） ===== {%- endcomment -%}
+      <div class="ai-card__back absolute inset-0 flex flex-col">
+        {%- if product.description != blank -%}
+          <p class="ai-card__description">{{ product.description | strip_html | truncate: 120 }}</p>
+        {%- endif -%}
+
+        {%- if product.tags.size > 0 -%}
+          <ul class="ai-card__features flex flex-col">
+            {%- for tag in product.tags limit: 3 -%}
+              <li class="ai-card__feature-item">{{ tag }}</li>
+            {%- endfor -%}
+          </ul>
+        {%- endif -%}
+
+        <a class="ai-card__back-link" href="{{ product.url }}">View Details</a>
+
+        <ai-quick-add-cart
+          product-id="{{ product.id }}"
+          variant-id="{{ current_variant.id }}"
+          variant-mode="modal"
+          product-title="{{ product.title | escape }}"
+          product-image="{{ product.featured_image | image_url: width: 600 }}"
+        >
+          <button class="ai-card__back-btn" slot="add-btn" type="button">Add to Cart</button>
+        </ai-quick-add-cart>
+      </div>
+    </div>
+  </div>
+</ai-product-card>

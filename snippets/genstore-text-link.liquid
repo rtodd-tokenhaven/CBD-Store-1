@@ -1,0 +1,41 @@
+{% comment %}
+   -- text 文本
+   -- text_size 文本大小
+   no_letter_spacing 无字间距 默认有
+  -- block 
+  -- visual_text_key
+  -- visual_link_key
+  -- vkey_group
+{% endcomment %}
+
+{% liquid
+  assign text_size = text_size | default: 'm'
+  assign suffix_slot_content = suffix_content | default: ''
+  assign pre_slot_content = pre_content | default: ''
+  assign is_disabled = is_disabled | default: false
+  assign tag_type = tag_type | default: 'a'
+  assign empty_url = ''
+  if  url == blank and tag_type =='a'
+     assign  empty_url = 'prevent-click'
+  endif
+  assign key_group = ''
+  if vkey_group != blank
+      assign key_group = vkey_group
+  endif 
+  assign  visual_block = ''
+  if block != blank
+    assign  visual_block = block
+  endif    
+%}
+ <div
+  class="genstore-text-link  {% if no_letter_spacing == blank %} genstore-text-letter-spacing {% endif %} {{ text_size }} {{ empty_url }} {% if is_disabled == true %}disabled{% endif %} {{ className }} f-row align-center gap-200">
+  {% if pre_slot_content != blank %}
+    {{ pre_slot_content }}
+  {% endif %}
+  <{{ tag_type }} href="{{ url }}" {{ '' | genstore_vkey: key:visual_text_key, block:visual_block,group:key_group | genstore_vkey: key:visual_link_key, block:visual_block,group:key_group }} class="{{ empty_url }}" {% if empty_url %} onclick="event.preventDefault();" {% endif %}>
+    {{ text }}
+  </{{ tag_type }}>
+  {% if slot_content != blank %}
+    {{ slot_content }}
+  {% endif %}
+</div>

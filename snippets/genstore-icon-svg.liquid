@@ -1,0 +1,10 @@
+{%liquid
+  assign visual_block = ''
+  if block != blank
+    assign visual_block = block
+  endif
+%}
+{%- if icon != 'none' -%}
+  {%- assign file = icon | replace: '_', '-' | prepend: 'icon-' | append: '.svg' -%}
+  <span class="svg-wrapper" {{ '' | genstore_vkey: key:visual_icon_key,block:visual_block,value: icon }}>{{ file | inline_asset_content }}</span>
+{%- endif -%}

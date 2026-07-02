@@ -1,0 +1,118 @@
+{% comment %}
+  Genstore Checkbox Group Component (Web Component)
+
+  参数说明:
+  - options: 选项列表，格式为逗号或分号分隔的字符串，每个选项格式为 "label:id" 或 "label:id:disabled"
+    例如: "选项1:opt1,选项2:opt2,选项3:opt3:true"
+  - selected_ids: 预选的 id，逗号分隔的字符串，例如: "opt1,opt2"
+  - className: 自定义容器class
+  - disabled: 是否禁用整个组（可选）
+  - layout: 布局方式，可选值: 'vertical'(默认) 或 'horizontal'
+  - size: 尺寸，可选值: 'small', 'medium'(默认), 'large'
+  - id: 组件的唯一ID（可选）
+  - scope: 作用域标识（可选）
+  - enable_all: 是否启用全部选项（可选）
+  使用示例:
+  {% render 'genstore-checkbox-group',
+    options: '接收营销邮件:email,接收短信通知:sms,接收推送通知:push',
+    selected_ids: 'email,push',
+    layout: 'vertical',
+    className: 'my-checkbox-group'
+  %}
+
+  JavaScript API:
+  - getSelectedIds(): 获取选中的 id 数组
+  - setSelectedIds(ids): 设置选中的 id
+  - clearSelection(): 清空选中
+  - selectAll(): 全选
+  - toggleId(id): 切换指定 id 的选中状态
+  - setDisabled(disabled): 启用/禁用整个组
+
+  事件:
+  - change: 当选中状态改变时触发，event.detail 包含 { id, checked, selectedIds }
+{% endcomment %}
+
+{% liquid
+  assign group_class = 'genstore-checkbox-group'
+  assign size_class = size | default: 'medium'
+  assign is_disabled = disabled | default: false
+  assign component_id = id | default: ''
+
+  if className
+    assign group_class = group_class | append: ' ' | append: className
+  endif
+
+  assign group_class = group_class | append: ' genstore-checkbox-group--' | append: size_class
+
+  assign selected_array = selected_ids | split: ','
+  assign selected_map = ''
+  for selected_id in selected_array
+    assign trimmed_id = selected_id | strip
+    assign selected_map = selected_map | append: '|' | append: trimmed_id | append: '|'
+  endfor
+  assign all_label = 'featured-faq.filter.default.label' | t
+  if enable_all
+    assign options = all_label | append: ':all,' | append: options
+  endif
+%}
+
+<genstore-checkbox-group
+  data-enable-all='{{ enable_all }}'
+  class='genstore-selection-group {{ layout | default: 'vertical' }} {{ size | default: 'medium' }}'
+  {% if component_id != '' %}
+    id='{{ component_id }}'
+  {% endif %}
+  {% if scope %}
+    data-scope='{{ scope }}'
+  {% endif %}
+>
+  {% assign option_separator = ',' %}
+  {% if options contains ';' %}
+    {% assign option_separator = ';' %}
+  {% endif %}
+
+  {% assign options_array = options | split: option_separator %}
+
+  {% for option_str in options_array %}
+    {% assign option_parts = option_str | split: ':' %}
+    {% assign option_label = option_parts[0] | strip %}
+    {% assign checkbox_id = option_parts[1] | strip | default: option_label %}
+    {% assign option_disabled = option_parts[2] | strip | default: 'false' %}
+
+    {% assign is_checked = false %}
+    {% assign check_pattern = '|' | append: checkbox_id | append: '|' %}
+    {% if selected_map contains check_pattern %}
+      {% assign is_checked = true %}
+    {% endif %}
+
+    {% assign is_option_disabled = false %}
+    {% if is_disabled or option_disabled == 'true' %}
+      {% assign is_option_disabled = true %}
+    {% endif %}
+
+    <div class='genstore-selection-item genstore-checkbox-item'>
+      <input
+        type='checkbox'
+        id='{{ checkbox_id }}'
+        class='genstore-checkbox-input'
+        data-input-id='{{ checkbox_id }}'
+        {% if is_checked %}
+          checked
+        {% endif %}
+        {% if is_option_disabled %}
+          disabled
+        {% endif %}
+      >
+      <label for='{{ checkbox_id }}' class='genstore-checkbox-label f-row align-center gap-8'>
+        <span class='genstore-checkbox-box f-row align-center content-center'>
+          {% render 'genstore-svg',
+            icon_weight: 'fill',
+            icon_name: 'icon-success',
+            className: 'genstore-checkbox-icon'
+          %}
+        </span>
+        <span class='genstore-checkbox-text'>{{ option_label }}</span>
+      </label>
+    </div>
+  {% endfor %}
+</genstore-checkbox-group>

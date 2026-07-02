@@ -1,0 +1,76 @@
+{% assign active_values_number = 0 %}
+
+<div id='facets-selected-container'>
+  <div class='facets-selected-values'>
+    {%- for filter in filters -%}
+      {%- for value in filter.active_values -%}
+        {% assign active_values_number = active_values_number | plus: 1 %}
+        <div 
+          class='item'
+          onclick='removeSelectedValue(event)'
+          data-type='{{ filter.param_name }}'
+          data-id='{{ value.value }}'
+        >
+          <span class='label'>{{- value.label -}}</span>
+          {% render 'genstore-icon', icon_name: 'icon-filter-value-close' %}
+        </div>
+      {%- endfor -%}
+      {%- if filter.type == 'price_range' -%}
+        {% assign min = filter.min_value.value %}
+        {% assign max = filter.max_value.value %}
+        {%- if min != null or max != null -%}
+          {% assign active_values_number = active_values_number | plus: 1 %}
+          {% if min != null and max != null %}
+            {% assign min_formatted = min | money %}
+            {% assign max_formatted = max | money %}
+            {% assign label = min_formatted | append: ' ~ ' | append: max_formatted %}
+            {% assign id = min | append: '-' | append: max %}
+            {% assign type = filter.param_name %}
+          {% elsif min != null %}
+            {% assign label = min | money %}
+            {% assign id = min %}
+            {% assign type = filter.param_name | append: '.gte' %}
+          {% elsif max != null %}
+            {% assign label = max | money %}
+            {% assign id = max %}
+            {% assign type = filter.param_name | append: '.lte' %}
+          {% endif %}
+          <div 
+            class='item'
+            onclick='removeSelectedValue(event)'
+            data-type='{{ type }}'
+            data-id='{{ id }}'
+          >
+            <span class='label'>{{- label -}}</span>
+            {% render 'genstore-icon', icon_name: 'icon-filter-value-close' %}
+          </div>
+        {%- endif -%}
+      {%- endif -%}
+    {%- endfor -%}
+    {% if active_values_number > 1 %}
+      <filters-remove-all>
+        <div class='remove-all'>{{ 'products.facets.clear_all' | t -}}</div>
+      </filters-remove-all>
+    {% endif %}
+    {%- if active_values_number > 0 -%}
+      <div class="facets-selected-values__nul"></div>
+    {%- endif -%}
+  </div>
+</div>
+
+<script>
+  function removeSelectedValue(e) {
+    e.preventDefault();
+    const query = new URLSearchParams(location.search);
+    const type = e.currentTarget.dataset.type,
+      id = e.currentTarget.dataset.id;
+    if (type.includes('price') && id.includes('-')) {
+      query.delete(`${type}.gte`, id.split('-')[0]);
+      query.delete(`${type}.lte`, id.split('-')[1]);
+    } else {
+      query.delete(`${e.currentTarget.dataset.type}`, e.currentTarget.dataset.id);
+    }
+    const searchParams = query.toString();
+    FacetFiltersForm.renderPage(searchParams, e);
+  }
+</script>

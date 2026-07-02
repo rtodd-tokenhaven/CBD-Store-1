@@ -1,0 +1,28 @@
+{% comment %}
+  -- icon_name 图标名称
+  -- icon_style 风格
+  general 通用
+  popular 潮流
+  frendly 亲和
+
+  -- icon_weight 粗细
+  bold 粗
+  normal 常规
+  thin 细
+  thinner 纤细
+  fill 填充
+{% endcomment %}
+{% liquid
+  assign icon_weigth = icon_weight
+  if icon_weigth == blank
+    assign icon_weight = settings.icon_weight | default: 'normal'
+  endif
+  assign icon_style = icon_style
+  if icon_style == blank
+    assign icon_style = settings.icon_style | default: 'general'
+  endif
+  assign icon_name = icon_name | append: '-' | append: icon_style | append: '-' | append: icon_weight | append: '.svg'
+%}
+<span class='svg-wrapper {{ className }}' style='flex-shrink: 0;' {{ attributes }}>
+  {{ icon_name | inline_asset_content }}
+</span>

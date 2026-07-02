@@ -1,0 +1,29 @@
+{
+  "sections": {
+    "form": {
+      "settings": {
+        "heading": "",
+        "padding_top": "none",
+        "color_scheme": "scheme-1",
+        "padding_bottom": "m",
+        "heading_size": "h1",
+        "color_mode": "light",
+        "color_style": "pure"
+      },
+      "type": "contact-form"
+    },
+    "main": {
+      "settings": {
+        "padding_top": "m",
+        "padding_bottom": "m",
+        "alignment": "center",
+        "color_style": "pure"
+      },
+      "type": "main-page"
+    }
+  },
+  "order": [
+    "main",
+    "form"
+  ]
+}

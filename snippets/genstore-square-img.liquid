@@ -1,0 +1,29 @@
+{% liquid
+  assign ratio = accept_ratio | default: '1' | divided_by: 0.01
+%}
+
+<div
+  class="genstore-square-img"
+  style="padding-top:{{ ratio }}%"
+>
+  {%- if image != blank -%}
+    <img
+      src="{{ image | image_url }}"
+      width="{{ image.width | default: '' }}"
+      height="{{ image.height | default: '' }}"
+      alt="{{ image.alt | default: '' }}"
+      class="genstore-square-img__img"
+      loading="lazy"
+    >
+  {%- endif -%}
+  {%- if image == blank -%}
+    <img
+      src="{{ 'product-mock.png' | asset_url }}"
+      width="200"
+      height="200"
+      alt=""
+      class="genstore-square-img__img"
+      loading="lazy"
+    >
+  {% endif %}
+</div>

@@ -1,0 +1,29 @@
+{% comment %}
+ -- input_type: text or number,email
+{% endcomment %}
+{% liquid
+  assign type = input_type | default: 'text'
+  assign min = min | default: 0
+  assign max = max | default: 1000
+%}
+<div class="genstore-input f-row align-center xl {{ className }}">
+  <input placeholder=" " type={{ type }}
+  id="{{ input_id }}"
+         name="{{ input_name | escape }}"
+         min="{{ min }}"
+         max="{{ max }}"
+         inputmode="decimal"
+         data-pattern="\d| |,|\."
+         value="{{ value }}"
+  />
+  <label>{{ label }}</label>
+  {% if extra_content != blank %}
+    {{ extra_content }}
+  {% else %}
+    <span class="f-row align-center content-center icon remove"
+          {% if remove_url != blank %}data-remove-url="{{ remove_url }}" {% endif %}>
+    {% render 'genstore-icon', icon_name: 'icon-close-small' %}
+  </span>
+  {% endif %}
+
+</div>

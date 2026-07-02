@@ -1,0 +1,437 @@
+{% capture content %}
+  {%- form 'customer', id: 'ContactFooter' -%}
+    <news-letter
+      class="page-width  f-column align-center content-center center news-letter-container"
+      data-success-tip="{{ 'newsletter.success' | t }}"
+      >
+      <div class="f-column gap-300">
+        {%- for block in section.blocks -%}
+          {%- case block.type -%}
+            {%- when '@app' -%}
+              {% render block %}
+            {%- when 'heading' -%}
+              {% render 'genstore-heading',
+                title: block.settings.heading,
+                heading_size: block.settings.heading_size,
+                className: 'newsletter__heading',
+                genstore_attributes: block.genstore_attributes,
+                block:block,
+                visual_text_key:'heading'
+              %}
+            {%- when 'sub_heading' -%}
+              {% render 'genstore-text-block',className: "rich-text-content section-reset" , text: block.settings.text, text_size: block.settings.text_size, genstore_attributes: block.genstore_attributes , block:block,
+                visual_text_key:'text'%}
+          {%- endcase -%}
+        {%- endfor -%}
+      </div>
+
+      {% capture content %}
+        <div class="submit">
+          <span>{{"customer.login_page.submit" | t}}</span>
+          {% render 'loading-spinner', class: 'newsletter__loading-spinner hidden' %}
+        </div>
+      {% endcapture %}
+      {% assign email = 'recipient.form.email' | t %}
+      {% render 'genstore-input-1', type: 'email', label: email, extra_content: content, className: 'newsletter__input' %}
+    </news-letter>
+  {% endform %}
+
+{% endcapture %}
+{% render 'genstore-container',
+  section: section,
+  color_scheme: settings.theme_color_scheme,
+  color_mode: section.settings.color_mode,
+  color_style: section.settings.color_style,
+  content: content
+%}
+
+{% schema %}
+{
+  "name": "t:sections.newsletter.name",
+  "tag": "section",
+  "class": "section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "default": "light",
+      "options": [
+        {
+          "label": "t:sections.all.color_mode.options__1.label",
+          "value": "light"
+        },
+        {
+          "label": "t:sections.all.color_mode.options__2.label",
+          "value": "dark"
+        }
+      ],
+      "id": "color_mode",
+      "label": "t:sections.all.color_mode.label",
+      "type": "select"
+    },
+    {
+      "id": "color_style",
+      "label": "t:sections.all.color_style.label",
+      "type": "select_draw",
+      "default": "pure",
+      "visible_if": "{{ block.settings.color_mode == 'dark' }}",
+      "options": [
+        {
+          "label": "t:sections.all.color_style.transparent.label",
+          "value": "transparent"
+        },
+        {
+          "label": "t:sections.all.color_style.pure.label",
+          "value": "pure",
+          "definition": {
+            "background": "{{ settings.theme_color_scheme.dark-background }}",
+            "text": "#fff"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.neutral.label",
+          "value": "neutral",
+          "definition": {
+            "background": "{{ settings.theme_color_scheme.dark-neutral }}",
+            "background_gradient": [
+              "{{ settings.theme_color_scheme.dark-neutral }}",
+              20,
+              "{{ settings.theme_color_scheme.dark-neutral }}",
+              20,
+              "#141414",
+              100
+            ],
+            "text": "#fff"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.brand.label",
+          "value": "brand",
+          "definition": {
+            "background": "{{ settings.theme_color_scheme.dark-brand }}",
+            "background_gradient": [
+              "{{ settings.theme_color_scheme.dark-brand }}",
+              70,
+              "{{ settings.theme_color_scheme.dark-brand }}",
+              70,
+              "#141414",
+              100
+            ],
+            "text": "#fff"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.secondary.label",
+          "value": "secondary",
+          "definition": {
+            "background": "{{ settings.theme_color_scheme.dark-secondary }}",
+            "background_gradient": [
+              "{{ settings.theme_color_scheme.dark-secondary }}",
+              70,
+              "{{ settings.theme_color_scheme.dark-secondary }}",
+              70,
+              "#141414",
+              100
+            ],
+            "text": "#fff"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.striking.label",
+          "value": "striking",
+          "definition": {
+            "background": "{{ settings.theme_color_scheme.dark-striking }}",
+            "background_gradient": [
+              "{{ settings.theme_color_scheme.dark-striking }}",
+              70,
+              "{{ settings.theme_color_scheme.dark-striking }}",
+              70,
+              "#141414",
+              100
+            ],
+            "text": "#fff"
+          }
+        }
+      ]
+    },
+    {
+      "id": "color_style",
+      "label": "t:sections.all.color_style.label",
+      "type": "select_draw",
+      "default": "pure",
+      "visible_if": "{{ block.settings.color_mode == 'light' }}",
+      "options": [
+        {
+          "label": "t:sections.all.color_style.transparent.label",
+          "value": "transparent"
+        },
+        {
+          "label": "t:sections.all.color_style.pure.label",
+          "value": "pure",
+          "definition": {
+            "background": "{{ settings.theme_color_scheme.light-background }}",
+            "text": "#141414"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.neutral.label",
+          "value": "neutral",
+          "definition": {
+            "background": "{{ settings.theme_color_scheme.light-neutral }}",
+            "background_gradient": [
+              "{{ settings.theme_color_scheme.light-neutral }}",
+              40,
+              "{{ settings.theme_color_scheme.light-neutral }}",
+              40,
+              "#fff",
+              100
+            ],
+            "text": "#141414"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.brand.label",
+          "value": "brand",
+          "definition": {
+            "background": "{{ settings.theme_color_scheme.light-brand }}",
+            "background_gradient": [
+              "{{ settings.theme_color_scheme.light-brand }}",
+              10,
+              "{{ settings.theme_color_scheme.light-brand }}",
+              10,
+              "#fff",
+              100
+            ],
+            "text": "#141414"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.secondary.label",
+          "value": "secondary",
+          "definition": {
+            "background": "{{ settings.theme_color_scheme.light-secondary }}",
+            "background_gradient": [
+              "{{ settings.theme_color_scheme.light-secondary }}",
+              10,
+              "{{ settings.theme_color_scheme.light-secondary }}",
+              10,
+              "#fff",
+              100
+            ],
+            "text": "#141414"
+          }
+        },
+        {
+          "label": "t:sections.all.color_style.striking.label",
+          "value": "striking",
+          "definition": {
+            "background": "{{ settings.theme_color_scheme.light-striking }}",
+            "background_gradient": [
+              "{{ settings.theme_color_scheme.light-striking }}",
+              10,
+              "{{ settings.theme_color_scheme.light-striking }}",
+              10,
+              "#fff",
+              100
+            ],
+            "text": "#141414"
+          }
+        }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "options": [
+        {
+          "label": "t:sections.all.padding.options__1.label",
+          "value": "none"
+        },
+        {
+          "label": "t:sections.all.padding.options__2.label",
+          "value": "xxs"
+        },
+        {
+          "label": "t:sections.all.padding.options__3.label",
+          "value": "xs"
+        },
+        {
+          "label": "t:sections.all.padding.options__4.label",
+          "value": "s"
+        },
+        {
+          "label": "t:sections.all.padding.options__5.label",
+          "value": "m"
+        },
+        {
+          "label": "t:sections.all.padding.options__6.label",
+          "value": "l"
+        },
+        {
+          "label": "t:sections.all.padding.options__7.label",
+          "value": "xl"
+        }
+      ],
+      "id": "padding_top",
+      "label": "t:sections.all.padding.padding_top",
+      "type": "select",
+      "default": "s"
+    },
+    {
+      "options": [
+        {
+          "label": "t:sections.all.padding.options__1.label",
+          "value": "none"
+        },
+        {
+          "label": "t:sections.all.padding.options__2.label",
+          "value": "xxs"
+        },
+        {
+          "label": "t:sections.all.padding.options__3.label",
+          "value": "xs"
+        },
+        {
+          "label": "t:sections.all.padding.options__4.label",
+          "value": "s"
+        },
+        {
+          "label": "t:sections.all.padding.options__5.label",
+          "value": "m"
+        },
+        {
+          "label": "t:sections.all.padding.options__6.label",
+          "value": "l"
+        },
+        {
+          "label": "t:sections.all.padding.options__7.label",
+          "value": "xl"
+        }
+      ],
+      "id": "padding_bottom",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": "s",
+      "type": "select"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "heading",
+      "name": "t:sections.newsletter.blocks.heading.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "heading",
+          "default": "t:sections.newsletter.blocks.heading.settings.heading.default",
+          "label": "t:sections.newsletter.blocks.heading.settings.heading.label"
+        },
+        {
+          "default": "m",
+          "options": [
+            {
+              "label": "t:sections.all.size.xxs",
+              "value": "xxs"
+            },
+            {
+              "label": "t:sections.all.size.xs",
+              "value": "xs"
+            },
+            {
+              "label": "t:sections.all.size.s",
+              "value": "s"
+            },
+            {
+              "label": "t:sections.all.size.m",
+              "value": "m"
+            },
+            {
+              "label": "t:sections.all.size.l",
+              "value": "l"
+            },
+            {
+              "label": "t:sections.all.size.xl",
+              "value": "xl"
+            },
+            {
+              "label": "t:sections.all.size.xxl",
+              "value": "xxl"
+            }
+          ],
+          "id": "heading_size",
+          "label": "t:sections.all.heading_size.label",
+          "type": "select"
+        }
+      ]
+    },
+    {
+      "type": "sub_heading",
+      "name": "t:sections.all.sub_heading.label",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "text",
+          "default": "t:sections.newsletter.blocks.paragraph.settings.paragraph.default",
+          "label": "t:sections.all.sub_heading.label"
+        },
+        {
+          "type": "select",
+          "id": "text_size",
+          "options": [
+            {
+              "label": "t:sections.all.size.none",
+              "value": "none"
+            },
+            {
+              "label": "t:sections.all.size.xxs",
+              "value": "xxs"
+            },
+            {
+              "label": "t:sections.all.size.xs",
+              "value": "xs"
+            },
+            {
+              "label": "t:sections.all.size.s",
+              "value": "s"
+            },
+            {
+              "label": "t:sections.all.size.m",
+              "value": "m"
+            },
+            {
+              "label": "t:sections.all.size.l",
+              "value": "l"
+            },
+            {
+              "label": "t:sections.all.size.xl",
+              "value": "xl"
+            }
+          ],
+          "default": "s",
+          "label": "t:sections.newsletter.blocks.heading.settings.text_size.label"
+        }
+      ]
+    },
+    {
+      "type": "@app"
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.newsletter.presets.name",
+      "blocks": [
+        {
+          "type": "heading"
+        },
+        {
+          "type": "sub_heading"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

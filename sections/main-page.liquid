@@ -1,0 +1,171 @@
+{{ 'section-main-page.css' | asset_url | stylesheet_tag }}
+
+{% capture content %}
+  <div class="page-width  {{ section.settings.alignment }} f-column gap-300">
+    <div class="heading-l genstore-heading-letter-spacing">{{ page.title }}</div>
+    <div class="rich-text-content genstore-text-letter-spacing">{{ page.content }}</div>
+  </div>
+{% endcapture %}
+
+{% render 'genstore-container',
+  content: content,
+  section: section,
+  color_scheme: settings.theme_color_scheme,
+  color_mode: section.settings.color_mode,
+  color_style: section.settings.color_style
+%}
+
+{% schema %}
+{
+  "name": "t:sections.main-page.name",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "select",
+      "id": "alignment",
+      "default": "left",
+      "label": "t:sections.all.alignment.label",
+      "options": [
+        {
+          "label": "t:sections.all.alignment.left",
+          "value": "left"
+        },
+        {
+          "label": "t:sections.all.alignment.center",
+          "value": "center"
+        },
+        {
+          "label": "t:sections.all.alignment.right",
+          "value": "right"
+        }
+      ]
+    },
+    {
+      "default": "light",
+      "options": [
+        {
+          "label": "t:sections.all.color_mode.options__1.label",
+          "value": "light"
+        },
+        {
+          "label": "t:sections.all.color_mode.options__2.label",
+          "value": "dark"
+        }
+      ],
+      "id": "color_mode",
+      "label": "t:sections.all.color_mode.label",
+      "type": "select",
+      "info": "t:sections.header.settings.menu_type_desktop.info"
+    },
+    {
+      "default": "pure",
+      "options": [
+        {
+          "label": "t:sections.all.color_style.transparent.label",
+          "value": "transparent"
+        },
+        {
+          "label": "t:sections.all.color_style.pure.label",
+          "value": "pure"
+        },
+        {
+          "label": "t:sections.all.color_style.neutral.label",
+          "value": "neutral"
+        },
+        {
+          "label": "t:sections.all.color_style.brand.label",
+          "value": "brand"
+        },
+        {
+          "label": "t:sections.all.color_style.secondary.label",
+          "value": "secondary"
+        },
+        {
+          "label": "t:sections.all.color_style.striking.label",
+          "value": "striking"
+        }
+      ],
+      "id": "color_style",
+      "label": "t:sections.all.color_style.label",
+      "type": "select"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "options": [
+        {
+          "label": "t:sections.all.padding.options__1.label",
+          "value": "none"
+        },
+        {
+          "label": "t:sections.all.padding.options__2.label",
+          "value": "xxs"
+        },
+        {
+          "label": "t:sections.all.padding.options__3.label",
+          "value": "xs"
+        },
+        {
+          "label": "t:sections.all.padding.options__4.label",
+          "value": "s"
+        },
+        {
+          "label": "t:sections.all.padding.options__5.label",
+          "value": "m"
+        },
+        {
+          "label": "t:sections.all.padding.options__6.label",
+          "value": "l"
+        },
+        {
+          "label": "t:sections.all.padding.options__7.label",
+          "value": "xl"
+        }
+      ],
+      "default": "m",
+      "id": "padding_top",
+      "label": "t:sections.all.padding.padding_top",
+      "type": "select"
+    },
+    {
+      "options": [
+        {
+          "label": "t:sections.all.padding.options__1.label",
+          "value": "none"
+        },
+        {
+          "label": "t:sections.all.padding.options__2.label",
+          "value": "xxs"
+        },
+        {
+          "label": "t:sections.all.padding.options__3.label",
+          "value": "xs"
+        },
+        {
+          "label": "t:sections.all.padding.options__4.label",
+          "value": "s"
+        },
+        {
+          "label": "t:sections.all.padding.options__5.label",
+          "value": "m"
+        },
+        {
+          "label": "t:sections.all.padding.options__6.label",
+          "value": "l"
+        },
+        {
+          "label": "t:sections.all.padding.options__7.label",
+          "value": "xl"
+        }
+      ],
+      "default": "m",
+      "id": "padding_bottom",
+      "label": "t:sections.all.padding.padding_bottom",
+      "type": "select"
+    }
+  ]
+}
+{% endschema %}

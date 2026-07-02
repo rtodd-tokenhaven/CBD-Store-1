@@ -1,0 +1,2 @@
+﻿/* Compatibility placeholder for missing asset: quick-order-list.js */
+

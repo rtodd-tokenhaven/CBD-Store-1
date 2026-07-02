@@ -1,0 +1,69 @@
+{% comment %} 
+  -- link 菜单 
+  -- section 分区设置项 
+  -- id 
+  -- slot_content 按钮内容
+{% endcomment %}
+{% liquid
+  assign tag_size = section.settings.menu_size | default: 's'
+%}
+{% capture arrow_content %} 
+    {% render 'genstore-svg', icon_name: 'icon-down', className: "icon-caret down" %}
+    <label for="accordion-close-{{id}}" class="accordion-close-btn">
+        {% render 'genstore-svg', icon_name: 'icon-down', className: "icon-caret up" %}
+    </label>
+
+{% endcapture %}
+{% capture block_content %} 
+    <input type="radio" name="{{id}}" id="accordion-close-{{id}}" class="collapse-all" checked>
+    {% for link in links %}
+        {% if link.links == blank %}
+            {% render 'genstore-header-item'
+            , is_active: link.child_active
+            , link: link
+            , tag_size: "m"
+            , url: link.url
+            , image_ratio: section.settings.menu_image_ratio
+            , enable_menu_image: section.settings.enable_menu_image 
+            , className: 'list-menu__group'
+            %}
+        {% else %}
+             <div class="list-menu__group">
+                <input type="radio" name="{{id}}" id="{{id}}-{{forloop.index}}"  />
+                <label for="{{id}}-{{forloop.index}}" class="list-menu__group-title">
+                    {% render 'genstore-header-item'
+                    , is_active: link.child_active
+                    , link: link                    , tag_size: "m"
+                    , image_ratio: section.settings.menu_image_ratio
+                    , enable_menu_image: section.settings.enable_menu_image
+                    , slot_content: arrow_content
+                %}
+                </label>
+                
+                <div class="list-menu__group-content">
+                    {% for sublink in link.links %}
+                        {% render 'genstore-header-item'
+                        , is_active: sublink.active
+                        , link: sublink
+                        , url: sublink.url
+                        , tag_size: "s"
+                        , image_ratio: section.settings.menu_image_ratio
+                        , enable_menu_image: section.settings.enable_menu_image
+                        , className: 'list-menu__item' 
+                        %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endcapture %}
+{% render 'genstore-container'
+  , color_scheme: settings.theme_color_scheme
+  , color_mode: section.settings.menu_color_mode
+  , color_style: section.settings.menu_color_style
+  , content: block_content
+  , padding_bottom: 'none'
+  , padding_top: 'none'
+  , className: 'header__submenu list-menu list-menu--disclosure in-dropdown'
+  , full_width: false
+%}

@@ -1,0 +1,143 @@
+{% comment %}
+  参数:
+  - section: section对象
+  - products_wrapper: 商品包装对象,
+  - nav_content: 导航内容
+  - products_to_show: 商品数量
+{% endcomment %}
+
+{%- liquid
+  assign products_to_display = products_wrapper.all_products_count
+  if products_wrapper == blank or products_wrapper.all_products_count > products_to_show or products_wrapper.all_products_count == products_to_show
+    assign products_to_display = products_to_show
+    assign more_in_collection = true
+  endif
+
+  assign columns_mobile_int = section.settings.columns_mobile | plus: 0
+  assign show_mobile_slider = false
+  if section.settings.enable_mobile_slider and products_to_display > columns_mobile_int
+    assign show_mobile_slider = true
+  endif
+
+  assign show_desktop_slider = false
+  if section.settings.enable_desktop_slider and products_to_display > section.settings.columns_desktop
+    assign show_desktop_slider = true
+  endif
+  assign products = products_wrapper.products
+  assign show_product_placeholder = false
+  if products == blank
+    assign products = array
+    assign show_product_placeholder = true
+    for i in (1..products_to_show)
+      assign products = products | push: 'example'
+    endfor
+  endif
+
+  assign show_slider_btn = show_desktop_slider
+  assign total_elements = products_to_show
+  if products_wrapper != blank and products_wrapper.all_products_count < products_to_show
+    assign total_elements = products_wrapper.all_products_count
+  endif
+
+  assign layout = 'normal'
+  if show_desktop_slider or show_mobile_slider
+    assign layout = 'carousel'
+  endif
+-%}
+<div
+  class="collection__title  {% if show_mobile_slider %} title-wrapper--self-padded-tablet-down{% endif %}{% if show_desktop_slider %} collection__title--desktop-slider{% endif %}"
+>
+  {{ nav_content }}
+</div>
+
+<slide-carousel
+  class="slider-mobile-gutter  {% if section.settings.full_width %}   slider-component-full-width{% endif %}"
+  data-default-layout="normal"
+  data-desktop-columns="{{ section.settings.columns_desktop }}"
+  data-mobile-columns="{{ section.settings.columns_mobile }}"
+  data-total-items="{{ total_elements }}"
+  data-show-carousel-in-desktop="{{ show_desktop_slider }}"
+  data-show-carousel-in-mobile="{{ show_mobile_slider }}"
+  style="
+    --card-offset-mobile:{% if show_mobile_slider and total_elements > section.settings.columns_mobile %}0.333{% else %}0{% endif %};
+    --card-offset-desktop: 0;
+    --grid-columns: {{ section.settings.columns_desktop }};
+    --grid-mobile-columns: {{ section.settings.columns_mobile }};
+  "
+>
+  {% capture content %}
+        {% liquid
+          assign id_prefix = ''
+          if show_slider_btn == true
+            assign id_prefix = 'Slider-'
+          endif
+          assign section_id = id_prefix | append: section.id
+        %}
+        {%- for product in products limit: products_to_show -%}
+          {% assign card_index = forloop.index %}
+          {% assign card_id = section_id | append: '-' | append: card_index %}
+          {% render 'genstore-card-product',
+            id: card_id,
+            section_id: section_id,
+            product: product,
+            section: section,
+            index: card_index,
+            show_product_placeholder: show_product_placeholder,
+            enable_color_picker: section.settings.enable_color_picker,
+            enable_rating: section.settings.enable_rating 
+          %}
+        {%- endfor -%}
+      {% endcapture %}
+  {% render 'genstore-cart-list-container',
+    layout: layout,
+    id: section_id,
+    columns_desktop: section.settings.columns_desktop,
+    columns_mobile: section.settings.columns_mobile,
+    enable_desktop_slider: section.settings.enable_desktop_slider,
+    enable_mobile_slider: section.settings.enable_mobile_slider,
+    content: content,
+    gap: section.settings.gap
+  %}
+  {% comment %}
+    🎯 只要 PC 或移动端任一启用了轮播，就渲染分页器
+    JavaScript 会根据当前设备和配置动态控制显示/隐藏
+  {% endcomment %}
+  {% if show_desktop_slider or show_mobile_slider %}
+    {% capture attributes %}
+          {% if show_desktop_slider == false %}
+            data-hidden-in-desktop="true"
+          {% endif %}
+          {% if show_mobile_slider == false %}
+            data-hidden-in-mobile="true"
+          {% endif %}
+        {% endcapture %}
+    {% render 'genstore-arrow-nav', attributes: attributes %}
+    {% if products_to_show >= 15 and products.size >= 15  and autoplay %}
+      <loop-trigger interval="2000" handleEl="button.carousel-next" resetEl=":nth-child(1)" />
+    {% endif %}
+  {% endif %}
+</slide-carousel>
+{%- if section.settings.show_view_all
+  and more_in_collection == true
+  and products_wrapper != blank
+  and products_wrapper.url != blank
+-%}
+  <div class="center m-t-1800">
+    <a
+      href="{{products_wrapper.url}}"
+      {% if products_wrapper == blank or products_wrapper.url == blank %}
+        onclick="event.preventDefault();"
+      {% endif %}
+      style="min-width: 120px"
+      class="
+        genstore-btn
+        {% if products_wrapper == blank or products_wrapper.url == blank %} prevent-click {% endif %}
+        {{ section.settings.button_size | default: 'large' }}
+        {{ section.settings.view_all_style | default: 'default' }}
+        {{ section.settings.button_color_style | default: 'brand' }}
+      "
+    >
+      {{ 'sections.featured_collection.view_all' | t }}
+    </a>
+  </div>
+{%- endif -%}

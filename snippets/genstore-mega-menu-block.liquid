@@ -1,0 +1,46 @@
+{% comment %}
+    -- link 菜单
+    -- alignment   justify 两端对齐 page 页面对齐
+    -- enable_menu_image
+    -- block
+       -- color_scheme
+       -- color_mode
+       -- color_style
+{% endcomment %}
+{%  capture  block_content %} 
+    <div class="genstroe-mega-menu-block f-row position-{{block.settings.image_position}}
+     {% if block.settings.alignment == 'justify' %}  content-between{% endif %}
+     {% if block.settings.alignment == 'page' %} page-width  content-between {% endif %}
+     {% if block.settings.alignment == 'adapt' %} f-row-wrap m-x-auto  content-center {% endif %}"
+    {% if block.settings.alignment == 'adapt' %} style="max-width: 1080px" {% endif %}
+    >
+        <div class="link-block-groups f-row f-row-wrap  {% if block.settings.alignment != 'adapt' %} flex-1 {% endif %} ">
+            {% for link in links %}
+                <div class="link-block-item">
+                    
+                    {%  render 'genstore-header-item', url: link.url, link: link, tag_size: 's', enable_menu_image:enable_menu_image %}
+                    {% if link.links != blank %}
+                        <div class="link-block">
+                            {% for sublink in link.links %}
+                                {%  render 'genstore-header-item',url: sublink.url, link: sublink, tag_size: 's', enable_menu_image:enable_menu_image %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+             {% endfor %}
+        </div>   
+        {% render 'genstore-mega-medias', block: block, scope_class_name: 'header-menu' %}
+    </div>
+    
+{% endcapture  %}
+{% render 'genstore-container'
+, color_scheme: settings.theme_color_scheme
+, color_mode: block.settings.color_mode
+, color_style: block.settings.color_style
+, content: block_content
+, padding_bottom:"none"
+, padding_top:"none"
+, attributes:block.genstore_attributes
+, className: 'genstroe-mega-menu-container'
+, full_width: false
+%}

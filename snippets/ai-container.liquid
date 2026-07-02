@@ -1,0 +1,28 @@
+{%- comment -%}
+  ai-container — Section 外层容器
+  封装配色变量计算 + CSS 变量注入 + padding + 布局模式
+
+  参数：
+    content        (capture, 必填) Children 内容
+    section        (object, 必填)  当前 section 对象
+    color_scheme   (string)        配色方案，默认 settings.theme_color_scheme
+    className      (string)        额外 CSS 类
+    padding_top    (string)        上间距档位 none/sm/md/lg/xl，默认 md
+    padding_bottom (string)        下间距档位，默认 md
+    full_width     (boolean)       是否全宽
+    id             (string)        额外 ID
+    style          (string)        额外内联样式
+{%- endcomment -%}
+
+{%- liquid
+  assign _cs = color_scheme | default: settings.theme_color_scheme | default: 'scheme-1'
+
+  assign _pt = padding_top | default: 'md'
+  assign _pb = padding_bottom | default: 'md'
+-%}
+
+<div class="section-mark padding-top-{{ _pt }} padding-bottom-{{ _pb }}{% if full_width %} full-screen{% endif %}{% if className != blank %} {{ className }}{% endif %}"
+     {% if id != blank %}id="{{ id }}"{% endif %}
+     style="{% render 'ai-color-tokens', color_scheme: _cs %}{% if style != blank %}{{ style }}{% endif %}">
+  {{ content }}
+</div>

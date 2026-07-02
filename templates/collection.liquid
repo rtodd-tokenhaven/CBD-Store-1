@@ -1,0 +1,39 @@
+{{ 'template-collection.css' | asset_url | stylesheet_tag }}
+{{ 'component-card.css' | asset_url | stylesheet_tag }}
+{{ 'component-price.css' | asset_url | stylesheet_tag }}
+{{ 'component-button.css' | asset_url | stylesheet_tag }}
+
+<style>
+  .search_page {
+    .pagination__list {
+      justify-content: center;
+      gap: 10px;
+
+      .pagination__item.light {
+        opacity: 1;
+        border: 1px rgba(0, 0, 0, 1) solid;
+        color: rgba(0, 0, 0, 1);
+      }
+
+      .pagination__item--current::after,
+      .pagination__item:hover::after {
+        display: none;
+      }
+
+      .pagination__item--prev,
+      .pagination__item--next {
+        border: none;
+
+        .svg-wrapper {
+          width: 12px;
+          height: 12px;
+        }
+
+        .icon-caret {
+          height: 0.8rem;
+          color: #000;
+        }
+      }
+    }
+  }
+</style>

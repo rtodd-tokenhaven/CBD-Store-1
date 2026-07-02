@@ -1,0 +1,129 @@
+{
+  "sections": {
+    "image_with_text_gkQrja": {
+      "settings": {
+        "desktop_content_position": "top",
+        "image": "https://image-c-pioneer.weimobqa.com/qa-2TL/4022069760827/2c778510cbd34515a1a3f586a9ca57e1.png",
+        "section_color_mode": "light",
+        "color_mode": "light",
+        "section_color_style": "brand",
+        "padding_top": "s",
+        "desktop_content_alignment": "left",
+        "color_style": "brand",
+        "content_layout": "no-overlap",
+        "layout": "text_first",
+        "is_card": false,
+        "full_width": false,
+        "section_color_scheme": "scheme-1",
+        "color_scheme": "scheme-1",
+        "padding_bottom": "xl",
+        "desktop_image_width": "medium",
+        "height": "medium"
+      },
+      "blocks": {
+        "text_t99PAd1": {
+          "settings": {
+            "text_size": "s",
+            "text": "The creation of the craft department combines freedom, creativity and craftsmanship. Each piece is designed to stand the test and adapt to changing lifestyles. The people-oriented values from the handicraft world lead the development of the enterprise"
+          },
+          "type": "text"
+        },
+        "heading_U8bb6n1": {
+          "settings": {
+            "heading": "Freedom of creation",
+            "heading_size": "xl"
+          },
+          "type": "heading"
+        },
+        "separator_line2": {
+          "type": "separator_line"
+        }
+      },
+      "type": "image-with-text",
+      "block_order": [
+        "heading_U8bb6n1",
+        "text_t99PAd1",
+        "separator_line2"
+      ]
+    },
+    "image-banner-0KybVS": {
+      "settings": {
+        "desktop_content_position": "middle-center",
+        "show_text_box": true,
+        "image": "https://image-c-pioneer.weimobqa.com/qa-2TL/4022069760827/8aaa38b4f2aa4b10a6daf175639a1c6b.png",
+        "image_horizontal_percent": "three-quarters",
+        "image_height": "large",
+        "color_mode": "light",
+        "image_vertical_percent": "three-quarters",
+        "desktop_content_alignment": "center",
+        "color_scheme": "scheme-1",
+        "color_style": "brand",
+        "image_overlay_opacity": 0
+      },
+      "blocks": {},
+      "type": "image-banner",
+      "block_order": []
+    },
+    "image_with_text_gkQrjG": {
+      "settings": {
+        "desktop_content_position": "top",
+        "image": "https://image-c-pioneer.weimobqa.com/qa-2TL/4022069760827/cf17165ecf4c46678d92198b931124ad.png",
+        "section_color_mode": "light",
+        "color_mode": "light",
+        "section_color_style": "brand",
+        "padding_top": "xl",
+        "desktop_content_alignment": "left",
+        "color_style": "brand",
+        "content_layout": "no-overlap",
+        "layout": "image_first",
+        "is_card": false,
+        "full_width": false,
+        "section_color_scheme": "scheme-1",
+        "color_scheme": "scheme-1",
+        "padding_bottom": "s",
+        "desktop_image_width": "medium",
+        "height": "medium"
+      },
+      "blocks": {
+        "text_t99PAd": {
+          "settings": {
+            "text_size": "s",
+            "text": "We are an enterprise integrating independence, artisan spirit, creativity, innovation and sense of responsibility. It can be seen that the entrepreneurial spirit is the business philosophy that Hermes has long upheld"
+          },
+          "type": "text"
+        },
+        "heading_U8bb6n": {
+          "settings": {
+            "heading": "Entrepreneurial spirit",
+            "heading_size": "xl"
+          },
+          "type": "heading"
+        },
+        "separator_line": {
+          "type": "separator_line"
+        }
+      },
+      "type": "image-with-text",
+      "block_order": [
+        "heading_U8bb6n",
+        "text_t99PAd",
+        "separator_line"
+      ]
+    },
+    "main": {
+      "settings": {
+        "padding_top": "none",
+        "padding_bottom": "none",
+        "alignment": "center"
+      },
+      "type": "main-page",
+      "disabled": true
+    }
+  },
+  "order": [
+    "main",
+    "image-banner-0KybVS",
+    "image_with_text_gkQrjG",
+    "image_with_text_gkQrja"
+  ]
+}

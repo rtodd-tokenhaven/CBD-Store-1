@@ -1,0 +1,17 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-404",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "color_mode": "light",
+        "color_style": "pure",
+        "padding_top": "xl",
+        "padding_bottom": "xl"
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

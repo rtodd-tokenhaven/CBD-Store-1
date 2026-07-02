@@ -1,0 +1,39 @@
+{% comment %}
+  --type: product | section 用来判断占位图大小
+  --show_product_placeholder: 是否显示产品占位图
+    visual_image_key
+    visual_image_mobile_key
+    visual_video_key
+    visual_video_mobile_key
+{% endcomment %}
+{% liquid
+  assign icon_name = icon_name | default: "icon-img"
+  assign ratio = image_ratio | default: 1
+  if image_ratio == 'portrait'
+    assign ratio = 0.75
+  endif
+  if image_ratio == 'square'
+    assign ratio = 1
+  endif
+  if image_ratio == 'adapt'
+    assign ratio = 'auto'
+  endif
+
+    assign visual_block = ''
+  if block != blank
+     assign visual_block = block
+  endif
+%}
+<div
+  class="genstore-placeholder {{ className | default: '' }}"
+  style="--aspect-ratio: {{ ratio }}; --aspect-padding: calc(100% /(var(--aspect-ratio)));"
+  data-aspect-ratio="{{ ratio }}">
+  {% if show_product_placeholder == true %}
+    {% assign icon_name = icon_name | append: '.png' %}
+    <img  {{ '' | genstore_vkey: key:visual_image_key, block:visual_block,placeholderValue: icon_name | genstore_vkey: key:visual_image_mobile_key, block:visual_block,placeholderValue: icon_name | genstore_vkey: key:visual_video_key, block:visual_block ,placeholderValue: icon_name| genstore_vkey: key:visual_video_mobile_key, block:visual_block,placeholderValue: icon_name }}
+  src='{{ icon_name | asset_url }}' class="{% if type == 'product' %}product{% else %}section{% endif %}" />
+  {% else %}
+    {% render 'genstore-svg'
+      , icon_name: icon_name %}
+  {% endif %}
+</div>
