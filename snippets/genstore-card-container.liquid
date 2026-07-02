@@ -1,0 +1,69 @@
+{% comment %}
+    公共的卡片容器 产品卡，产品系列卡，博客卡
+    -- show_image : 是否显示图片
+    -- coloer_scheme : 主题色 card_color_scheme/collection_card_color_scheme/blog_card_color_scheme
+    -- color_style : 配色方案 card_color_style/collection_card_color_style/blog_card_color_style
+    -- color_mode : 配色模式 card_color_mode/collection_card_color_mode/blog_card_color_mode
+    -- card_style : 类型 card_style/collection_card_style/blog_card_style 是否是卡片类型
+    -- text_alignment : 文本对齐方式 card_text_alignment/collection_card_text_alignment/blog_card_text_alignment
+    -- layout : 布局 card_layout/collection_card_layout/blog_card_layout    inside 内部，outside外部
+    -- url : 链接
+    -- downloadable : 标识是否是虚拟商品可下载
+    -- card_content : 内容节点 DOM
+    -- image_content : 图片节点 DOM
+{% endcomment %}
+{% liquid
+  assign color_scheme = color_scheme | default: 'scheme-1'
+  assign color_mode = color_mode | default: 'light'
+  assign index = color_scheme | split: 'scheme-' | last
+  if color_mode == 'dark'
+    assign index = index | times: 2
+  else
+    assign index = index | times: 2 | minus: 1
+  endif
+  assign color_scheme = 'color-scheme-' | append: index
+  assign color_style = color_style | default: 'brand'
+
+  assign is_card = card_style | default: 'standard'
+  assign text_alignment = 'text-align-' | append: text_alignment | default: 'left'
+  assign show_image = show_image
+  assign layout = layout | default: 'outside'
+
+  assign image_padding = image_padding | default: 0
+  assign border_thickness = border_thickness | default: 0
+  assign shadow_opacity = shadow_opacity | default: 0
+  assign shadow_horizontal_offset = shadow_horizontal_offset | default: 0
+  assign shadow_vertical_offset = shadow_vertical_offset | default: 0
+  assign shadow_blur_radius = shadow_blur_radius | default: 0
+  assign animate_slide_in = ''
+  if settings.animations_reveal_on_scroll
+    assign animate_slide_in = 'scroll-trigger animate--slide-in'
+  endif
+%}
+<div
+  class="genstore-card-container {{ color_scheme }} {{ color_style }} {{ color_mode }} {% if card_style == 'card' %} card  {% else %} card-transparent {% endif %}  {{ animate_slide_in }}"
+  id="{{ id }}"
+  {{ attributes }}
+  style="
+    --genstore-blog-card-image-padding:{{ settings.blog_card_image_padding }}px;
+    --genstore-card-shadow: {{ shadow_horizontal_offset }}px {{ shadow_vertical_offset }}px {{ shadow_blur_radius }}px  rgba(0,0,0,{{ shadow_opacity | divided_by: 100 }});
+    --genstore-card-image-padding: {{ image_padding }}px;
+    --genstore-card-border-thickness: {{ border_thickness }}px;
+  {% if settings.animations_reveal_on_scroll %}--animation-order: {{ card_index }};{% endif %}
+    "
+>
+  {% if show_image == true %}
+    <div class="image-wrapper">
+      <a href="{{ url }}" {% unless url %} class="prevent-click"  onclick="event.preventDefault();" {% endunless %}>
+        {{ image_content }}
+      </a>
+      {% if badges != blank %}  {{ badges }} {% endif %}
+      {% if downloadable == true %}
+        <span class="downloadable-svg-wrapper">{{- 'icon-down.svg' | inline_asset_content -}}</span>
+      {% endif %}
+    </div>
+  {% endif %}
+  <div class="content-wrapper {{ text_alignment }} {{ content_wrapper_class_name | default: '' }}">
+    {{ card_content }}
+  </div>
+</div>

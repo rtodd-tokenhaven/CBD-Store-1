@@ -1,0 +1,647 @@
+{% comment %}theme-check-disable UndefinedObject{% endcomment %}
+{{ 'section-footer.css' | asset_url | stylesheet_tag }}
+{{ 'component-newsletter.css' | asset_url | stylesheet_tag }}
+{{ 'component-list-menu.css' | asset_url | stylesheet_tag }}
+{{ 'component-list-payment.css' | asset_url | stylesheet_tag }}
+{{ 'component-list-social.css' | asset_url | stylesheet_tag }}
+{{ 'component-deferred-media.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign color_scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign color_mode = section.settings.color_mode | default: 'light'
+  assign color_style = section.settings.color_style | default: 'brand'
+
+  assign index = color_scheme | split: 'scheme-' | last
+  if color_mode == 'dark'
+    assign index = index | times: 2
+  else
+    assign index = index | times: 2 | minus: 1
+  endif
+  assign color_scheme = 'color-scheme-' | append: index
+
+  assign has_social_icons = true
+  if settings.social_facebook_link == blank and settings.social_instagram_link == blank and settings.social_youtube_link == blank and settings.social_tiktok_link == blank and settings.social_twitter_link == blank and settings.social_pinterest_link == blank and settings.social_snapchat_link == blank and settings.social_tumblr_link == blank and settings.social_vimeo_link == blank
+    assign has_social_icons = false
+  endif
+
+  assign columns = section.blocks.size
+  if section.blocks.size > 5
+    assign columns = 5
+  endif
+-%}
+<footer
+  class="footer {{ color_scheme }} {{ color_mode }} {{ color_style }} padding-bottom-{{ section.settings.padding_bottom }} padding-top-{{ section.settings.padding_top }}"
+>
+  {%- if section.blocks.size > 0
+    or section.settings.newsletter_enable
+    or section.settings.show_social
+    and has_social_icons == true
+    or section.settings.enable_follow_on_shop
+  -%}
+    {%- unless only_empty_brand -%}
+      {%- if section.blocks.size > 0 -%}
+        <div class="footer__content-top {{ section.settings.layout }} page-width" style="--block-columns:{{ columns }}">
+          <div
+            class="footer__blocks-wrapper {% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}"
+            {% if settings.animations_reveal_on_scroll %}
+              data-cascade
+            {% endif %}
+          >
+            {%- for block in section.blocks -%}
+              {%- assign position_in_group = forloop.index0 | modulo: 5 -%}
+              {%- if position_in_group == 0 -%}
+                <div class="footer__blocks-row">
+              {%- endif -%}
+
+              <div
+                class="footer-block type-{{ block.type }} {{ block.settings.alignment | default: '' }}{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}"
+                {{ block.genstore_attributes }}
+                {% if settings.animations_reveal_on_scroll %}
+                  data-cascade
+                  style="--animation-order: {{ forloop.index }};"
+                {% endif %}
+              >
+                {%- case block.type -%}
+                  {%- when '@app' -%}
+                    {% render block %}
+
+                  {% when 'newsletter' %}
+                    <div class="news-letter-wrapper">
+                      <news-letter
+                        data-success-tip="{{ 'newsletter.success' | t }}"
+                        class="page-width f-column news-letter-container"
+                      >
+                        {%- if block.settings.heading != blank -%}
+                          {% render 'genstore-text-block',
+                            text: block.settings.heading,
+                            text_size: block.settings.size,
+                            className: 'bolder',
+                            block:block,
+                            visual_text_key:'heading'
+                          %}
+                        {% endif %}
+                        {% capture content %}
+                          <div class="submit">
+                            <span>{{ 'icon-arrow.svg' | inline_asset_content }}</span>
+                            {% render 'loading-spinner', class: 'newsletter__loading-spinner hidden' %}
+                          </div>
+                        {% endcapture %}
+                        {% assign email = 'recipient.form.email' | t %}
+                        {% render 'genstore-input-1',
+                          type: 'email',
+                          label: email,
+                          extra_content: content,
+                          className: 'newsletter__input',
+                          input_size: 'large',
+                          placeholder: email
+                        %}
+                      </news-letter>
+                      {% if block.settings.enable_social %}
+                        <div class="footer-brand-info__social">
+                          {%- render 'social-icons', class: 'footer__list-social' -%}
+                        </div>
+                      {% endif %}
+                    </div>
+
+                  {% when 'brand' %}
+                    <div class="footer-brand-info f-column gap-800">
+                      {%- if settings.brand_image != blank -%}
+                        <div class="footer-block__image-wrapper" style="width: {{ settings.brand_image_width }}px">
+                          {{ settings.brand_image | image_url: width: 300 | image_tag }}
+                        </div>
+                      {%- endif -%}
+                      {% if settings.brand_headline != blank or settings.brand_description != blank %}
+                        <div class="f-column gap-200">
+                          {%- if settings.brand_headline != blank -%}
+                            {% render 'genstore-text-block', text: settings.brand_headline, text_size: 's', text_key: 'brand_headline', vkey_group: 'settings' %}
+                          {%- endif -%}
+                          {%- if settings.brand_description != blank -%}
+                            {% render 'genstore-text-block', text: settings.brand_description, text_size: 's' %}
+                          {%- endif -%}
+                        </div>
+                      {% endif %}
+                      {% if block.settings.enable_social %}
+                        <div class="footer-brand-info__social">
+                          {%- render 'social-icons', class: 'footer__list-social' -%}
+                        </div>
+                      {% endif %}
+                    </div>
+
+                  {%- when 'text' -%}
+                    <div class="footer-block__details-content {{ block.settings.alignment }}">
+                      {%- if block.settings.heading != blank -%}
+                        {% render 'genstore-text-block',
+                          text: block.settings.heading,
+                          text_size: block.settings.text_size,
+                          block:block,
+                          visual_text_key:'heading'
+                        %}
+                      {%- endif -%}
+                      {%- if block.settings.heading != blank -%}
+                        {% render 'genstore-text-block',
+                          text: block.settings.subtext,
+                          text_size: block.settings.sub_text_size,
+                          className: 'genstore-text-block-content',
+                          block:block,
+                          visual_text_key:'subtext'
+                        %}
+                      {% endif %}
+                    </div>
+
+                  {%- when 'link_list' -%}
+                    {%- if block.settings.heading != blank -%}
+                      {% render 'genstore-text-block',
+                        text: block.settings.heading,
+                        text_size: 's',
+                        className: 'm-b-600 bolder',
+                        block:block,
+                        visual_text_key:'heading'
+                      %}
+                    {%- endif -%}
+                    {%- if block.settings.menu != blank -%}
+                      <ul class="f-column gap-400">
+                        {%- for link in block.settings.menu.links -%}
+                          {% render 'genstore-text-link', text: link.title, url: link.url %}
+                        {%- endfor -%}
+                      </ul>
+                    {%- endif -%}
+
+                  {%- when 'image' -%}
+                    <div class="footer-block__details-content footer-block-image {{ block.settings.alignment }}">
+                      {%- if block.settings.image != blank -%}
+                        <div class="footer-block__image-wrapper" style="max-width: min(100%, {{ block.settings.image_width }}px);">
+                          <img src="{{ block.settings.image | image_url: width: 760 }}">
+                        </div>
+                      {%- else -%}
+                        <div class="footer-block__image-wrapper" style="max-width: min(100%, {{ block.settings.image_width }}px);">
+                          <img src="{{ 'section-placeholder-1.png' | asset_url }}">
+                        </div>
+                      {%- endif -%}
+                    </div>
+
+                  {%- when 'video' -%}
+                    {% liquid
+                      assign video_url = ''
+                      if block.settings.video and block.settings.video.sources
+                        assign video_url = block.settings.video.sources[0].url
+                      endif
+                    %}
+                    <div class="footer-block__details-content {{ block.settings.alignment }}">
+                      <deferred-media class="video-section__media deferred-media footer-video-play" data-media-id="{{ video_id }}" enableFullscreen="true" {% if block.settings.enable_autoplay %}data-autoplay="true"{% endif %} style="--aspect-ratio: {{ block.settings.image_ratio }};max-width: min(100%, {{ block.settings.video_width }}px)">
+                        <button id="Deferred-Poster-Modal-{{ video_id }}" class="video-section__poster media deferred-media__poster media--landscape" type="button" aria-label="{{ alt }}">
+                          <span class="deferred-media__poster-button motion-reduce">
+                            <div class="icon-play-container footer-video-play-icon">
+                              {% render 'genstore-svg', icon_name: 'icon-play', icon_weight: 'fill' %}
+                            </div>
+                          </span>
+                          {%- if block.settings.cover_image != blank -%}
+                            {{ block.settings.cover_image | image_url: width: 1920 | image_tag: sizes: '100vw', widths: '375, 750, 1100, 1500, 1920', alt: alt | genstore_vkey: key:'cover_image', block:block }}
+                          {%- else -%}
+                            {% render 'genstore-placeholder', show_product_placeholder: true, icon_name: 'section-placeholder-1', image_ratio: 1.78, block:block, visual_image_key:'cover_image' %}
+                          {%- endif -%}
+                        </button>
+                        <template>
+                          {{ block.settings.video | video_tag: image_size: '1100x', autoplay: false, loop: block.settings.enable_video_looping, controls: false, muted: true | genstore_vkey: key:'video', block:block, value:video_url }}
+                        </template>
+                      </deferred-media>
+                    </div>
+
+                  {%- when 'liquid' -%}
+                    {{ block.settings.custom_liquid }}
+                {%- endcase -%}
+              </div>
+
+              {%- if position_in_group == 4 or forloop.last -%}
+                </div>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        </div>
+      {%- endif -%}
+    {%- endunless -%}
+  {%- endif -%}
+
+  <div class="footer__content-bottom page-width">
+    {% render 'genstore-split-line', line_height: '1px', padding_top: 'xs', padding_bottom: 'xs' %}
+    <div class="footer-container">
+      {%- liquid
+        assign has_brand_info = false
+        if section.settings.enable_country_selector and localization.available_countries.size > 1
+          assign has_brand_info = true
+        elsif section.settings.enable_language_selector and localization.available_languages.size > 1
+          assign has_brand_info = true
+        elsif section.settings.payment_enable and shop.enabled_payment_types.size > 0
+          assign has_brand_info = true
+        endif
+      -%}
+      <div class="footer__copyright{% if has_brand_info == false %} full-width{% endif %}">
+        <small class="copyright__content">
+          &copy; {{ 'now' | date: '%Y' }}, {{ shop.name | append: '&nbsp;&nbsp;&nbsp;' -}}
+          {{ 'Genstore. Inc' | shop_group: 'made with genstore ai' }}
+        </small>
+        {%- if section.settings.show_policy -%}
+          <ul class="policies list-unstyled">
+            {%- for policy in shop.policies -%}
+              {%- if policy != blank -%}
+                <li>
+                  <small class="copyright__content">
+                    <a href="{{ policy.url }}">{{ policy.title | escape }}</a>
+                  </small>
+                </li>
+              {%- endif -%}
+            {%- endfor -%}
+          </ul>
+        {%- endif -%}
+      </div>
+      {% if has_brand_info %}
+        <div class="footer-brand-info f-row f-row-wrap">
+          {% if section.settings.enable_country_selector and localization.available_countries.size > 1 or section.settings.enable_language_selector and localization.available_languages.size > 1 or section.settings.payment_enable %}
+            <div class="f-row align-center f-row-wrap footer-content-utils">
+              {%- if section.settings.enable_country_selector and localization.available_countries.size > 1 -%}
+                <localization-form>
+                  {%- form 'localization', id: 'FooterCountryForm', class: 'localization-form' -%}
+                    <div>
+                      {%- render 'country-localization', localPosition: 'FooterCountry' -%}
+                    </div>
+                  {%- endform -%}
+                </localization-form>
+              {%- endif -%}
+
+              {%- if section.settings.enable_language_selector and localization.available_languages.size > 1 -%}
+                <localization-form>
+                  {%- form 'localization', id: 'FooterLanguageForm', class: 'localization-form' -%}
+                    <div>
+                      {%- render 'language-localization', localPosition: 'FooterLanguage' -%}
+                    </div>
+                  {%- endform -%}
+                </localization-form>
+              {%- endif -%}
+            </div>
+          {% endif %}
+          {%- if section.settings.payment_enable -%}
+            <ul class="list list-payment" role="list">
+              {%- for type in shop.enabled_payment_types -%}
+                <li class="list-payment__item">
+                  {{ type | payment_type_svg_tag: class: 'icon icon--full-color' }}
+                </li>
+              {%- endfor -%}
+            </ul>
+          {%- endif -%}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "t:sections.footer.name",
+  "blocks": [
+    {
+      "type": "@app"
+    },
+    {
+      "type": "newsletter",
+      "name": "t:sections.footer.blocks.newsletter.name",
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "heading",
+          "default": "t:sections.footer.blocks.newsletter.settings.heading.default",
+          "label": "t:sections.footer.blocks.newsletter.settings.heading.label"
+        },
+        {
+          "type": "select",
+          "id": "alignment",
+          "label": "t:sections.all.alignment.label",
+          "options": [
+            { "value": "left", "label": "t:sections.all.alignment.left" },
+            { "value": "center", "label": "t:sections.all.alignment.center" },
+            { "value": "right", "label": "t:sections.all.alignment.right" }
+          ],
+          "default": "left"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_social",
+          "label": "t:sections.footer.blocks.newsletter.settings.show_social.label",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "brand",
+      "name": "t:settings_schema.brand_information.name",
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.footer.blocks.brand_information.settings.paragraph.content"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_social",
+          "label": "t:sections.footer.blocks.brand_information.settings.header__1.content",
+          "default": true
+        }
+      ]
+    },
+    {
+      "type": "link_list",
+      "name": "t:sections.footer.blocks.link_list.name",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "t:sections.footer.blocks.link_list.settings.heading.default",
+          "label": "t:sections.footer.blocks.link_list.settings.heading.label"
+        },
+        {
+          "type": "text_alignment",
+          "id": "alignment",
+          "label": "t:sections.all.alignment.label",
+          "options": [
+            { "value": "left", "label": "t:sections.all.alignment.left" },
+            { "value": "center", "label": "t:sections.all.alignment.center" },
+            { "value": "right", "label": "t:sections.all.alignment.right" }
+          ],
+          "default": "left"
+        },
+        {
+          "type": "link_list",
+          "id": "menu",
+          "default": "footer",
+          "label": "t:sections.footer.blocks.link_list.settings.menu.label",
+          "info": "t:sections.footer.blocks.link_list.settings.menu.info"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "t:sections.footer.blocks.text.name",
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "heading",
+          "default": "t:sections.footer.blocks.text.settings.heading.default",
+          "label": "t:sections.footer.blocks.text.settings.heading.label"
+        },
+        {
+          "default": "s",
+          "options": [
+            { "label": "t:sections.all.size.none", "value": "none" },
+            { "label": "t:sections.all.size.xs", "value": "xs" },
+            { "label": "t:sections.all.size.s", "value": "s" },
+            { "label": "t:sections.all.size.m", "value": "m" },
+            { "label": "t:sections.all.size.l", "value": "l" },
+            { "label": "t:sections.all.size.xl", "value": "xl" },
+            { "label": "t:sections.all.size.xxl", "value": "xxl" }
+          ],
+          "id": "text_size",
+          "label": "t:sections.all.text.size.label",
+          "type": "select"
+        },
+        {
+          "type": "richtext",
+          "id": "subtext",
+          "default": "t:sections.all.text.subtitle.default",
+          "label": "t:sections.all.text.subtitle.name"
+        },
+        {
+          "default": "s",
+          "options": [
+            { "label": "t:sections.all.size.none", "value": "none" },
+            { "label": "t:sections.all.size.xs", "value": "xs" },
+            { "label": "t:sections.all.size.s", "value": "s" },
+            { "label": "t:sections.all.size.m", "value": "m" },
+            { "label": "t:sections.all.size.l", "value": "l" },
+            { "label": "t:sections.all.size.xl", "value": "xl" },
+            { "label": "t:sections.all.size.xxl", "value": "xxl" }
+          ],
+          "id": "sub_text_size",
+          "label": "t:sections.all.text.size.label",
+          "type": "select"
+        },
+        {
+          "type": "select",
+          "id": "alignment",
+          "label": "t:sections.all.alignment.label",
+          "options": [
+            { "value": "left", "label": "t:sections.all.alignment.left" },
+            { "value": "center", "label": "t:sections.all.alignment.center" },
+            { "value": "right", "label": "t:sections.all.alignment.right" }
+          ],
+          "default": "left"
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "name": "t:sections.collage.blocks.image.settings.image.label",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.collage.blocks.image.settings.image.label",
+          "info": "t:sections.all.image.info"
+        },
+        {
+          "type": "range",
+          "id": "image_width",
+          "min": 50,
+          "max": 300,
+          "step": 5,
+          "unit": "px",
+          "label": "t:settings_schema.brand_information.settings.brand_image_width.label",
+          "default": 200
+        },
+        {
+          "type": "text_alignment",
+          "id": "alignment",
+          "label": "t:sections.all.alignment.label",
+          "options": [
+            { "value": "left", "label": "t:sections.all.alignment.left" },
+            { "value": "center", "label": "t:sections.all.alignment.center" },
+            { "value": "right", "label": "t:sections.all.alignment.right" }
+          ],
+          "default": "left"
+        }
+      ]
+    },
+    {
+      "type": "video",
+      "name": "t:sections.video.name",
+      "settings": [
+        {
+          "type": "video",
+          "id": "video",
+          "label": "t:sections.video.settings.video.label",
+          "info": "t:sections.all.video.settings.info"
+        },
+        {
+          "type": "image_picker",
+          "id": "cover_image",
+          "label": "t:sections.video.settings.cover_image.label",
+          "info": "t:sections.all.image.info"
+        },
+        {
+          "default": 1.78,
+          "options": [
+            { "label": "t:sections.all.image_ratio.options__1", "value": 1 },
+            { "label": "t:sections.all.image_ratio.options__2", "value": 0.75 },
+            { "label": "t:sections.all.image_ratio.options__3", "value": 1.33 },
+            { "label": "t:sections.all.image_ratio.options__4", "value": 1.78 },
+            { "label": "t:sections.all.image_ratio.options__6", "value": 2.33 }
+          ],
+          "id": "image_ratio",
+          "label": "t:sections.video.settings.cover_image.ratio",
+          "type": "select"
+        },
+        {
+          "type": "range",
+          "id": "video_width",
+          "min": 50,
+          "max": 300,
+          "step": 5,
+          "unit": "px",
+          "content": "t:sections.footer.blocks.brand_information.settings.brand_image_width.label",
+          "default": 100
+        },
+        {
+          "type": "select",
+          "id": "alignment",
+          "label": "t:sections.all.alignment.label",
+          "options": [
+            { "value": "left", "label": "t:sections.all.alignment.left" },
+            { "value": "center", "label": "t:sections.all.alignment.center" },
+            { "value": "right", "label": "t:sections.all.alignment.right" }
+          ],
+          "default": "left"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_autoplay",
+          "label": "t:sections.video.settings.enable_autoplay.label",
+          "default": false
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_video_looping",
+          "label": "t:sections.video.settings.enable_video_looping.label",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "liquid",
+      "name": "t:sections.custom-liquid.name",
+      "settings": [
+        {
+          "type": "liquid",
+          "id": "custom_liquid",
+          "label": "t:sections.custom-liquid.settings.custom_liquid.label",
+          "info": "t:sections.custom-liquid.settings.custom_liquid.info"
+        }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "payment_enable",
+      "default": true,
+      "label": "t:sections.footer.settings.payment_enable.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_policy",
+      "default": true,
+      "label": "t:sections.footer.settings.show_policy.label",
+      "info": "t:sections.footer.settings.header__8.info"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.footer.settings.header__3.content"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_language_selector",
+      "default": false,
+      "label": "t:sections.footer.settings.enable_language_selector.label",
+      "info": "t:sections.footer.settings.header__6.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_country_selector",
+      "default": false,
+      "label": "t:sections.footer.settings.enable_country_selector.label",
+      "info": "t:sections.footer.settings.header__4.info"
+    },
+    {
+      "default": "light",
+      "options": [
+        { "label": "t:sections.all.color_mode.options__1.label", "value": "light" },
+        { "label": "t:sections.all.color_mode.options__2.label", "value": "dark" }
+      ],
+      "id": "color_mode",
+      "label": "t:sections.all.color_mode.label",
+      "type": "select",
+      "info": "t:sections.header.settings.menu_type_desktop.info"
+    },
+    {
+      "id": "color_style",
+      "label": "t:sections.all.color_style.label",
+      "type": "select_draw",
+      "default": "brand",
+      "options": [
+        { "label": "t:sections.all.color_style.transparent.label", "value": "transparent" },
+        { "label": "t:sections.all.color_style.pure.label", "value": "pure" },
+        { "label": "t:sections.all.color_style.neutral.label", "value": "neutral" },
+        { "label": "t:sections.all.color_style.brand.label", "value": "brand" },
+        { "label": "t:sections.all.color_style.secondary.label", "value": "secondary" },
+        { "label": "t:sections.all.color_style.striking.label", "value": "striking" }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "options": [
+        { "label": "t:sections.all.padding.options__1.label", "value": "none" },
+        { "label": "t:sections.all.padding.options__2.label", "value": "xxs" },
+        { "label": "t:sections.all.padding.options__3.label", "value": "xs" },
+        { "label": "t:sections.all.padding.options__4.label", "value": "s" },
+        { "label": "t:sections.all.padding.options__5.label", "value": "m" },
+        { "label": "t:sections.all.padding.options__6.label", "value": "l" },
+        { "label": "t:sections.all.padding.options__7.label", "value": "xl" }
+      ],
+      "default": "l",
+      "id": "padding_top",
+      "label": "t:sections.all.padding.padding_top",
+      "type": "select"
+    },
+    {
+      "options": [
+        { "label": "t:sections.all.padding.options__1.label", "value": "none" },
+        { "label": "t:sections.all.padding.options__2.label", "value": "xxs" },
+        { "label": "t:sections.all.padding.options__3.label", "value": "xs" },
+        { "label": "t:sections.all.padding.options__4.label", "value": "s" },
+        { "label": "t:sections.all.padding.options__5.label", "value": "m" },
+        { "label": "t:sections.all.padding.options__6.label", "value": "l" },
+        { "label": "t:sections.all.padding.options__7.label", "value": "xl" }
+      ],
+      "default": "xxs",
+      "id": "padding_bottom",
+      "label": "t:sections.all.padding.padding_bottom",
+      "type": "select"
+    }
+  ],
+  "default": {
+    "blocks": [
+      {
+        "type": "link_list"
+      }
+    ]
+  }
+}
+{% endschema %}

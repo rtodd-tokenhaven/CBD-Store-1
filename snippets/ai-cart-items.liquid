@@ -1,0 +1,272 @@
+{% comment %}
+  -- layout : horizontal or vertical
+  -- className
+  -- cart
+  -- show_footer
+  bugfix: 购物车删除按钮样式写在style中避免网络延迟导致删除按钮会出现闪烁的问题
+{% endcomment %}
+{% liquid
+  assign groups = cart.groups
+  if groups == nil
+    assign groups = cart.extraInfo.groups
+  endif
+%}
+<style type="text/css">
+  .cart-group-content .cart-items-detail .cart-items-action quantity-input cart-remove-button {
+    display: none
+  }
+  @media screen and (max-width: 750px) {
+    cart-remove-button {
+      display: none
+    }
+    .cart-group-content .cart-items-detail .cart-items-action quantity-input[quantity='1'] cart-remove-button {
+      display: block
+    }
+    .cart-group-content .cart-items-detail .cart-items-action quantity-input[quantity='1'] button[name='minus'] {
+      display: none
+    }
+  }
+
+
+
+</style>
+<link rel="stylesheet" href="{{ 'component-cart-items.css' | asset_url }}" fetchpriority="high">
+<link rel="stylesheet" href="{{ 'component-cart.css' | asset_url }}" fetchpriority="high">
+{{ 'component-product-variant-picker.css' | asset_url | stylesheet_tag }}
+<div class="cart-container  {{ layout }} {{ className | default: '' }}">
+  {%- if cart.items != empty -%}
+    <{% if type == 'cart-drawer' %}cart-drawer-items{% else %}cart-items{% endif %} data-error-limit="{{ 'products.product.limit_inventory' | t }}">
+      <form
+        action="{{ routes.cart_url }}"
+        class="cart__contents critical-hidden"
+        method="post"
+        id="{% if type == 'cart-drawer' %}cart-drawer-items{% else %}cart-items{% endif %}">
+        <div class="cart__items">
+          <div class="js-contents">
+            {%- for group in groups -%}
+              <div class="cart-group-container f-column gap-800">
+                {% if group.discountId or group.id %}
+                  <nav class="cart-group-nav f-row  align-center">
+                    <div class="cart-group-nav-title f-row align-center">
+                      {% render 'genstore-svg'
+                        , icon_name: 'icon-discount'
+                        , icon_weight: 'fill' %}
+                      <span class="cart-group-nav-discount-name">
+                        {{ group.discountTypeName | default: group.typeName }}
+                      </span>
+                    </div>
+                    {% if group.promotionRuleIntro %}
+                      <div class="divider"></div>
+                      <label class="cart-group-nav-intro">
+                        {{ group.promotionRuleIntro }}
+                      </label>
+                    {% endif %}
+                  </nav>
+                {% endif %}
+                {%- for item in group.goodsList -%}
+                  <cart-line-item class="cart-group-content f-row" data-product-handle="{{ item.product.handle }}" =>
+                    <div class="cart-items-face">
+                      {% if item.image != blank %}
+                        <img src="{{ item.image | image_url:width:150 }}" />
+                      {% else %}
+                        <img src="{{ 'product-empty.png' | asset_url }}" />
+                      {% endif %}
+                    </div>
+                    <div class="cart-line-item-container">
+                      <div class="cart-items-detail f-row content-between flex-start gap-400">
+                        <div class="cart-items-detail-content flex-1 gap-1200">
+                          <div class="cart-items-desc f-column gap-200">
+                            <div class="f-row align-center">
+                              <a href="{{ item.url }}" class="link link--text">
+                                {% render 'genstore-text'
+                                  , text: item.title %}
+                              </a>
+                            </div>
+                            {% liquid
+                              assign final_price = item.final_price | money
+                              assign original_price = item.original_price | money
+                            %}
+                            {%- if item.original_price != item.final_price -%}
+                              <div class="cart-item__discounted-prices f-row gap-400">
+                                {% render 'genstore-text'
+                                  , text: final_price %}
+                                {% render 'genstore-text'
+                                  , text: original_price
+                                  , type: 'cross' %}
+                              </div>
+                            {%- else -%}
+                              <div class="product-option">
+                                {% render 'genstore-text'
+                                  , text: original_price %}
+                              </div>
+                            {%- endif -%}
+                            {%- if item.options_with_values.size > 0 -%}
+                              <cart-edit-btn
+                                class="cart-item-edit flex-row align-center"
+                                data-open-edit-cart
+                                data-edit-cart-url="{{ item.url }}&view=ajax_edit_cart"
+                                data-edit-cart-id="{{ item.id }}"
+                                data-edit-cart-quantity="{{ item.quantity }}"
+                                data-line="{{ item.key }}"
+                                data-index="{{ item.index | plus: 1 }}">
+                                {% if item.options_with_values.size == 1 %}
+                                  {% assign optionValue = item.options_with_values[0].value %}
+                                  {% assign option_label = item.options_with_values[0].name %}
+                                  {% assign label = option_label
+                                    | append: ' : '
+                                    | append: optionValue %}
+                                  {% render 'genstore-text'
+                                    , text: label
+                                    , text_size: 'small' %}
+                                  {% render 'genstore-svg'
+                                    , icon_name: 'icon-down'
+                                    , className: 'icon-open-dialog' %}
+                                {% else %}
+                                  {%- for option in item.options_with_values -%}
+                                    {% assign optionValue = option.value %}
+                                    {% render 'genstore-text'
+                                      , text: optionValue
+                                      , text_size: 'small' %}
+                                    {% unless forloop.last %}
+                                      {% render 'genstore-text'
+                                        , text: '/'
+                                        , text_size: 'small' %}
+                                    {% endunless %}
+                                    {% if forloop.last %}
+                                      {% render 'genstore-svg'
+                                        , icon_name: 'icon-down'
+                                        , className: 'icon-open-dialog' %}
+                                    {% endif %}
+                                  {%- endfor -%}
+                                {% endif %}
+
+                              </cart-edit-btn>
+                            {%- endif -%}
+                            {% if item.selling_plan_allocation != empty and item.selling_plan_allocation.selling_plan != empty and item.selling_plan_allocation.selling_plan.name != empty %}
+                                <div class="preorder-tag">{{ item.selling_plan_allocation.selling_plan.name }}</div>
+                            {% endif %}
+                            {% if item.discount_allocations.size > 0 %}
+                              <ul class="discounts list-unstyled" role="list">
+                                {%- for discount in item.discount_allocations -%}
+                                  <li class="discounts__discount f-row align-center">
+                                    {% render 'genstore-svg'
+                                      , icon_name: 'icon-discount' %}
+                                    <span class="discounts__discount-title">
+                                      {{ discount.title | escape }}
+                                    {% comment %} (-{{ item.line_level_total_discount | money }}) {% endcomment %}
+                                    </span>
+                                  </li>
+                                {%- endfor -%}
+                              </ul>
+                            {% endif %}
+
+                          </div>
+                          {% comment %}输入框{% endcomment %}
+                          <div class="cart-items-action ">
+                            {% assign quantityId = 'Quantity-' | append: item.id %}
+                            <div class="f-row gap-400">
+                              {% render 'genstore-quantity-input'
+                                , value: item.quantity
+                                , input_size: 'large'
+                                , data_index: item.id
+                                , quantity_variant_id: item.variant_id
+                                , data_key: item.key
+                                , product_id: item.product_id
+                                , data_id: quantityId
+                                , enable_loading: true
+                                , extra_remove_button: true
+                                , index: item.index
+                              %}
+                              <cart-remove-button
+                                id="Remove-{{ item.index }}"
+                                data-index="{{ item.id }}"
+                                data-key="{{ item.key }}"
+                                data-variant-id="{{ item.variant_id }}"
+                                data-product-id="{{ item.product_id }}">
+                                {% render 'genstore-svg'
+                                  , icon_name: 'icon-trash' %}
+                              </cart-remove-button>
+                            </div>
+                            <div id="Quantity-{{ item.id }}-error_message" class="errorMessage"></div>
+                          </div>
+                        </div>
+                        <div class=" cart-item__price-wrapper  content-end right">
+                          {% liquid
+                            assign final_line_price = item.final_line_price | money
+                            assign original_line_price = item.original_line_price | money
+                          %}
+                          {% render 'genstore-text'
+                            , text: final_line_price %}
+                        </div>
+                      </div>
+                      {% if item.extraData != blank %}
+                        <ul class="line-item-extra">
+                          {% for data in item.extraData %}
+                            <li>
+                              <span>
+                                {{ data[0] }}
+                              </span>
+                              <span>
+                                {{ data[1] }}
+                              </span>
+                            </li>
+                          {% endfor %}
+                        </ul>
+                      {% endif %}
+                    </div>
+                    <div class="cart-remove-button-touch">
+                      <cart-remove-button
+                        id="Remove-{{ item.index }}-mobile-move-del"
+                        class="cart-remove-button-touch-mobile"
+                        data-key="{{ item.key }}"
+                        data-index="{{ item.id }}"
+                        data-variant-id="{{ item.variant_id }}"
+                        data-product-id="{{ item.product_id }}">
+
+                        {% render 'genstore-svg'
+                          , icon_name: 'icon-trash' %}
+                        <p>
+                          {{ 'customer.addresses.delete' | t }}
+                        </p>
+                      </cart-remove-button>
+                    </div>
+
+                  </cart-line-item>
+                {% endfor %}
+              </div>
+            {% endfor %}
+          </div>
+
+        </div>
+      </form>
+    </{% if type == 'cart-drawer' %}cart-drawer-items{% else %}cart-items{% endif %}>
+  {% endif %}
+  {% if blocks != nil %}
+    {% for block in blocks %}
+      {%- case block.type -%}
+        {%- when 'footer' -%}
+          {% render 'main-cart-footer'
+            , button_size: block.settings.button_size
+            , button_style_secondary: block.settings.button_style_secondary
+            , color_style_button: block.settings.color_style_button
+            , cart: cart
+            , content_alignment: block.settings.content_alignment
+            , show_dynamic_checkout: block.settings.show_dynamic_checkout
+            , enable_sub_total: block.settings.enable_sub_total
+            , genstore_attributes: block.genstore_attributes
+            , enable_buy_buttons: block.settings.enable_buy_buttons
+            , type: type
+          -%}
+      {% endcase %}
+    {% endfor %}
+  {% endif %}
+  {% if show_footer %}
+    {% render 'main-cart-footer'
+      , cart: cart
+      , show_dynamic_checkout: true
+      , enable_sub_total: true
+      , enable_buy_buttons: true
+      , type: type
+    %}
+  {% endif %}
+</div>

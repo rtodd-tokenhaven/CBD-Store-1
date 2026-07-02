@@ -1,0 +1,76 @@
+{% comment %}
+  -- input_type: text or number,email
+  -- is_readonly: true or false, 只读模式
+{% endcomment %}
+{% liquid
+  assign type = input_type | default: 'text'
+  assign min = min | default: 0
+  assign max = max | default: 1000
+  assign input_mode = input_mode | default: 'text'
+  assign is_readonly = is_readonly | default: false
+  assign border_radius = settings.inputs_radius | default: 0
+  assign size = input_size | default: 'xl'
+  if settings.inputs_is_rounded == true
+    assign border_radius = 999
+  endif
+%}
+<genstore-input
+  class='{{ className }} genstore-input-container f-column gap-200 
+  {% if is_readonly %}readonly{% endif %}
+  '
+  style='
+    --inputs-border-radius:{{ border_radius }}px;
+    --inputs-border-width:{{ settings.inputs_border_thickness }}px;
+    --inputs-shadow-horizontal-offset:{{ settings.inputs_shadow_horizontal_offset }}px;
+    --inputs-shadow-vertical-offset:{{ settings.inputs_shadow_vertical_offset }}px;
+    --inputs-shadow-blur:{{ settings.inputs_shadow_blur }}px;
+    --inputs-shadow-opacity:{{ settings.inputs_shadow_opacity }}
+  '
+>
+  <div class='genstore-input f-row align-center {{ size }}   {% if disabled %}disabled{% endif %}'>
+    <input
+      placeholder='{{ placeholder }}'
+      type='{{ type }}'
+      id='{{ input_id }}'
+      name='{{ input_name | escape }}'
+      min='{{ min }}'
+      max='{{ max }}'
+      data-pattern='\d| |,|\.'
+      inputmode='{{ input_mode }}'
+      value='{{ value }}'
+      {% if disabled %}
+        disabled
+      {% endif %}
+      {% if is_readonly %}
+        readonly
+      {% endif %}
+      {{ additional_attributes }}
+    >
+    <div class='label'>
+      {% if is_required == true %}
+        <i>*</i>
+      {% endif %}
+      {{ label }}
+    </div>
+    {% if extra_content != blank %}
+      {{ extra_content }}
+    {% elsif is_readonly == false %}
+      <span
+        class='f-row align-center content-center icon remove'
+        {% if remove_url != blank %}
+          data-remove-url='{{ remove_url }}'
+        {% endif %}
+      >
+        {% render 'genstore-icon', icon_name: 'icon-close-small' %}
+      </span>
+    {% endif %}
+  </div>
+  <div class='input-error f-row align-center hidden'>
+    {% render 'genstore-svg', icon_name: 'icon-error' %}
+    <span class='error-message'></span>
+  </div>
+  <div class='input-success f-row align-center hidden'>
+    {% render 'genstore-svg', icon_name: 'icon-success' %}
+    <span class='success-message'></span>
+  </div>
+</genstore-input>

@@ -1,0 +1,33 @@
+{% comment  %} 
+    -- block
+    -- title 标题
+    -- button_text 按钮文本
+    -- button_url 按钮链接
+    -- enable_image_link
+    -- image
+    -- image_ratio
+    -- image_shape  rounded right_angle soft capsule arch 
+{% endcomment %}
+<div class="mega-menu-image-container  {{image_text_align}}" >
+    <a {{ '' | genstore_vkey: key:visual_matched_button_url_key,block:block  }} {%if enable_image_link == true %}  href="{{ button_url }}" {% endif %}>
+        {% render 'banner-media', image: image, accept_ratio: image_ratio,block:block,
+            visual_image_key:visual_image_key
+        %}
+    </a>
+    <div class="card-content">
+        {% if title != blank %}
+            {% render 'genstore-text-block' , text: title,
+                block:block,
+                visual_text_key:visual_matched_title_key,
+            %}
+        {% endif %}
+        {% if button_text != blank %}
+            {% render 'genstore-text-link', text: button_text,
+                 url: button_url, text_size: 's',block:block,
+                visual_text_key:visual_matched_button_text_key,
+                visual_link_key:visual_matched_button_url_key,
+                vkey_group:vkey_group
+            %}
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,509 @@
+{% comment %}
+  -- card_id : id section.id-{{index}}
+  -- images: 图片列表 支持最多两张 一张主图，一张hover时显示另外一张图
+  -- section.settings
+  -- show_vendor 显示供应商
+  -- badges : 产品标签列表
+  -- show_product_placeholder : 是否显示产品占位图
+  -- enable_color_picker : 是否启用颜色选择器
+  -- index
+  -- settings.card_price_type : 价格显示类型 min - 最小价格 range -最小价格-最大价格 from - 最小价格
+  -- enable_animation 是否需要动画
+{% endcomment %}
+{% liquid
+  assign product_form_id = 'quick-add-' | append: section.id | append: product.id
+  assign icon_interaction_class = ''
+  assign button_interaction_class = ''
+  assign button_color_style = ''
+  assign has_padding = false
+  assign quick_add_interaction_mode = quick_add_interaction_mode | default: settings.quick_add_interaction_mode
+  assign quick_add_button_type = quick_add_button_type | default: settings.quick_add_button_type
+  assign card_style = card_style | default: settings.card_style
+  assign card_quick_add = card_quick_add | default: settings.card_quick_add
+  assign btn_text = 'products.product.add_to_cart' | t
+  if product.available == false
+    assign btn_text = 'products.product.sold_out' | t
+  endif
+  if quick_add_interaction_mode == 'flat' and quick_add_button_type == 'button'
+    assign has_padding = true
+  endif
+
+  assign card_class_name = 'f-column content-between'
+  assign disable_hover = false
+  assign singleVariant = false
+  if product.variants.size == 1
+    assign singleVariant = true
+  endif
+  if quick_add_button_type == 'icon'
+    assign disable_hover = true
+    assign button_color_style = 'pure'
+    assign card_class_name = card_class_name | append: ' icon'
+  endif
+  if quick_add_button_type == 'icon' and quick_add_interaction_mode == 'hover'
+    assign icon_interaction_class = 'absolute top-full  p-16 right-0 duration-400 transition-all opacity-0 translate-y-full hover:opacity-100 hover:slide-up'
+  endif
+  if quick_add_button_type == 'icon' and quick_add_interaction_mode == 'flat'
+    assign icon_interaction_class = 'absolute top-0 -translate-y-full p-16 right-0'
+  endif
+  if quick_add_button_type == 'button' and quick_add_interaction_mode == 'hover'
+    assign button_interaction_class = 'absolute top-full left-0 p-16 right right-0 duration-400 transition-all opacity-0 translate-y-full hover:opacity-100 hover:slide-up'
+  endif
+  if quick_add_button_type == 'button' and quick_add_interaction_mode == 'flat'
+    assign button_interaction_class = ''
+  endif
+  assign enable_hover_overlay = false
+
+  if card_style == 'card' and quick_add_interaction_mode == 'hover' and quick_add_button_type == 'button'
+    assign enable_hover_overlay = true
+    assign button_interaction_class = ''
+  endif
+  assign wallet_class = 'hidden'
+  if quick_add_button_type == 'icon'
+    assign wallet_class = 'icon-wallet'
+  endif
+
+  comment
+    当 hover 模式且非 card 样式时，button_content 放到图片区域（通过 genstore-card 的 button_content 参数）
+  endcomment
+  assign button_in_image_box = true
+  if quick_add_interaction_mode == 'flat'
+    assign button_in_image_box = false
+  elsif card_style == 'card' and quick_add_interaction_mode == 'hover' and quick_add_button_type == 'button'
+    assign button_in_image_box = false
+  endif
+  if card_quick_add == 'none'
+    assign button_in_image_box = false
+  endif
+  if show_product_placeholder
+    assign button_in_image_box = false
+  endif
+%}
+{% capture button_content %}
+  {% if card_quick_add == 'standard' %}
+      {% if product.variants.size == 1 %}
+        <product-form data-section-id="{{ section.id }}"
+         class="  {{ icon_interaction_class }} {{ button_interaction_class }} {% if has_padding %}has-padding{% endif %}"
+        >
+          {%- form 'product',
+            product,
+            id: product_form_id,
+            class: 'form',
+            novalidate: 'novalidate',
+            data-type: 'add-to-cart-form'
+          -%}
+            <input
+              type="hidden"
+              name="id"
+              value="{{ product.selected_or_first_available_variant.id }}"
+              class="product-variant-id"
+              {% if product.selected_or_first_available_variant.available == false %}
+                disabled
+              {% endif %}
+            >
+            <button
+              id="{{ product_form_id }}-submit"
+              type="submit"
+              name="add"
+              class="genstore-btn primary medium   {{ button_color_style }}
+              {% if disable_hover == true %} disable-hover {% endif %}
+              {% if quick_add_button_type == 'button' %}full-width {% endif %}
+              {% if product.selected_or_first_available_variant.available == false %}disabled{% endif %}"
+              aria-haspopup="dialog"
+              aria-live="polite"
+              data-sold-out-message="true"
+              {% if product.selected_or_first_available_variant.available == false %}
+                aria-disabled="true"
+              {% endif %}
+            >
+              {% render 'genstore-svg', icon_name: 'icon-wallet', className:wallet_class %}
+              <span class="btn-label">
+                {%- if product.selected_or_first_available_variant.available -%}
+                  {{ 'products.product.add_to_cart' | t }}
+                {%- else -%}
+                  {{ 'products.product.sold_out' | t }}
+                {%- endif -%}
+              </span>
+              {%- render 'loading-spinner' -%}
+              <span class="cart-added">
+                <span class="svg-wrapper">
+                  {{- 'icon-checkmark.svg' | inline_asset_content -}}
+                </span>
+              </span>
+            </button>
+          {%- endform -%}
+        </product-form>
+
+      {% else %}
+        <modal-opener data-modal="#QuickAdd-{{ product.id }}"
+           class="{{ icon_interaction_class }} {{ button_interaction_class }} standard {% if has_padding %}has-padding{% endif %}"
+        >
+          <button
+            id="{{ product_form_id }}-submit"
+            class="genstore-btn primary medium {{ button_color_style }}
+            {% if disable_hover == true %} disable-hover {% endif %}
+            {% if quick_add_button_type == 'button' %}full-width {% endif %}
+            {% if product.available == false %}disabled{% endif %}
+            "
+            data-product-url="{{ product.url }}"
+            {% if product.available == false %}
+              aria-disabled="true"
+            {% endif %}
+            type="submit" name="add">
+            {% render 'genstore-svg', icon_name: 'icon-wallet', className:wallet_class %}
+            <span class="btn-label">
+              {{ btn_text }}
+            </span>
+            {%- render 'loading-spinner' -%}
+            <span class="cart-added">
+              <span class="svg-wrapper">
+                {{- 'icon-checkmark.svg' | inline_asset_content -}}
+              </span>
+            </span>
+          </button>
+        </modal-opener>
+      {% endif %}
+  {% endif %}
+  {% if product.url and card_quick_add == 'bulk' %}
+      {% if product.variants.size == 1 %}
+        <quick-add-bulk
+          data-min="{{ product.selected_or_first_available_variant.quantity_rule.min }}"
+          id="quick-add-bulk-{{ product.selected_or_first_available_variant.id }}-{{ section.id }}"
+          class="quick-add-bulk {{ icon_interaction_class }} {{ button_interaction_class }} {% if has_padding %}has-padding{% endif %}"
+          data-index="{{ product.selected_or_first_available_variant.id }}"
+        >
+          {% if product.selected_or_first_available_variant.available == false %}
+            <button
+              id="{{ product_form_id }}-submit"
+              type="submit"
+              name="add"
+              class="genstore-btn primary medium disabled {% if disable_hover == true %} disable-hover {% endif %}"
+              aria-labelledby="{{ product_form_id }}-submit title-{{ section_id }}-{{ product.id }}"
+              data-sold-out-message="true"
+              disabled
+            >
+              <span>{{ 'products.product.sold_out' | t }}</span>
+              <span class="sold-out-message hidden">
+                    {{ 'products.product.sold_out' | t }}
+                  </span>
+            </button>
+          {% else %}
+          {% assign min = product.selected_or_first_available_variant.quantity_rule.min %}
+          {% assign step = product.selected_or_first_available_variant.quantity_rule.increment %}
+          {% assign variant = product.selected_or_first_available_variant %}
+          {% assign max = product.selected_or_first_available_variant.inventory_quantity %}
+          {% if max > 9999 %}
+            {% assign max = 9999 %}
+          {% endif %}
+            {% assign cart_qty = cart | item_count_for_variant: variant.id %}
+                {% render 'genstore-quantity-input',
+                  input_size: 'small', max: max, min: 0, value: cart_qty,
+              step: step, product_form_id: product_form_id,
+              data_index: variant.id,
+              data_quantity_variant_id: variant.id,
+              data_id: variant.id,
+              data_product_id: product.id,
+               enable_loading: true %}
+          {% endif %}
+        </quick-add-bulk>
+      {% else %}
+        <div class="quick-add no-js-hidden {{ icon_interaction_class }} {{ button_interaction_class }}">
+          {%- liquid
+            assign product_form_id = 'quick-add-' | append: section_id | append: product.id
+            assign qty_rules = false
+            if product.selected_or_first_available_variant.quantity_rule.min > 1 or product.selected_or_first_available_variant.quantity_rule.max != null or product.selected_or_first_available_variant.quantity_rule.increment > 1
+              assign qty_rules = true
+            endif
+          -%}
+          <modal-opener
+            id="QuickBulk-{{ product.id }}-{{ section_id }}"
+            data-modal="#QuickAddBulk-{{ product.id }}-{{ section.id }}"
+            class="bulk {% if has_padding %}has-padding{% endif %}"
+          >
+            <button
+              id="{{ product_form_id }}-submit"
+              type="submit"
+              name="add"
+              class="genstore-btn primary medium {{ button_color_style }}
+                {% if disable_hover == true %} disable-hover {% endif %}
+                {% if quick_add_button_type == 'button' %}full-width {% endif %}
+                {% if product.available == false %}disabled{% endif %}"
+                {% if product.available == false %}
+                  aria-disabled="true"
+                {% endif %}
+                aria-haspopup="dialog"
+                aria-labelledby="{{ product_form_id }}-submit title-{{ section_id }}-{{ product.id }}"
+                data-product-url="{{ product.url }}"
+            >
+              {% render 'genstore-svg', icon_name: 'icon-wallet', className:wallet_class %}
+              <span class="btn-label">
+                {{ btn_text }}
+              </span>
+              {%- render 'loading-spinner' -%}
+            </button>
+          </modal-opener>
+        </div>
+      {% endif %}
+    {% endif %}
+{% endcapture %}
+{% comment %} Modal dialogs - these get moved to body by the web component {% endcomment %}
+{% capture modal_content %}
+  {% if card_quick_add == 'standard' and product.variants.size > 1 %}
+    <quick-add-modal id="QuickAdd-{{ product.id }}" class="quick-add-modal">
+      <div role="dialog" class="quick-add-modal__content global-settings-popup" tabindex="-1">
+        <span
+          id="ModalClose-{{ product.id }}"
+          type="button"
+          class="quick-add-modal__toggle"
+          aria-label="{{ 'accessibility.close' | t }}"
+        >
+          {% render 'genstore-svg', icon_name: 'icon-close' %}
+        </span>
+        <div id="QuickAddInfo-{{ product.id }}" class="quick-add-modal__content-info"></div>
+      </div>
+    </quick-add-modal>
+  {% endif %}
+  {% if card_quick_add == 'bulk' and product.variants.size > 1 %}
+    <modal-dialog
+      id="QuickAddBulk-{{ product.id }}-{{ section.id }}"
+      class="quick-add-modal color-{{ section.settings.color_scheme | default: 'scheme-1' }}"
+    >
+            <div
+              role="dialog"
+              aria-label="{{ 'products.product.choose_product_options' | t: product_name: product.title | escape }}"
+              aria-modal="true"
+              class="quick-add-modal__content quick-add-modal__content--bulk global-settings-popup"
+              tabindex="-1"
+            >
+              <span
+                id="ModalClose-{{ product.id }}"
+                type="button"
+                class="quick-add-modal__toggle"
+                aria-label="{{ 'accessibility.close' | t }}"
+              >
+              {% render 'genstore-svg', icon_name: 'icon-close' %}
+              </span>
+              <div
+                id="QuickAddInfo-{{ product.id }}"
+                class="quick-add-modal__content-info quick-add-modal__content-info--bulk"
+              >
+                <div class="quick-add__content-info__media">
+                  <div class="quick-add__info">
+                    {%- if product.featured_media -%}
+                      <div
+                        class="quick-add__product-media"
+                      >
+                        <div class="quick-add__product-container global-media-settings">
+                          {% comment %}theme-check-disable ImgLazyLoading{% endcomment %}
+                          <img
+                            srcset="
+                                  {%- if product.featured_media.width >= 165 -%}{{ product.featured_media | image_url: width: 165 }} 165w,{%- endif -%}
+                                  {%- if product.featured_media.width >= 360 -%}{{ product.featured_media | image_url: width: 360 }} 360w,{%- endif -%}
+                                  {%- if product.featured_media.width >= 533 -%}{{ product.featured_media | image_url: width: 533 }} 533w,{%- endif -%}
+                                  {%- if product.featured_media.width >= 720 -%}{{ product.featured_media | image_url: width: 720 }} 720w,{%- endif -%}
+                                  {%- if product.featured_media.width >= 940 -%}{{ product.featured_media | image_url: width: 940 }} 940w,{%- endif -%}
+                                  {%- if product.featured_media.width >= 1066 -%}{{ product.featured_media | image_url: width: 1066 }} 1066w,{%- endif -%}
+                                  {{ product.featured_media | image_url }} {{ product.featured_media.width }}w
+                                "
+                            src="{{ product.featured_media | image_url: width: 533 }}"
+                            sizes="(min-width: {{ settings.page_width }}px) {{ settings.page_width | minus: 130 | divided_by: 4 }}px, (min-width: 990px) calc((100vw - 130px) / 4), (min-width: 750px) calc((100vw - 120px) / 3), calc((100vw - 35px) / 2)"
+                            alt="{{ product.featured_media.alt | escape }}"
+                            class="motion-reduce"
+                            {% unless lazy_load == false %}
+                              loading="lazy"
+                            {% endunless %}
+                            width="{{ product.featured_media.width }}"
+                            height="{{ product.featured_media.height }}"
+                          >
+                          {% comment %}theme-check-enable ImgLazyLoading{% endcomment %}
+                        </div>
+                      </div>
+                    {%- endif -%}
+                  </div>
+                  <div class="quick-add-modal__content-info--bulk-details medium-hide large-up-hide">
+                    <a href="{{ product.url }}" class="full-unstyled-link {% if product == blank or product.url == blank %} prevent-click {% endif %}" {% if product == blank or product.url == blank %} onclick="event.preventDefault();"  {% endif %} >
+                      <h3>{{ product.title | escape }}</h3>
+                    </a>
+                    {% render 'price',
+                      product: product,
+                      price_class: '',
+                      text_size: settings.card_price_size,
+                      price_color: settings.card_price_color,
+                      is_bolder: settings.card_price_is_bolder,
+                      show_compare_at_price: settings.card_enable_compare_at_price,
+                      show_price_type: settings.card_price_type
+                    %}
+                    {% if cart.taxes_included %}
+                      <div>
+                        {% assign taxes = 'products.product.taxes_included' | t %}
+                        {% render 'genstore-text', text: taxes, text_size: 'small', type: 'grey' %}
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div>
+                  <div class="quick-add-modal__content-info--bulk-details small-hide">
+                    <a href="{{ product.url }}" class="full-unstyled-link {% if product == blank or product.url == blank %} prevent-click {% endif %}" {% if product == blank or product.url == blank %}  onclick="event.preventDefault();"  {% endif %}>
+                      <h3 class="heading-s">
+                        {{ product.title | escape }}
+                      </h3>
+                    </a>
+                    {% render 'price',
+                      product: product,
+                      price_class: '',
+                      text_size: settings.card_price_size,
+                      price_color: settings.card_price_color,
+                      is_bolder: settings.card_price_is_bolder,
+                      show_compare_at_price: settings.card_enable_compare_at_price,
+                      show_price_type: settings.card_price_type
+                    %}
+
+                    {% if cart.taxes_included %}
+                      <div>
+                        {% assign taxes = 'products.product.taxes_included' | t %}
+                        {% render 'genstore-text', text: taxes, text_size: 'small', type: 'grey' %}
+                      </div>
+                    {% endif %}
+                  </div>
+                  <bulk-modal
+                    id="QuickBulkModal-{{ product.id }}-{{ section_id }}"
+                    data-url="{{ product.url }}"
+                    data-section-id="{{ section_id }}"
+                    data-product-id="{{ product.id }}"
+                  >
+                  </bulk-modal>
+                </div>
+              </div>
+            </div>
+    </modal-dialog>
+  {% endif %}
+{% endcapture %}
+
+{% capture content %}
+<genstore-card-info data-card-style="{{ card_style }}">
+  <div class="card-content isolate       {% if enable_hover_overlay %}hover-overlay{% endif %}"
+       data-text-limit="{{ settings.card_text_limit }}"
+       style="--card-text-limit:{{ settings.card_text_limit }};"
+  >
+    <div class="card-content-wrapper f-column gap-300" >
+      <div class="card-link isolate f-column gap-300">
+      {% if settings.card_quick_add == 'none' and enable_color_picker %}
+        {% render 'genstore-product-card-color-picker', product: product,id:index %}
+      {% endif %}
+      {% if section.settings.show_rating  and product.metafields != blank and product.metafields.reviews != blank and  product.metafields.reviews.value != blank  %}
+        {% if settings.rating_is_show_no_total == false or  settings.rating_is_show_no_total == true and product.metafields.reviews.value.rating > 0 %}
+            <div class="rating-wrap {{ settings.card_text_alignment }}">
+            {% render 'genstore-rating',rating_score:product.metafields.reviews.value.rating,review_count:product.metafields.reviews.value.comment_count,icon_type:settings.rating_style,font_size:16,icon_color:settings.rating_color,max_count: product.metafields.reviews.value.scale_max,half_star:false%}
+            </div>
+        {% endif %}
+      {% endif %}
+      <a href="{{ product.url }}" {% if product == blank or product.url == blank %} class="prevent-click" onclick="event.preventDefault();"  {% endif %}>
+        {% liquid
+          assign title = product.title
+          if title == blank
+            assign title = 'onboarding.product_title' | t
+          endif
+        %}
+        {% render 'genstore-text-block', text: title %}
+      </a>
+      </div>
+      <div class="card-information isolate">
+        {% if show_product_placeholder %}
+          {% assign text = shop.symbol | append: ' 20' %}
+          {% render 'genstore-text-block', text: text,text_size:settings.card_price_size,no_letter_spacing:true %}
+        {% else %}
+          {% render 'price',
+            product: product,
+            price_class: '',
+            text_size: settings.card_price_size,
+            price_color: settings.card_price_color,
+            is_bolder: settings.card_price_is_bolder,
+            show_compare_at_price: settings.card_enable_compare_at_price,
+            show_price_type: settings.card_price_type %}
+        {% endif %}
+      </div>
+
+      {% if settings.card_show_vendor and product.vendor != blank %}
+          <div class="card-vendor">
+            {% render 'genstore-text', text: product.vendor, type: 'grey', text_size: 'small' %}
+          </div>
+      {% endif %}
+    </div>
+
+    {% unless button_in_image_box %}
+      {% if product != 'example' and product != blank %}
+        {{ button_content }}
+      {% endif %}
+    {% endunless %}
+  </div>
+  </genstore-card-info>
+{% endcapture %}
+{% liquid
+  assign downloadable = false
+  if product.type == 2 and product.subType == 205
+    assign downloadable = true
+  endif
+%}
+{% capture attributes %}data-product-id="{{ product.id }}" {{attributes|default:""}}{% endcapture %}
+{% capture badges %}
+  {% assign compare_at_price =product.compare_at_price|to_integer  %}
+  {% assign price =product.price | to_integer  %}
+    <div class="badges-container  {{ settings.card_badge_location | default: 'top-left' }}"
+      style="--card-badge-radius: {{ settings.card_badge_radius }}px;"
+    >
+      {% assign extra_class =   settings.card_badge_style  |  append: ' brand'  %}
+      {% if compare_at_price > price  and settings.card_enable_badge ==true and settings.enable_badge == true and product.available == true%}
+        {% capture label_content %}
+          {% render 'genstore-compute-discount',
+            cpmpare_at_price: compare_at_price,
+            price: price,
+            badge_type: settings.card_badge_type,
+            badge_format: settings.card_badge_format
+          %}
+        {% endcapture %}
+        {% render 'genstore-badge', label: label_content ,extra_class: extra_class %}
+      {% endif %}
+      {% if settings.enable_product_tag and product.tags.size >0 %}
+        {% assign tag = product.tags.first %}
+        {% if tag != blank %}
+          {% render 'genstore-badge', label: tag, extra_class: extra_class %}
+        {% endif %}
+      {% endif %}
+      {% if card_quick_add == 'none' and product.available == false %}
+        {% render 'genstore-badge', label:btn_text, extra_class: 'disabled' %}
+      {% endif %}
+    </div>
+{% endcapture %}
+{% liquid
+  assign image_button_content = ''
+  if button_in_image_box
+    assign image_button_content = button_content
+  endif
+  assign extra_content = extra_content | append: modal_content
+%}
+{% liquid
+  assign disable_hover = false
+  if card_quick_add == 'none'
+    assign disable_hover = true
+  endif
+%}
+{% render 'genstore-card',
+  id: product.id,
+  section_id: section_id,
+  attributes: attributes,
+  url: product.url,
+  badges: badges,
+  media: product.media,
+  image_ratio: section.settings.image_ratio,
+  hover_type: settings.card_hover_type,
+  downloadable: downloadable,
+  content: content,
+  button_content: image_button_content,
+  card_index: index,
+  show_product_placeholder: show_product_placeholder,
+  class_name: card_class_name,
+  isSingleVariant: singleVariant,
+  extra_content: extra_content,
+  shape: section.settings.image_shape,
+  enable_animation: enable_animation,
+  disable_hover: disable_hover
+%}

@@ -1,0 +1,78 @@
+{%- comment -%}
+  snippets/ai-product-list.liquid — 产品列表布局骨架
+
+  封装 for 循环 + grid/carousel 两种布局模式。
+  AI 不需要编写 for 循环和列表容器的 HTML，只需为 .ai-pl-* class 编写 CSS。
+
+  参数:
+    products         — 必填，产品数组（如 section.settings.collection.products）
+    layout           — 可选，'grid' | 'carousel'，默认 'grid'
+    limit            — 可选，显示数量，默认 8
+    per_view         — 可选，carousel 每屏显示数，默认 4
+    spacing          — 可选，carousel 间距(px)，默认 16
+
+  用法:
+    {% render 'ai-product-list',
+      products: section.settings.collection.products,
+      layout: 'carousel',
+      limit: section.settings.products_to_show,
+      per_view: 4,
+      spacing: 16
+    %}
+{%- endcomment -%}
+
+{%- liquid
+  assign list_layout = layout | default: 'grid'
+  assign list_limit = limit | default: 8
+  assign list_per_view = per_view | default: 4
+  assign list_spacing = spacing | default: 16
+-%}
+
+{%- if list_layout == 'carousel' -%}
+  <style>
+    .ai-pl-carousel-wrap .ai-pl-prev { left: 8px; }
+    .ai-pl-carousel-wrap .ai-pl-next { right: 8px; }
+  </style>
+  <div class="ai-pl-carousel-wrap">
+    <ai-slider
+      class="ai-pl-carousel"
+      selector="ai-product-card"
+      per-view="{{ list_per_view }}"
+      spacing="{{ list_spacing }}"
+      drag
+      data-breakpoints='{"(max-width: 749px)": {"slides": {"perView": 1.2, "spacing": 12}}, "(min-width: 750px) and (max-width: 1023px)": {"slides": {"perView": 2.5, "spacing": 16}}}'
+    >
+      {%- for product in products limit: list_limit -%}
+        {%- render 'ai-product-card', product: product, index: forloop.index -%}
+      {%- endfor -%}
+    </ai-slider>
+
+    <button class="ai-pl-prev" aria-label="Previous" type="button">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="ai-pl-next" aria-label="Next" type="button">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+
+  <script>
+    (function() {
+      const wrap = document.currentScript.closest('.ai-pl-carousel-wrap')
+        || document.currentScript.previousElementSibling;
+      if (!wrap) return;
+      const slider = wrap.querySelector('ai-slider.ai-pl-carousel');
+      const prev = wrap.querySelector('.ai-pl-prev');
+      const next = wrap.querySelector('.ai-pl-next');
+      if (!slider || !prev || !next) return;
+      prev.addEventListener('click', () => slider.prev());
+      next.addEventListener('click', () => slider.next());
+    })();
+  </script>
+
+{%- else -%}
+  <div class="ai-pl-grid">
+    {%- for product in products limit: list_limit -%}
+      {%- render 'ai-product-card', product: product, index: forloop.index -%}
+    {%- endfor -%}
+  </div>
+{%- endif -%}

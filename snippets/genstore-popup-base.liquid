@@ -1,0 +1,34 @@
+{% comment %}
+  -- popup_text --排序选项
+  -- popup_content -- 弹窗内容
+{% endcomment %}
+{% liquid
+  assign text_size = 'small'
+  assign text_type = 'normal'
+  assign has_icon = true
+  assign class_name = 'summary-desc'
+  if layout == 'vertical' or layout == 'drawer'
+    assign text_size = 'custom'
+    assign text_type = 'custom'
+    assign class_name = 'font-350 font-bold'
+    assign has_icon = false
+  endif
+%}
+<details
+  class="{% if layout == 'horizontal' %}disclosure-has-popup facets__disclosure {% if forloop.index > 5 %} hidden {% endif %} {% endif %}js-filter popup-base_{{ layout }}"
+  {% if layout == 'vertical' or layout == 'drawer' %}
+    open
+  {% endif %}
+>
+  <summary class="facets__summary caption-large focus-offset f-row align-center">
+    {{ extra_content }}
+    {% render 'genstore-text', text: popup_text, text_size: text_size, type: text_type, className: class_name %}
+    {% render 'genstore-svg', icon_name: 'icon-down' %}
+  </summary>
+  <div
+    class="{% if layout == 'horizontal' %} facets__display transparent_color_origin{% else %} facets__display-vertical{% endif %}"
+    style="{{ style }}"
+  >
+    {{ popup_content }}
+  </div>
+</details>

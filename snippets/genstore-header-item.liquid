@@ -1,0 +1,15 @@
+{% comment  %} 
+  -- link
+  -- section
+{% endcomment %}
+{% if link.image != blank and section.settings.enable_menu_image == true%}
+  <div class="menu-image-container">
+      {% render 'banner-media', image: link.image, aspect_ratio: section.settings.menu_image_ratio %}
+  </div>
+{% endif %}
+{% render 'genstore-text-link'
+, url: url
+, text: link.title
+, text_size: text_size
+, tag_type: 'div'
+%}

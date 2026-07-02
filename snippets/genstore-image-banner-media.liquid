@@ -1,0 +1,51 @@
+{% comment %}
+  image-banner-media.liquid
+  用于处理图片和移动端图片的逻辑，并渲染banner-media
+  
+  参数:
+  - image_index: 图片索引 (1, 2, 3)
+  - section: 当前section对象
+  - className: 类名
+  - aspect_ratio: 图片比例
+  - sizes: 响应式尺寸
+  - widths: 宽度
+  - fetch_priority: 加载优先级
+  - show_placeholder: 是否显示占位符
+{% endcomment %}
+
+{% liquid 
+  assign mobile_key = image_key | split:"_"
+  assign mobile_image_key = 'mobile_image'
+  assign image_value_placeholder = ''
+  if mobile_key.size > 1
+    assign mobile_image_key = 'mobile_image_' | append: mobile_key[1]
+  endif
+  
+  assign image_value = section.settings[image_key]
+  assign mobile_image_value = section.settings[mobile_image_key]
+  assign index = 1
+  if image_key == 'image_2'
+    assign index = 2
+  endif
+  if image_key == 'image_3'
+    assign index = 3
+  endif 
+  if image_value == blank  
+    assign image_value = 'section-placeholder-' | append: index | append: '.png' | asset_url
+    assign image_value_placeholder = 'section-placeholder-' | append: index | append: '.png'
+  endif
+ 
+%}
+{%- render 'banner-media',
+  image: image_value,
+  image_value_placeholder:'image_value_placeholder',
+  visual_image_key: image_key,
+  visual_image_mobile_key:mobile_image_key,
+  mobile_image: mobile_image_value,
+  aspect_ratio: aspect_ratio,
+  sizes: sizes,
+  className: className,
+  widths: widths,
+  data_role: data_role,
+  fetch_priority: fetch_priority
+-%}

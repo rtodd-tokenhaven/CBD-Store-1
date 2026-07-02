@@ -1,0 +1,13 @@
+{{ 'quick-order-list.css' | asset_url | stylesheet_tag }}
+
+<script src="{{ 'quick-order-list.js' | asset_url }}" defer="defer"></script>
+
+{% render 'quick-order-list', product: product, section: section, show_image: false, show_sku: false, is_modal: true %}
+
+{% schema %}
+{
+  "name": "t:sections.quick-order-list.name",
+  "limit": 1,
+  "enabled_on": {}
+}
+{% endschema %}

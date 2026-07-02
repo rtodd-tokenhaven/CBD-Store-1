@@ -1,0 +1,20 @@
+{% comment %}
+  -- direction: 'prev' or 'next'
+  -- className
+  -- control_id: 被控制组件的id
+{% endcomment %}
+<div class="{{ className }}">
+  {% if direction == 'prev' %}
+    <prev-button data-control-id="{{ control_id }}">
+      <button class="arrow-nav" name="previous" aria-label="Previous">
+        {% render 'genstore-svg', icon_name: 'icon-down', className: '', icon_weight: 'fill' %}
+      </button>
+    </prev-button>
+  {% else %}
+    <next-button data-control-id="{{ control_id }}">
+      <button class="arrow-nav" name="next" aria-label="Next">
+        {% render 'genstore-svg', icon_name: 'icon-down', className: '', icon_weight: 'fill' %}
+      </button>
+    </next-button>
+  {% endif %}
+</div>

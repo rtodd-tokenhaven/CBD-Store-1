@@ -1,0 +1,15 @@
+{% comment %}
+  Arrow Navigation Web Component for SlideCarousel and EffectCarousel
+  - Dispatches 'nav:prev' and 'nav:next' events (bubbles up to parent)
+  - Parent carousel listens and calls previous()/next()
+  - Use disabled attribute on buttons to hide them
+{% endcomment %}
+
+<genstore-arrow-nav class="genstore-arrow-nav" {{ attributes }}>
+  <button class="carousel-arrow carousel-prev" name="previous" aria-label="Previous">
+    {% render 'genstore-svg', icon_name: 'icon-down', className: '', icon_weight: 'fill' %}
+  </button>
+  <button class="carousel-arrow carousel-next" name="next" aria-label="Next">
+    {% render 'genstore-svg', icon_name: 'icon-down', className: '', icon_weight: 'fill' %}
+  </button>
+</genstore-arrow-nav>

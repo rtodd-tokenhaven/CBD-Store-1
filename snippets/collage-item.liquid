@@ -1,0 +1,76 @@
+{% comment %}
+  - block: {Object} block object.
+  - className: {String} class name.
+{% endcomment %}
+{% liquid
+  assign empty_img_url = block.settings.link | default: ''
+  assign empty_img_style = ''
+  unless empty_img_url
+    assign empty_img_style = 'prevent-click'
+  endunless
+%}
+<div class="gen-collage-item {{ className }}" {{ block.genstore_attributes | default: '' }}>
+  {%- if block.type == 'image' -%}
+    <div class="image-box image-block">
+      <a
+        {{ '' | genstore_vkey: key:'link', block:block }}
+        class="{{ empty_img_style}} animate--magnify"
+        href="{{ block.settings.link }}"
+        {% unless empty_img_url %}
+          onclick="event.preventDefault();"
+        {% endunless %}
+      >
+        {% if block.settings.image == blank %}
+          {% render 'genstore-placeholder', show_product_placeholder: true, icon_name: 'section-placeholder-1',block:block,visual_image_key:'image' %}
+        {% else %}
+          {% assign image_width = block.settings.image.width | default: 1500 %}
+          <img {{ '' | genstore_vkey: key:'image', block:block }} src="{{ block.settings.image | image_url: width: image_width }}">
+        {% endif %}
+      </a>
+    </div>
+  {%- elsif block.type == 'product' -%}
+    {% capture product_content %}
+            {% liquid
+            assign product = block.settings.product
+            assign title = product.title | default: 'onboarding.product_title' | t
+            assign empty_product_url = ''
+            if  product == blank or product.url  == blank
+               assign empty_product_url = 'prevent-click'
+            endif
+            %}
+            <div class="p-y-600 p-x-200 f-column gap-300" data-text-limit="{{ settings.card_text_limit }}"
+                style="--card-text-limit:{{ settings.card_text_limit }};">
+                <div class="card-link">
+                    <a href="{{ product.url }}" class="{{ empty_product_url }}" {% if empty_product_url %} onclick="event.preventDefault();" {% endif %}>
+                        {% render 'genstore-text-block', text: title %}
+                    </a>
+                </div>
+                <div class="card-information">
+                    {% render 'price', product: product, price_class: '', text_size: settings.card_price_size,
+                    is_bolder: settings.card_price_is_bolder, show_compare_at_price: true, show_price_type:
+                    settings.card_price_type %}
+                </div>
+            </div>
+        {% endcapture %}
+    {% render 'genstore-card-product', index: index, section_id: section_id, product: product, section: section %}
+  {%- elsif block.type == 'collection' -%}
+    {% render 'card-collection',
+      card_collection: block.settings.collection,
+      collection_index: 1,
+      media_aspect_ratio: 'adapter'
+    %}
+  {%- elsif block.type == 'video' -%}
+    {% render 'genstore-video',
+      video: block.settings.video,
+      enable_autoplay: block.settings.enable_autoplay,
+      cover_image: block.settings.cover_image,
+      full_width: false,
+      enable_fullscreen: true,
+      controls: true,
+      enable_video_looping: block.settings.enable_video_looping,
+      block:block,
+      visual_video_key:'video',
+      visual_image_key:'cover_image'
+    %}
+  {%- endif -%}
+</div>

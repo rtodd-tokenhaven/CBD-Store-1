@@ -1,0 +1,226 @@
+{%- liquid
+  assign color_mode = section.settings.color_mode | default: 'light'
+  assign color_style = section.settings.color_style | default: 'pure'
+  assign localization_forms = false
+  if section.settings.enable_country_selector and localization.available_countries.size > 1
+    assign localization_forms = true
+  endif
+  if section.settings.enable_language_selector and localization.available_languages.size > 1
+    assign localization_forms = true
+  endif
+-%}
+
+<style>
+  .section-header {
+    margin-bottom: {{ section.settings.margin_bottom | default: 0 }}px;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .header__heading {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .header__inline-menu .list-menu {
+    display: flex;
+    gap: 1rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .header__icons {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+</style>
+
+<header class="header section-header header--{{ section.settings.layout }} header--mobile-{{ section.settings.logo_position }} padding-top-{{ section.settings.padding_top }} padding-bottom-{{ section.settings.padding_bottom }}{% if section.settings.show_line_separator %} header--border-bottom{% endif %}">
+  <div class="header__icons--left">
+    {%- if section.settings.menu != blank -%}
+      {%- render 'header-drawer', section: section -%}
+    {%- endif -%}
+  </div>
+
+  <div class="header__heading">
+    {%- render 'header-heading', section: section -%}
+  </div>
+
+  {%- if section.settings.menu != blank and section.settings.menu_type_desktop != 'drawer' -%}
+    {%- render 'header-dropdown-menu', section: section -%}
+  {%- endif -%}
+
+  <div class="header__icons{% if localization_forms %} header__icons--localization{% endif %}">
+    {%- if section.settings.enable_country_selector and localization.available_countries.size > 1 -%}
+      {%- render 'country-localization', localPosition: 'HeaderCountry', section: section -%}
+    {%- endif -%}
+    {%- if section.settings.enable_language_selector and localization.available_languages.size > 1 -%}
+      {%- render 'language-localization', localPosition: 'HeaderLanguage', section: section -%}
+    {%- endif -%}
+
+    <div class="header__icons--right">
+      {%- render 'header-search', section: section -%}
+      {% section 'cart-icon-bubble' %}
+      {%- if shop.customer_accounts_enabled -%}
+        <a href="{%- if customer -%}{{ routes.account_url }}{%- else -%}{{ routes.account_login_url }}{%- endif -%}" class="header__icon header__icon--account link focus-inset" rel="nofollow">
+          <span class="visually-hidden">
+            {%- if customer -%}
+              {{ 'customer.account_fallback' | t }}
+            {%- else -%}
+              {{ 'customer.log_in' | t }}
+            {%- endif -%}
+          </span>
+          <span>👤</span>
+        </a>
+      {%- endif -%}
+    </div>
+  </div>
+</header>
+
+{% schema %}
+{
+  "name": "Header",
+  "class": "section-header-wrapper",
+  "settings": [
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout",
+      "default": "middle",
+      "options": [
+        { "value": "middle", "label": "Middle" },
+        { "value": "top", "label": "Top" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "logo_position",
+      "label": "Logo position",
+      "default": "center",
+      "options": [
+        { "value": "center", "label": "Center" },
+        { "value": "left", "label": "Left" }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "label": "Full width",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_country_selector",
+      "label": "Enable country selector",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_language_selector",
+      "label": "Enable language selector",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_line_separator",
+      "label": "Show line separator",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "sticky_header_type",
+      "label": "Sticky header",
+      "default": "none",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "on-scroll-up", "label": "On scroll up" },
+        { "value": "always", "label": "Always" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "color_mode",
+      "label": "Color mode",
+      "default": "light",
+      "options": [
+        { "value": "light", "label": "Light" },
+        { "value": "dark", "label": "Dark" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "color_style",
+      "label": "Color style",
+      "default": "pure",
+      "options": [
+        { "value": "pure", "label": "Pure" },
+        { "value": "brand", "label": "Brand" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "padding_top",
+      "label": "Top padding",
+      "default": "xs",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "default": "xs",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xs", "label": "XS" },
+        { "value": "s", "label": "S" },
+        { "value": "m", "label": "M" }
+      ]
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "label": "Bottom margin",
+      "min": 0,
+      "max": 80,
+      "step": 1,
+      "default": 0
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "select",
+      "id": "menu_type_desktop",
+      "label": "Desktop menu type",
+      "default": "dropdown",
+      "options": [
+        { "value": "dropdown", "label": "Dropdown" },
+        { "value": "drawer", "label": "Drawer" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Header"
+    }
+  ]
+}
+{% endschema %}

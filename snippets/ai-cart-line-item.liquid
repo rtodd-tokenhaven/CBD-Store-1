@@ -1,0 +1,240 @@
+{%- comment -%}
+  snippets/ai-cart-line-item.liquid — 购物车单行商品（自研版）
+
+  参数:
+    item — 行项目对象（Shopify line_item / GenStore goodsList 项，字段同名）
+    type — "page" | "drawer"（决定行 id 前缀）
+
+  被 ai-cart-items 在分组（GenStore）和扁平（Shopify）两种循环中复用。
+{%- endcomment -%}
+
+<ai-cart-line-item
+  id="{% if type == 'drawer' %}CartDrawer-Item-{{ item.id }}{% else %}CartItem-{{ item.id }}{% endif %}"
+  class="ci-line"
+  data-product-handle="{{ item.product.handle }}"
+>
+  {%- comment -%} 商品图片 {%- endcomment -%}
+  <div class="ci-line-image">
+    <a href="{{ item.url }}">
+      {% if item.image != blank %}
+        <img
+          src="{{ item.image | image_url: width: 150 }}"
+          alt="{{ item.title | escape }}"
+          loading="lazy"
+          width="150"
+        >
+      {% else %}
+        <img src="{{ 'product-empty.png' | asset_url }}" alt="" loading="lazy" width="150">
+      {% endif %}
+    </a>
+  </div>
+
+  {%- comment -%} 商品信息 {%- endcomment -%}
+  <div class="ci-line-body flex-1">
+    <div class="ci-line-info">
+      {%- comment -%} 标题 {%- endcomment -%}
+      <div class="ci-line-title">
+        <a href="{{ item.url }}" class="ci-line-title-link">{{ item.title }}</a>
+      </div>
+
+      {%- comment -%} 单价 {%- endcomment -%}
+      {%- liquid
+        assign final_price = item.final_price | money
+        assign original_price = item.original_price | money
+      -%}
+      <div class="ci-line-price">
+        {% if item.original_price != item.final_price %}
+          <span class="ci-line-price-current">{{ final_price }}</span>
+          <span class="ci-line-price-compare">{{ original_price }}</span>
+        {% else %}
+          <span class="ci-line-price-current">{{ original_price }}</span>
+        {% endif %}
+      </div>
+
+      {%- comment -%}
+        变体选项（MVP 暂不渲染编辑按钮，仅展示文字；单默认变体不展示 Default Title）。
+        用 != true 而非 == false：字段缺失(GenStore item.product 可能不暴露)时按 nil 处理仍渲染，
+        只有显式单默认变体(true)才跳过，避免 nil == false 为假导致 GenStore 规格全不显示。
+      {%- endcomment -%}
+      {%- if item.options_with_values.size > 0 and item.product.has_only_default_variant != true -%}
+        <div class="ci-line-options">
+          {% if item.options_with_values.size == 1 %}
+            <span class="ci-line-option">
+              {{ item.options_with_values[0].name }}: {{ item.options_with_values[0].value }}
+            </span>
+          {% else %}
+            {%- for option in item.options_with_values -%}
+              <span class="ci-line-option">{{ option.value }}</span>
+              {%- unless forloop.last -%}
+                <span class="ci-line-option-sep">/</span>
+              {%- endunless -%}
+            {%- endfor -%}
+          {% endif %}
+        </div>
+      {%- endif -%}
+
+      {%- comment -%} 预购标签 {%- endcomment -%}
+      {% if item.selling_plan_allocation != empty
+        and item.selling_plan_allocation.selling_plan != empty
+        and item.selling_plan_allocation.selling_plan.name != empty
+      %}
+        <div class="ci-line-preorder">{{ item.selling_plan_allocation.selling_plan.name }}</div>
+      {% endif %}
+
+      {%- comment -%} 折扣标签 {%- endcomment -%}
+      {% if item.discount_allocations.size > 0 %}
+        <ul class="ci-line-discounts" role="list">
+          {%- for discount in item.discount_allocations -%}
+            <li class="ci-line-discount">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
+              </svg>
+              <span>{{ discount.title | escape }}</span>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {% endif %}
+    </div>
+
+    {%- comment -%} 操作区：数量 + 删除 {%- endcomment -%}
+    <div class="ci-line-actions">
+      {% assign quantityId = 'Quantity-' | append: item.id %}
+      <div class="ci-line-actions-row">
+        <ai-cart-quantity-input
+          class="ci-quantity large"
+          data-index="{{ item.id }}"
+          quantity="{{ item.quantity }}"
+          data-key="{{ item.key }}"
+          data-variant-id="{{ item.variant_id }}"
+          data-product-id="{{ item.product_id }}"
+          data-id="{{ quantityId }}"
+          enable-loading="true"
+        >
+          <button class="qi-btn qi-minus" name="minus" type="button" aria-label="Decrease quantity">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+          <input
+            class="qi-input"
+            type="number"
+            name="updates[]"
+            value="{{ item.quantity }}"
+            data-min="1"
+            min="1"
+            data-max="99999"
+            max="99999"
+            step="1"
+            id="{{ quantityId }}"
+            data-index="{{ item.id }}"
+            data-key="{{ item.key }}"
+            data-quantity-variant-id="{{ item.variant_id }}"
+            data-product-id="{{ item.product_id }}"
+            data-id="{{ quantityId }}"
+          >
+          <button class="qi-btn qi-plus" name="plus" type="button" aria-label="Increase quantity">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+          <div class="progress-bar-container hidden" aria-hidden="true">
+            <div class="progress-bar">
+              <div class="progress-bar-value"></div>
+            </div>
+          </div>
+        </ai-cart-quantity-input>
+
+        <ai-cart-remove-btn
+          id="Remove-{{ item.index }}"
+          class="ci-line-remove"
+          data-index="{{ item.id }}"
+          data-key="{{ item.key }}"
+          data-variant-id="{{ item.variant_id }}"
+          data-product-id="{{ item.product_id }}"
+          aria-label="Delete"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+        </ai-cart-remove-btn>
+      </div>
+      <div id="Quantity-{{ item.id }}-error_message" class="ci-error-message"></div>
+    </div>
+
+    {%- comment -%} 行总价 {%- endcomment -%}
+    <div class="ci-line-total">
+      <span>{{ item.final_line_price | money }}</span>
+    </div>
+  </div>
+
+  {%- comment -%} 附加信息（GenStore 行级 extraData，Shopify 上为空不渲染） {%- endcomment -%}
+  {% if item.extraData != blank %}
+    <ul class="ci-line-extra">
+      {% for data in item.extraData %}
+        <li>
+          <span>{{ data[0] }}</span><span>{{ data[1] }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {%- comment -%} 移动端滑动删除区域 {%- endcomment -%}
+  <div class="ci-swipe-action">
+    <ai-cart-remove-btn
+      id="Remove-{{ item.index }}-mobile"
+      class="ci-swipe-remove"
+      data-key="{{ item.key }}"
+      data-index="{{ item.id }}"
+      data-variant-id="{{ item.variant_id }}"
+      data-product-id="{{ item.product_id }}"
+      aria-label="Delete"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+      </svg>
+      <p>Delete</p>
+    </ai-cart-remove-btn>
+  </div>
+</ai-cart-line-item>

@@ -1,0 +1,65 @@
+{% comment %}
+  -- block 匹配到的block
+  -- scope_class_name 用来区分正常导航还是抽屉类型的导航
+    被header-drawer和mega_menu引用
+{%endcomment%}
+{% liquid 
+  assign length =0
+  if block.settings.image_1 != blank
+    assign length = length | plus: 1
+  endif
+  if block.settings.image_2 != blank
+    assign length = length | plus: 1
+  endif
+  if block.settings.image_3 != blank
+    assign length = length | plus: 1
+  endif
+  assign image_length=''
+  if length == 1
+    assign image_length='one'
+  elsif length == 2
+    assign image_length='two'
+  elsif length == 3
+    assign image_length='three'
+  endif
+%}
+{% if  block.settings.image_1 != blank or block.settings.image_2 != blank or block.settings.image_3 != blank %}
+    <div class="mega-menu-medias {{scope_class_name}}   {{block.settings.image_layout}} shape-{{block.settings.image_shape }} {% if block.settings.alignment != 'adapt' %} flex-1 {% endif %} grid-col-{{image_length}}">
+        {% assign image_configs = '1,2,3' | split: ',' %}
+        {% for image_num in image_configs %}
+            {%  liquid 
+                assign image_key = 'image_'|append: image_num 
+                assign matched_title_key = 'image_' | append: image_num | append: '_title'
+                assign matched_button_text_key= 'image_' | append: image_num | append: '_button_text'
+                assign matched_button_url_key= 'image_' | append: image_num | append: '_button_url'
+                assign enable_image_link_key ='enable_image_'|append: image_num | append: '_link'
+                
+                assign current_image = block.settings[image_key]
+                assign should_render = false 
+                if image_num == '1' and current_image != blank 
+                assign should_render = true
+                elsif image_num == '2' and block.settings.image_length != 'one' and current_image != blank
+                assign should_render = true
+                elsif image_num == '3' and block.settings.image_length == 'three' and current_image != blank
+                assign should_render = true
+                endif
+            %}
+            {% if should_render %}
+                {% render 'genstore-mega-image',
+                  block:block
+                , title: block.settings[matched_title_key]
+                , button_text: block.settings[matched_button_text_key]
+                , button_url: block.settings[matched_button_url_key]
+                , enable_image_link: block.settings[enable_image_link_key]
+                , image: current_image
+                , image_ratio: block.settings.image_ratio
+                , image_text_align: block.settings.image_content_alignment,
+                visual_image_key:image_key,
+                visual_matched_title_key:matched_title_key,
+                visual_matched_button_text_key:matched_button_text_key,
+                visual_matched_button_url_key:matched_button_url_key,
+                %}
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}

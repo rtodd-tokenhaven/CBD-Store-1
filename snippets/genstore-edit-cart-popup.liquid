@@ -1,0 +1,22 @@
+<div
+  class="genstore-dialog genstore-edit-cart-popup customPopup-large"
+  data-edit-cart-popup
+  id="genstore-edit-cart-popup"
+>
+  <script src="{{ 'variants-edit-cart.js' | asset_url }}" defer></script>
+  <div class="genstore-popup-wrapper">
+    <div class="genstore-popup-header">
+      <button
+        type="button"
+        class="dialog-close"
+        data-close-edit-cart
+      >
+        {% render 'genstore-svg', icon_name: 'icon-close' %}
+      </button>
+      {% assign title = 'general.cart.change' | t %}
+      {% render 'genstore-heading', heading_size: 's', title: title %}
+    </div>
+    <div class="genstore-popup-content genstore-popup-scroll custom-scrollbar" style="height: calc(100% - 73px)"></div>
+  </div>
+</div>
+<div class="genstore-mask"></div>

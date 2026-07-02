@@ -1,0 +1,474 @@
+{{ 'main-return.css' | asset_url | stylesheet_tag }}
+{{ 'quantity-popover.css' | asset_url | stylesheet_tag }}
+{{ 'component-localization-form.css' | asset_url | stylesheet_tag: preload: true }}
+
+<script src="{{ 'main-return.js' | asset_url }}" defer></script>
+<script src="{{ 'quantity-popover.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'localization-form.js' | asset_url }}" defer="defer"></script>
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+  padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+  padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+  .section-{{ section.id }}-padding {
+  padding-top: {{ section.settings.padding_top }}px;
+  padding-bottom: {{ section.settings.padding_bottom }}px;
+  }
+  }
+{%- endstyle -%}
+{% capture content %}
+  <div class='customer order section-{{ section.id }}-padding'>
+    <div class='customer__top'>
+      <div style="display:none">
+        <div class="please_select_return_reason">
+          {{ 'customer.order.select_return_reason' | t }}
+        </div>
+      </div>
+      <h1 class='customer__title'>
+        {% comment %}
+          <a href='' class='return_order_detail'>
+            <svg xmlns='http://www.w3.org/2000/svg' width='20' height='25' viewBox='0 0 24 24'>
+              <path fill="currentColor" d="m3.55 12l7.35 7.35q.375.375.363.875t-.388.875t-.875.375t-.875-.375l-7.7-7.675q-.3-.3-.45-.675T.825 12t.15-.75t.45-.675l7.7-7.7q.375-.375.888-.363t.887.388t.375.875t-.375.875z"/>
+            </svg>
+          </a>
+        {% endcomment %}
+        {{ 'customer.order.request_return' | t }}
+      </h1>
+    </div>
+    <div class='order-detail-con' cur_page_id='{{ order.orderId }}'>
+      <div>
+        {% for order_item in order.previews %}
+          <div
+            orderId='{{ order_item.orderId }}'
+            subtotalAmount='{{ order_item.subtotalAmount }}'
+            role='table'
+            class='order-details orderId table'
+          >
+            {%- for line_item in order_item.items -%}
+              <div class='order-item-tbody'>
+                <div>
+                  {% if line_item.image_url == blank %}
+                    <div class="return-product-img">
+                      {% render 'genstore-placeholder', icon_name: 'icon-img' %}
+                    </div>
+                  {% else %}
+                    <img
+                      src='{{ line_item.image_url | image_url: width: 200 }}'
+                      height='72px'
+                      width='72px'
+                      loading='lazy'
+                    >
+                  {% endif %}
+                </div>
+                <div
+                  id='{{ line_item.key }}'
+                  class='return-product-item tbody'
+                  order_id='{{ order_item.orderId }}'
+                  role='rowgroup'
+                  quantity='{{ line_item.quantity }}'
+                >
+                  <div role='row' class='tr'>
+                    <div
+                      class='td'
+                      id='ProductImage'
+                      role='cell'
+                      headers='ProductImage'
+                    >
+                      <div class='product-info'>
+                        <div>
+                          {%- if line_item.url != blank -%}
+                            <div class="a">{{ line_item.title | escape }}</div>
+                          {%- else -%}
+                            <p>{{ line_item.title | escape }}</p>
+                          {%- endif -%}
+                          {% if line_item.sku %}
+                            <p>{{ line_item.sku }}</p>
+                          {% endif %}
+                          {%- assign property_size = line_item.properties | size -%}
+                          {%- unless line_item.selling_plan_allocation == null and property_size == 0 -%}
+                            <div class='properties'>
+                              {%- unless line_item.product.has_only_default_variant -%}
+                                <span>
+                                  {{ line_item.variant.title | escape }}
+                                </span>
+                              {%- endunless -%}
+                              {%- unless line_item.selling_plan_allocation == null -%}
+                                <span>
+                                  {{ line_item.selling_plan_allocation.selling_plan.name }}
+                                </span>
+                              {%- endunless -%}
+                              {%- if property_size != 0 -%}
+                                {%- for property in line_item.properties -%}
+                                  {% assign property_first_char = property.first | slice: 0 %}
+                                  {%- if property.last != blank and property_first_char != '_' -%}
+                                    <span>{{ property.first }}:</span>
+                                    <span>
+                                      {%- if property.last contains '/uploads/' -%}
+                                        <a href='{{ property.last }}'>{{ property.last | split: '/' | last }}</a>
+                                      {%- else -%}
+                                        {{ property.last }}
+                                      {%- endif -%}
+                                    </span>
+                                  {%- endif -%}
+                                {%- endfor -%}
+                              {%- endif -%}
+                            </div>
+                          {%- endunless -%}
+
+                          {%- if line_item.line_level_discount_allocations != blank -%}
+                            <ul role='list' aria-label='{{ 'customer.order.discount' | t }}'>
+                              {%- for discount_allocation in line_item.line_level_discount_allocations -%}
+                                <li>
+                                  <span class='svg-wrapper'>
+                                    {{- 'icon-discount.svg' | inline_asset_content -}}
+                                  </span>
+                                  {{- discount_allocation.discount_application.title | escape }} (-
+                                  {{- discount_allocation.amount | money -}}
+                                  )
+                                </li>
+                              {%- endfor -%}
+                            </ul>
+                          {%- endif -%}
+
+                          {%- if line_item.fulfillment -%}
+                            <div class='fulfillment'>
+                              {%- assign created_at = line_item.fulfillment.created_at | time_tag: format: 'date' -%}
+                              <span>{{ 'customer.order.fulfilled_at_html' | t: date: created_at }}</span>
+
+                              {%- if line_item.fulfillment.tracking_url -%}
+                                <a href='{{ line_item.fulfillment.tracking_url }}'>
+                                  {{ 'customer.order.track_shipment' | t }}
+                                </a>
+                              {%- endif -%}
+                              <span>
+                                {{ line_item.fulfillment.tracking_company }}
+                                {%- if line_item.fulfillment.tracking_number -%}
+                                  #{{ line_item.fulfillment.tracking_number }}
+                                {%- endif -%}
+                              </span>
+                            </div>
+                          {%- endif -%}
+
+                          {% comment %} 礼品卡 {% endcomment %}
+                          {% if line_item.isGiftCard %}
+                            <div class='gift-info'>
+                              {{ 'customer.order.recipient_email' | t }}
+                              {{ line_item.giftCard.email }}
+                            </div>
+                            <div class='gift-info'>
+                              {{ 'customer.order.recipient_name' | t }}
+                              {{ line_item.giftCard.name }}
+                            </div>
+                            <div class='gift-info'>
+                              {{ 'customer.order.recipient_message' | t }}
+                              {{ line_item.giftCard.message }}
+                            </div>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      headers='Row{{ line_item.key }} ColumnTotal'
+                      role='cell'
+                      data-label='{{ 'customer.order.total' | t }}'
+                      class='return_item_price td product-price-info'
+                      symbol='{{ symbol }}'
+                      data-price='{{ line_item.original_line_price }}'
+                    >
+                      {% if line_item.applyAmount %}
+                        {{ line_item.applyAmount | money }}
+                      {% else %}
+                        {{ '0' | money }}
+                      {% endif %}
+                    </div>
+                    <div
+                      headers='Row{{ line_item.key }} ColumnAction'
+                      role='cell'
+                      class='cart-item__quantity td{% if has_qty_rules or has_vol_pricing %} cart-item__quantity--info{% endif %}'
+                    >
+                      <quantity-popover>
+                        <div class='cart-item__quantity-wrapper quantity-popover-wrapper'>
+                          <label class='visually-hidden' for='Quantity-{{ line_item.key }}'>
+                            {{ 'products.product.quantity.label' | t }}
+                          </label>
+                          <div
+                            class='quantity-popover-container{% if has_qty_rules or has_vol_pricing %} quantity-popover-container--hover{% endif %}'
+                          >
+                            {%- if has_qty_rules or has_vol_pricing -%}
+                              <button
+                                type='button'
+                                aria-expanded='false'
+                                class='quantity-popover__info-button quantity-popover__info-button--icon-only button button--tertiary small-hide medium-hide'
+                              >
+                                {{- 'icon-info.svg' | inline_asset_content -}}
+                              </button>
+                            {%- endif -%}
+                            <quantity-input class='quantity cart-quantity'>
+                              <button class='quantity__button left' name='minus' type='button'>
+                                <span class='visually-hidden'>
+                                  {{- 'products.product.quantity.decrease' | t: product: line_item.title | escape -}}
+                                </span>
+                                <span class='svg-wrapper'>
+                                  {{- 'icon-minus.svg' | inline_asset_content -}}
+                                </span>
+                              </button>
+                              <input
+                                class='quantity__input'
+                                data-quantity-variant-id='{{ line_item.key }}'
+                                data-product-id='{{ line_item.key }}'
+                                type='number'
+                                name='updates[]'
+                                value='{{ line_item.quantity }}'
+                                {% # theme-check-disable %}
+                                data-cart-quantity='{{ cart | item_count_for_variant: item.variant.id }}'
+                                min='0'
+                                data-min='0'
+                                max='{{ line_item.quantity }}'
+                                step='{{ item.variant.quantity_rule.increment }}'
+                                aria-label='{{ 'products.product.quantity.input_label' | t: product: line_item.title | escape }}'
+                                id='Quantity-{{ line_item.key }}'
+                                data-index='{{ line_item.key }}'
+                                item-price='{{ line_item.final_line_price }}'
+                              >
+                              <button class='quantity__button right' name='plus' type='button'>
+                                <span class='visually-hidden'>
+                                  {{- 'products.product.quantity.increase' | t: product: line_item.title | escape -}}
+                                </span>
+                                <span class='svg-wrapper'>
+                                  {{- 'icon-plus.svg' | inline_asset_content -}}
+                                </span>
+                              </button>
+                            </quantity-input>
+                          </div>
+                        </div>
+                      </quantity-popover>
+                    </div>
+                  </div>
+                  <div class='tr'>
+                    <div colspan='5' style='text-align: center;' class='return_select td'>
+                      {% comment %} Select a reason {% endcomment %}
+                      <div
+                        class='header__icons{% if section.settings.enable_country_selector or section.settings.enable_language_selector %} header__icons--localization header-localization{% endif %}'
+                      >
+                        <div class='desktop-localization-wrapper'>
+                          <localization-form class='custom-select' data-prevent-hide>
+                            {%- form 'localization', id: 'HeaderLanguageForm', class: 'localization-form' -%}
+                              <div>
+                                <h2 class='visually-hidden' id='HeaderLanguageLabel'>
+                                  {{ 'localization.language_label' | t }}
+                                </h2>
+                                <div class='disclosure'>
+                                  <button
+                                    type='button'
+                                    class='disclosure__button localization-form__select localization-selector link link--text caption-large'
+                                    aria-expanded='false'
+                                    aria-controls='issueList'
+                                    aria-describedby='issueLabel'
+                                  >
+                                    <span class='select_reason_value_show'>
+                                      {{- 'customer.order.select_a_reason' | t -}}
+                                    </span>
+                                    <div class='select_reason_value_hid'></div>
+                                    {{ 'icon-caret.svg' | inline_asset_content }}
+                                  </button>
+                                  <div class="return_select_error" style="display: none;">
+                                    <div class="return_select_error_main">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M12 17q.425 0 .713-.288Q13 16.425 13 16t-.287-.713Q12.425 15 12 15t-.712.287Q11 15.575 11 16t.288.712Q11.575 17 12 17Zm0-4q.425 0 .713-.288Q13 12.425 13 12V8q0-.425-.287-.713Q12.425 7 12 7t-.712.287Q11 7.575 11 8v4q0 .425.288.712q.287.288.712.288Zm0 9q-2.075 0-3.9-.788q-1.825-.787-3.175-2.137q-1.35-1.35-2.137-3.175Q2 14.075 2 12t.788-3.9q.787-1.825 2.137-3.175q1.35-1.35 3.175-2.138Q9.925 2 12 2t3.9.787q1.825.788 3.175 2.138q1.35 1.35 2.137 3.175Q22 9.925 22 12t-.788 3.9q-.787 1.825-2.137 3.175q-1.35 1.35-3.175 2.137Q14.075 22 12 22Zm0-2q3.35 0 5.675-2.325Q20 15.35 20 12q0-3.35-2.325-5.675Q15.35 4 12 4Q8.65 4 6.325 6.325Q4 8.65 4 12q0 3.35 2.325 5.675Q8.65 20 12 20Zm0-8Z"/></svg>
+                                      <span></span>
+                                    </div>
+                                  </div>
+
+                                  <div class='disclosure__list-wrapper language-selector' hidden>
+                                    <ul role='list' class='disclosure__list list-unstyled'>
+                                      {%- for issue in applyReasons.reasons -%}
+                                        <li class='disclosure__item' tabindex='-1'
+                                         key='{{- 'customer.order.reasons_map.reasons_' | append: issue.id | t -}}'
+                                         data-value='{{ issue.id }}'
+                                        >
+                                          <div
+                                            class='link link--text disclosure__link caption-large focus-inset'
+                                            href='#'
+                                            data-value='{{- 'customer.order.reasons_map.reasons_' | append: issue.id | t -}}'
+                                          >
+                                            <span class='visibility-visible checkmark'>
+                                              {{- 'icon-checkmark.svg' | inline_asset_content -}}
+                                            </span>
+                                            <span>
+                                              {{- 'customer.order.reasons_map.reasons_' | append: issue.id | t -}}
+                                            </span>
+                                          </div>
+                                        </li>
+                                      {%- endfor -%}
+                                    </ul>
+                                  </div>
+                                </div>
+                                <input type='hidden' name='issue_id' value='{{ settings.selectedIssueId }}'>
+                              </div>
+                            {%- endform -%}
+                          </localization-form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class='return_note tr' style="display: none;">
+                    <div class='td' colspan='5' style='text-align: center;'>
+                      <div class='customer order search_right'>
+                        <div class='field' style="flex-wrap: wrap;">
+                          <input
+                            class='country-filter__input field__input'
+                            {% comment %} id='order-filter-input' {% endcomment %}
+                            type='search'
+                            name='order_filter'
+                            value=''
+                            placeholder='Search'
+                            role='combobox'
+                            aria-owns='country-results'
+                            aria-controls='country-results'
+                            aria-haspopup='listbox'
+                            aria-autocomplete='list'
+                            autocorrect='off'
+                            autocomplete='off'
+                            autocapitalize='off'
+                            spellcheck='false'
+                          >
+                          <label class='field__label' for='country-filter-input'>
+                            {{ 'customer.order.select_return_reason_100' | t }}
+                          </label>
+                          <button
+                            type='reset'
+                            class='country-filter__reset-button field__button hidden'
+                            aria-label='Clear search term'
+                          >
+                            <svg class='icon icon-close' aria-hidden='true' focusable='false'>
+                              <use xlink:href="#icon-reset">
+                            </svg>
+                          </button>
+                          <div class='country-filter__search-icon field__button motion-reduce'>
+                            <svg class='icon icon-search' aria-hidden='true' focusable='false'>
+                              <use xlink:href="#icon-search">
+                            </svg>
+                          </div>
+                        </div>
+
+                      </div>
+                      <div class="field__message field__message--error " style="display: none;">
+                        {{ 'customer.order.select_return_reason_100_error' | t }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {%- endfor -%}
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class='right_con'>
+        <div role='table' class='order-detailstable table'>
+          <div class='tfoot order-detailstable-top' role='rowgroup'>
+            <div class='tr' role='row'>
+              <div class='td' id='RowSubtotal' role='rowheader' scope='row' colspan='4'>
+                {{ 'customer.order.subtotal' | t }}
+              </div>
+              <div class='td' headers='RowSubtotal' role='cell' data-label='{{ 'customer.order.subtotal' | t }}'>
+                {{ order.subtotalAmount | money }}
+              </div>
+            </div>
+            {%- if order.cart_level_discount_applications != blank -%}
+              <div class='tr' role='row'>
+                {%- for discount_application in order.cart_level_discount_applications -%}
+                  {% if discount_application.total_allocated_amount
+                    and discount_application.total_allocated_amount != 0
+                  %}
+                    <div class='td' id='RowDiscount' role='rowheader' scope='row' colspan='4'>
+                      {{ 'customer.order.discount' | t }}
+                      <span class='cart-discount'>
+                        <span class='svg-wrapper'>
+                          {{- 'icon-discount.svg' | inline_asset_content -}}
+                        </span>
+                        {{- discount_application.title | escape -}}
+                      </span>
+                    </div>
+                    <div class='td' headers='RowDiscount' role='cell' data-label='{{ 'customer.order.discount' | t }}'>
+                      <div>
+                        <span>-{{ discount_application.total_allocated_amount | money }}</span>
+                      </div>
+                    </div>
+                  {% endif %}
+                {%- endfor -%}
+              </div>
+            {%- endif -%}
+            <div class='tr' role='row'>
+              <div class='td' id='RowShipping' role='rowheader' scope='row' colspan='4'>
+                {{ 'customer.order.return_shipping' | t }}
+                {% comment %} ({{ shipping_method.title | escape }}) {% endcomment %}
+              </div>
+              <div
+                class='td'
+                headers='RowShipping'
+                role='cell'
+                data-label='{{ 'customer.order.return_shipping' | t }}  '
+              >
+                {{ order.shippingAmount | money }}
+              </div>
+            </div>
+            <div class='tr' role='row'>
+              <div class='td' id='RowTax' role='rowheader' scope='row' colspan='4'>
+                {{ 'customer.order.tax' | t }}
+              </div>
+              <div class='td' headers='RowTax' role='cell' data-label='{{ 'customer.order.tax' | t }}'>
+                {{ order.taxAmount | money }}
+              </div>
+            </div>
+
+            <div role='row' class='return_total tr'>
+              <div class='td' id='EstimatedTotal' role='rowheader' scope='row' colspan='3'>
+                {{ 'customer.order.estimated_total' | t }}
+              </div>
+              <div
+                class='td'
+                headers='EstimatedTotal'
+                role='cell'
+                colspan='2'
+                data-label='{{ 'customer.order.estimated_total' | t }}'
+              >
+                {{ order.totalAmount | money }}
+              </div>
+            </div>
+          </div>
+          <div class='tfoot action' role='rowgroup'>
+            <div class='tr' role='row'>
+              <div colspan='5' class='return_btn td'>
+                <button class='return_request_btn submit'
+                 data-success-tip="{{ 'customer.order.return_apply.success' | t }}"
+                 data-error-tip="{{ 'customer.order.return_apply.error' | t }}"
+                 >{{ 'customer.order.request_return' | t }}</button>
+              </div>
+            </div>
+            <div class='tr' role='row'>
+              <div colspan='5' class='return_btn td'>
+                <button class='return_request_btn cancel'>{{ 'customer.order.cancel_return' | t }}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endcapture %}
+
+{% render 'genstore-container',
+  section: section,
+  color_scheme: section.settings.color_scheme,
+  color_mode: section.settings.color_mode,
+  color_style: section.settings.color_style,
+  content: content
+%}
+<script>
+  window.addEventListener('load', () => {
+    typeof OrderDetail !== 'undefined' && new OrderDetail();
+  });
+</script>

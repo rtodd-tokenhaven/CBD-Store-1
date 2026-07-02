@@ -1,0 +1,132 @@
+{% comment %}
+  计算color_scheme 当color_mode是dark的时候，需要根据当前的scheme-xx的值来计算序号
+  1. 如果是light的话，就是color-scheme-1，color-scheme-3,color-scheme-5,color-scheme-7
+  2. 如果是dark的话，就是color-scheme-2，color-scheme-4,color-scheme-6,color-scheme-8
+  -- has_padding 是否有padding 来自于 带文本的图片，他不是个卡片但是需要padding
+{% endcomment %}
+{% liquid
+  assign is_card = is_card | default: false
+  assign has_animation = has_animation | default: false
+
+  assign color_scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign color_mode = color_mode | default: 'light'
+  assign color_style = color_style | default: 'brand'
+  assign opacity = opacity | default: 100
+  assign index = color_scheme | split: 'scheme-' | last
+  if color_mode == 'dark'
+    assign index = index | times: 2
+  else
+    assign index = index | times: 2 | minus: 1
+  endif
+  assign color_scheme = 'color-scheme-' | append: index
+%}
+{% if blocks.size > 0 %}
+  <div
+    class="pointer-events-auto banner__box f-column  {% if has_animation == true %} scroll-trigger animate--slide-in{% endif %} {{ className | default: '' }}  {{ color_scheme }} {{ color_mode }} {{ color_style }} {% if is_card == false %} banner--card-transparent {% else %} enable-card {% endif %} {% if has_padding == true %} card-padding {% endif %}"
+    {% if data_role != blank %}
+      data-role="{{ data_role }}"
+    {% endif %}
+    style="--opacity:{{ opacity }}; {% if has_animation == true %}--duration-extra-long: 0.8s;{% endif %}"
+  >
+    {%- for block in blocks -%}
+      {%- case block.type -%}
+        {%- when 'introduction' -%}
+          <div
+            class="banner__text genstore-text-letter-spacing {{ block.settings.text_size }}"
+            {{ block.genstore_attributes }}
+             {{ '' | genstore_vkey: key:'text',block:block }}
+          >
+            {{ block.settings.text }}
+          </div>
+        {%- when 'heading' -%}
+          {% render 'genstore-heading',
+            block: block,
+            title_key: 'heading',
+            title: block.settings.heading,
+            heading_size: block.settings.heading_size,
+            genstore_attributes: block.genstore_attributes,
+            visual_text_key:'heading'
+          %}
+        {%- when 'text' -%}
+          <div
+            class="banner__text genstore-text-letter-spacing {{ block_class_name }} rte {{ block.settings.text_size }}"
+            {{ block.genstore_attributes }}
+            {{ '' | genstore_vkey: key:'text',block:block }}
+          >
+            {{ block.settings.text }}
+          </div>
+        {%- when 'separator_line' -%}
+          {% render 'separator-line',
+            genstore_attributes: block.genstore_attributes,
+            border_color: '--genstore-neutral-border-900',
+            border_position: 'bottom'
+          %}
+        {%- when 'buttons' -%}
+          {% comment %}定义按钮组{% endcomment %}
+          {% capture button_object %}
+            {"label":"{{ block.settings.button_label_1 | escape }}","url":"{{ block.settings.button_link_1 | escape }}","style":"{{ block.settings.button_style_secondary_1 | default: 'default' | escape }}", "color_style":"{{ block.settings.color_style_button_1 | default: 'brand' | escape }}","size":"{{ block.settings.button_size_1 | default: 'xl' | escape }}","visual_text_key":"button_label_1","visual_link_key":"button_link_1"}
+          {% endcapture %}
+          {% capture button_object2 %}
+            {"label":"{{ block.settings.button_label_2 | escape }}","url":"{{ block.settings.button_link_2 | escape }}","style":"{{ block.settings.button_style_secondary_2 | default: 'default' | escape }}","color_style":"{{ block.settings.color_style_button_2 | default: 'brand' | escape }}","size":"{{ block.settings.button_size_2 | default: 'xl' | escape }}","visual_text_key":"button_label_2","visual_link_key":"button_link_2"}
+          {% endcapture %}
+          {% liquid
+            assign totalButtons = array
+            if block.settings.button_label_1 != blank and block.settings.show_button_1 or block.settings.button_label_1 != blank and block.settings.show_button_1 == blank
+              assign totalButtons = totalButtons | push: button_object
+            endif
+            if block.settings.button_label_2 != blank and block.settings.show_button_2 or block.settings.button_label_2 != blank and block.settings.show_button_2 == blank
+              assign totalButtons = totalButtons | push: button_object2
+            endif
+          %}
+          <div
+            class="banner__buttons buttons-{{block.settings.button_display}} {% if totalButtons.size > 1 %} banner__buttons--multiple{% endif %} {% if has_animation == true %} scroll-trigger animate--slide-in{% endif %}"
+            style="{% if has_animation == true %}--duration-extra-long: 0.8s; --animation-order: 1;{% endif %}"
+            {{ block.genstore_attributes }}
+          >
+            {% for button in totalButtons %}
+              {% assign button_props = button | parse_json %}
+              {% render 'button', props: button_props, size: 'large', block: block %}
+            {% endfor %}
+          </div>
+        {%- when 'video' -%}
+          <div class="video-wrap" {{ block.genstore_attributes }}>
+            {% assign video_ratio = block.settings.video.aspect_ratio | default: 1.78 %}
+            {% if block.settings.cover_video_image != blank %}
+              {% assign image_ratio = block.settings.cover_video_image.aspect_ratio | default: video_ratio %}
+            {% endif %}
+            {% render 'genstore-video',
+              video: block.settings.video,
+              cover_image: block.settings.cover_video_image,
+              video_ratio: video_ratio,
+              image_ratio: image_ratio,
+              full_width: false,
+              enable_fullscreen: true,
+              controls: true,
+              contain_video: true,
+              block:block,
+              visual_image_key:'cover_video_image',
+              visual_video_key:'video'
+            %}
+          </div>
+        {%- when 'image' -%}
+          <div
+            class="image-wrap"
+            {{ block.genstore_attributes }}
+            style="--cover-image-width:{{block.settings.cover_image_pc_range}}px;--cover-mobile-image-width:{{block.settings.cover_image_mobile_range}}px;"
+          >
+            {% if block.settings.cover_image == blank %}
+              {% render 'genstore-placeholder',
+                show_product_placeholder: true,
+                icon_name: 'section-placeholder-1',
+                image_ratio: 1,
+                block:block,
+                visual_image_key:'cover_image'
+              %}
+            {% else %}
+              {% render 'banner-media', image: block.settings.cover_image, accept_ratio: 'auto',visual_image_key:'cover_image',block:block %}
+            {% endif %}
+          </div>
+      {%- endcase -%}
+    {%- endfor -%}
+  </div>
+{% endif %}

@@ -1,0 +1,20 @@
+{% comment %}
+   text 文本
+   text_size 文本尺寸
+   type normal
+        cross 划线
+        grey  灰色
+   genstore_attributes
+{% endcomment %}
+ {% comment %} 购物车等多用该组件，不添加no_letter_spacing类名 {% endcomment %}
+{% assign iconenable = has_icon | default: false %}
+{% assign icon = icon_name | append: '.svg' %}
+<span
+  class="genstore-text {{ className }} {{ type | default: 'normal' }} {{ text_size | default: 'medium' }}" {{ genstore_attributes }}
+  style="--genstore-text-color:{{ color_from_props | default: '' }};"
+>
+  {{ text }}
+</span>
+{% if iconenable == true %}
+  {{- icon | inline_asset_content -}}
+{% endif %}

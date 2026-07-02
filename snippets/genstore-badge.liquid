@@ -1,0 +1,15 @@
+{% comment %}
+  -- label 徽标的文本
+  -- badge_corner_radius 圆角半径
+  -- color_scheme 颜色方案
+  -- extra_class 类名
+{% endcomment %}
+{% liquid
+  assign color_scheme_class = ''
+  if color_scheme
+    assign color_scheme_class = 'color-' | append: color_scheme
+  endif
+%}
+<span class='genstore-badge {{color_scheme_class}} {{extra_class}}'>
+  {{ label }}
+</span>

@@ -1,0 +1,258 @@
+<style>
+  #genstore-section-{{ section.id }} {
+    {% render 'ai-color-tokens' %}
+    max-width: 100vw;
+    background: var(--secondary);
+    color: var(--secondary-foreground);
+  }
+
+  #genstore-section-{{ section.id }} .trust-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 18px 20px;
+  }
+
+  #genstore-section-{{ section.id }} .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 160px;
+    min-width: 140px;
+    max-width: 260px;
+    padding: 12px 18px;
+    position: relative;
+  }
+
+  #genstore-section-{{ section.id }} .trust-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: currentColor;
+    opacity: 0.2;
+  }
+
+  #genstore-section-{{ section.id }} .trust-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand);
+    color: var(--brand-foreground);
+    border-radius: 8px;
+    transition: transform 0.2s ease;
+  }
+
+  #genstore-section-{{ section.id }} .trust-item:hover .trust-icon {
+    transform: scale(1.08);
+  }
+
+  #genstore-section-{{ section.id }} .trust-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  #genstore-section-{{ section.id }} .trust-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  #genstore-section-{{ section.id }} .trust-label-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+    color: inherit;
+  }
+
+  #genstore-section-{{ section.id }} .trust-label-sub {
+    font-size: 0.6875rem;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    opacity: 0.75;
+    line-height: 1.4;
+    color: inherit;
+  }
+
+  @media (max-width: 767px) {
+    #genstore-section-{{ section.id }} .trust-bar {
+      gap: 0;
+      padding: 12px 10px;
+    }
+
+    #genstore-section-{{ section.id }} .trust-item {
+      flex: 1 1 45%;
+      max-width: 50%;
+      padding: 10px 12px;
+    }
+
+    #genstore-section-{{ section.id }} .trust-item:nth-child(2)::after,
+    #genstore-section-{{ section.id }} .trust-item:last-child::after {
+      display: none;
+    }
+
+    #genstore-section-{{ section.id }} .trust-label-title {
+      font-size: 0.75rem;
+    }
+
+    #genstore-section-{{ section.id }} .trust-label-sub {
+      font-size: 0.625rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    #genstore-section-{{ section.id }} .trust-bar {
+      flex-wrap: nowrap;
+      padding: 20px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    #genstore-section-{{ section.id }} .trust-item {
+      flex: 1;
+      max-width: none;
+      justify-content: center;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #genstore-section-{{ section.id }} * {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="section-mark">
+  <div class="trust-bar">
+    {% for block in section.blocks %}
+      <div class="trust-item" {{ block.genstore_attributes }}>
+        <div class="trust-icon">
+          {% if block.settings.icon == 'lab' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 3h6M9 3v7l-4 8a1 1 0 0 0 .9 1.5h12.2a1 1 0 0 0 .9-1.5L15 10V3M9 3H7M15 3h2"/>
+              <circle cx="10" cy="16" r="1" fill="currentColor" stroke="none"/>
+              <circle cx="13.5" cy="14.5" r="0.75" fill="currentColor" stroke="none"/>
+            </svg>
+          {% elsif block.settings.icon == 'shipping' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="1" y="3" width="15" height="13" rx="1"/>
+              <path d="M16 8h4l3 4v4h-7V8z"/>
+              <circle cx="5.5" cy="18.5" r="2"/>
+              <circle cx="18.5" cy="18.5" r="2"/>
+            </svg>
+          {% elsif block.settings.icon == 'secure' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.25C16.5 22.15 20 17.25 20 12V6L12 2z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          {% elsif block.settings.icon == 'guarantee' %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/>
+              <path d="M8.5 12.5l2 2 5-5"/>
+            </svg>
+          {% else %}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          {% endif %}
+        </div>
+        <div class="trust-label">
+          <span class="trust-label-title" {{ '' | genstore_vkey: key:'title', block:block }}>
+            {{ block.settings.title | default: "Trust Signal" }}
+          </span>
+          <span class="trust-label-sub" {{ '' | genstore_vkey: key:'subtitle', block:block }}>
+            {{ block.settings.subtitle | default: "" }}
+          </span>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Trust Badges — Icon Bar",
+  "settings": [],
+  "blocks": [
+    {
+      "type": "badge",
+      "name": "Trust Badge",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "options": [
+            { "value": "lab", "label": "Lab / Testing" },
+            { "value": "shipping", "label": "Shipping" },
+            { "value": "secure", "label": "Secure Checkout" },
+            { "value": "guarantee", "label": "Guarantee" }
+          ],
+          "default": "lab"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Label",
+          "default": "Third-Party Tested"
+        },
+        {
+          "type": "text",
+          "id": "subtitle",
+          "label": "Supporting Text",
+          "default": "Independent lab verified"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Trust Badges — Icon Bar",
+      "blocks": [
+        {
+          "type": "badge",
+          "settings": {
+            "icon": "lab",
+            "title": "Third-Party Tested",
+            "subtitle": "Independent lab verified"
+          }
+        },
+        {
+          "type": "badge",
+          "settings": {
+            "icon": "shipping",
+            "title": "Free Shipping Over $50",
+            "subtitle": "No hidden costs"
+          }
+        },
+        {
+          "type": "badge",
+          "settings": {
+            "icon": "secure",
+            "title": "Secure Checkout",
+            "subtitle": "256-bit SSL encryption"
+          }
+        },
+        {
+          "type": "badge",
+          "settings": {
+            "icon": "guarantee",
+            "title": "30-Day Guarantee",
+            "subtitle": "Zero compromise, full refund"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

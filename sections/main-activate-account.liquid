@@ -1,0 +1,223 @@
+{{ 'login.css' | asset_url | stylesheet_tag }}
+{%- liquid
+  assign section_id = section.id
+  assign layout = section.settings.layout_position
+  assign enable_card = section.settings.enable_card
+  assign scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign password_t = 'customer.reset_password.password' | t
+  assign password_confirm_t = 'customer.reset_password.password_confirm' | t
+-%}
+
+{%- style -%}
+  .section-{{ section_id }} {}
+{%- endstyle -%}
+
+{% capture content %}
+  <div class="card-{{ enable_card }} login-container">
+    <section class="resetBox {{ layout }}">
+      <div class="v-space-200">
+        <div class="title">{{ 'customer.activate_account.title' | t }}</div>
+        <div class="sub_title">{{ 'customer.activate_account.subtext' | t }}</div>
+      </div>
+      <div class="v-space-400">
+        <div class="password_input password_section">
+          {% render 'genstore-input-1', label:password_t, className: "s_input", input_id: "password", input_name: "password" input_type: "password" %}
+          {% render 'password-eye', input_id:'password', class: 'eye' %}
+        </div>
+        <div class="password_confirm_input password_section">
+          {% render 'genstore-input-1', label:password_confirm_t, className: "s_input", input_id: "password_confirm", input_name: "password_confirmation" input_type: "password" %}
+          {% render 'password-eye', input_id:'password_confirm', class: 'eye' %}
+        </div>
+      </div>
+      <div class="v-space-600">
+        <div class="genstore-btn xl primary brand" onclick="onSubmit(event,'ENABLED')">
+          {{ 'customer.activate_account.submit' | t }}
+        </div>
+        <div class="genstore-btn xl text brand" onclick="onSubmit(event,'DECLINED')">
+          {{ 'customer.activate_account.cancel' | t }}
+        </div>
+      </div>
+    </section>
+  </div>
+{% endcapture %}
+{% render 'genstore-container'
+  , color_scheme: settings.theme_color_scheme
+  , color_mode: section.settings.color_mode
+  , color_style: section.settings.color_style
+  , section: section
+  , content: content %}
+
+<script>
+  let password_input = document.querySelector('.password_input .s_input');
+  let password_confirm_input = document.querySelector('.password_confirm_input .s_input');
+  function correctPwd(password) {
+    return /^[a-zA-Z0-9!@#$%^&*()\-_=+\[\]{}|;:'",.<>/?]*$/.test(password);
+  }
+  function onSubmit(event,state) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailToken = urlParams.get('email_token');
+    let password = document.querySelector('#password').value;
+    if (state == 'ENABLED') {
+      if (!beforeValidate()) {
+        return;
+      }
+    }
+    fetch("{{ shop.routesRoot }}account/activate/ajax", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({emailToken,password,state})
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.errcode == 0) {
+        if (state == 'ENABLED') {
+          location.replace('{{ shop.pathPrefix }}/account');
+        }else{
+          location.replace('{{ shop.pathPrefix }}');
+        }
+      }else{
+        password_confirm_input.showError(res.errmsg);
+      }
+    });
+  }
+
+  function beforeValidate() {
+    hideAllErrors();
+    let password = document.querySelector('#password').value;
+    let password_confirmation = document.querySelector('#password_confirm').value;
+    let result = true;
+    if (!password) {
+      password_input.showError('{{ "customer.reset_password.password_required" | t }}');
+      result = false;
+    }else if(password.length < 6){
+      password_input.showError('{{ "customer.reset_password.password_invalid" | t }}');
+      result = false;
+    }
+    if (!password_confirmation) {
+      password_confirm_input.showError('{{ "customer.reset_password.confirm_required" | t }}');
+      result = false;
+    }
+    if (password != password_confirmation) {
+      password_confirm_input.showError('{{ "customer.reset_password.not_match" | t }}');
+      result = false;
+    }
+    if(!correctPwd(password)){
+      password_input.showError('{{ "customer.register.invalid_password" | t }}');
+      result = false;
+    }
+    return result;
+  }
+
+  function hideAllErrors() {
+    password_input.hiddenError();
+    password_confirm_input.hiddenError();
+  }
+</script>
+
+{% schema %}
+  {
+    "name": "t:sections.main-login.name",
+    "settings": [
+      {
+        "default": "left",
+        "options": [
+          {
+            "label": "t:sections.header.settings.logo_position.options__2.label",
+            "value": "left"
+          },
+          {
+            "label": "t:sections.header.settings.logo_position.options__1.label",
+            "value": "center"
+          }
+        ],
+        "id": "layout_position",
+        "label": "t:sections.header.settings.logo_position.label",
+        "type": "select"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_card",
+        "default": false,
+        "label": "t:sections.all.card_mode.label"
+      },
+      {
+        "type": "header",
+        "content": "t:sections.all.design.name"
+      },
+      {
+        "options": [
+          {
+            "label": "t:sections.all.padding.options__1.label",
+            "value": "none"
+          },
+          {
+            "label": "t:sections.all.padding.options__2.label",
+            "value": "xxs"
+          },
+          {
+            "label": "t:sections.all.padding.options__3.label",
+            "value": "xs"
+          },
+          {
+            "label": "t:sections.all.padding.options__4.label",
+            "value": "s"
+          },
+          {
+            "label": "t:sections.all.padding.options__5.label",
+            "value": "m"
+          },
+          {
+            "label": "t:sections.all.padding.options__6.label",
+            "value": "l"
+          },
+          {
+            "label": "t:sections.all.padding.options__7.label",
+            "value": "xl"
+          }
+        ],
+        "default": "l",
+        "id": "padding_top",
+        "label": "t:sections.all.padding.padding_top",
+        "type": "select"
+      },
+      {
+        "options": [
+          {
+            "label": "t:sections.all.padding.options__1.label",
+            "value": "none"
+          },
+          {
+            "label": "t:sections.all.padding.options__2.label",
+            "value": "xxs"
+          },
+          {
+            "label": "t:sections.all.padding.options__3.label",
+            "value": "xs"
+          },
+          {
+            "label": "t:sections.all.padding.options__4.label",
+            "value": "s"
+          },
+          {
+            "label": "t:sections.all.padding.options__5.label",
+            "value": "m"
+          },
+          {
+            "label": "t:sections.all.padding.options__6.label",
+            "value": "l"
+          },
+          {
+            "label": "t:sections.all.padding.options__7.label",
+            "value": "xl"
+          }
+        ],
+        "default": "l",
+        "id": "padding_bottom",
+        "label": "t:sections.all.padding.padding_bottom",
+        "type": "select"
+      }
+    ]
+  }
+{% endschema %}

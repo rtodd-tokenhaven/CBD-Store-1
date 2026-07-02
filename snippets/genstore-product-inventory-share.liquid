@@ -1,0 +1,93 @@
+{% comment %}
+  -- default_variant.inventory_quantity: 当前的库存数量
+  -- block.inventory_threshold: 库存预警阈值
+  -- block.show_inventory_quantity: 是否显示库存数量
+  -- default_variant.inventory_policy: 是否允许缺货后继续购买
+  -- default_variant.is_track_inverntory: 是否追踪库存
+  -- block  块的配置信息
+  -- text_size 按钮字体大小
+{% endcomment %}
+{% liquid
+  assign inventory_class = 'in-stock'
+  assign inventory_status = 'products.product.inventory_in_stock' | t
+  if default_variant.inventory_quantity > 0
+    if default_variant.inventory_quantity <= block.settings.inventory_threshold
+      assign inventory_class = 'low-stock'
+      assign inventory_status = 'products.product.inventory_low_stock' | t
+    endif
+  else
+    if default_variant.inventory_policy == 'continue'
+      assign inventory_class = 'in-stock'
+      assign inventory_status = 'products.product.inventory_in_stock' | t
+    else
+      assign inventory_class = 'out-of-stock'
+      assign inventory_status = 'products.product.inventory_out_of_stock' | t
+    endif
+  endif
+%}
+<script src="{{ 'share.js' | asset_url }}" defer="defer"></script>
+<div
+  id="{{ id }}"
+  class="f-row f-row-wrap justify-between align-center product__inventory p-y-200"
+>
+  {% if block.settings.enable_inventory %}
+    <div
+      class="f-row align-center flex-1 {{ inventory_class }}  inventory-content"
+      data-inventory-threshold="{{ block.settings.inventory_threshold | default: 0 }}"
+      data-show-quantity="{{ block.settings.show_inventory_quantity }}"
+      data-text-in-stock="{{ 'products.product.inventory_in_stock' | t }}"
+      data-text-low-stock="{{ 'products.product.inventory_low_stock' | t }}"
+      data-text-out-of-stock="{{ 'products.product.inventory_out_of_stock' | t }}"
+    >
+      <span class="svg-wrapper">
+        {{- 'icon-inventory-status.svg' | inline_asset_content -}}
+      </span>
+      <span class="inventory-status-text">{{ inventory_status }}</span>
+      {% if block.settings.show_inventory_quantity and default_variant.inventory_quantity > 0 %}
+        <span class="inventory-separator">:</span>
+        <span class="inventory-quantity">{{ default_variant.inventory_quantity }}</span>
+      {% endif %}
+    </div>
+  {% endif %}
+  {% if block.settings.share_enable %}
+    <share-button class="share-button quick-add-hidden">
+      <button class="share-button__button hidden">
+        {% render 'genstore-svg', icon_name: 'icon-share' %}
+        <span {{ '' | genstore_vkey: key:visual_text_key,block:block }} class="share-label">{{ block.settings.share_label }}</span>
+      </button>
+      <details id="Details-{{ block.id }} ">
+        <summary class="share-button__button">
+          <span class="svg-wrapper">{{ 'icon-share.svg' | inline_asset_content }}</span>
+          <span class="share-label">{{ block.settings.share_label }}</span>
+        </summary>
+        <div class="share-button__fallback motion-reduce">
+          <div class="field">
+            <span class="share-button__message hidden" role="status"> </span>
+            <input
+              type="text"
+              class="field__input"
+              id="share_button"
+              value="{{ share_link }}"
+              placeholder="{{ 'general.share.share_url' | t }}"
+              onclick="this.select();"
+              readonly
+            >
+            <label class="field__label" for="share_button">{{ 'general.share.share_url' | t }}</label>
+          </div>
+          <button class="share-button__close hidden">
+            <span class="svg-wrapper">
+              {{- 'icon-close.svg' | inline_asset_content -}}
+            </span>
+            <span class="visually-hidden">{{ 'general.share.close' | t }}</span>
+          </button>
+          <button class="share-button__copy">
+            <span class="svg-wrapper">
+              {{- 'icon-copy.svg' | inline_asset_content -}}
+            </span>
+            <span class="visually-hidden">{{ 'general.share.copy_to_clipboard' | t }}</span>
+          </button>
+        </div>
+      </details>
+    </share-button>
+  {% endif %}
+</div>

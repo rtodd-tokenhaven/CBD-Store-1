@@ -1,0 +1,87 @@
+{%- comment -%}
+  sections/ai-cart-drawer.liquid — 抽屉购物车固定骨架（自研版）
+
+  合并了原 section + snippet 为单一 section 文件。
+  零外部依赖：使用自研 ai-cart-items.js + ai-cart-drawer.js
+{%- endcomment -%}
+
+{%- liquid
+  assign continue_shopping = 'general.continue_shopping' | t
+
+  assign color_scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign cart_css_scope = ''
+  if section.id != blank
+    assign cart_css_scope = '#genstore-section-' | append: section.id
+  endif
+-%}
+
+<style>
+  {% render 'ai-cart-base-css', css_scope: cart_css_scope %}
+  {{ ai_generated_css }}
+</style>
+
+<script src="{{ 'ai-cart-items.js' | asset_url }}" defer></script>
+<script src="{{ 'ai-cart-drawer.js' | asset_url }}" defer></script>
+<script src="{{ 'ai-quantity-input.js' | asset_url }}" defer></script>
+
+<ai-cart-drawer data-state="closed" class="cd-drawer">
+  <div class="cd-overlay fixed inset-0"></div>
+  <div
+    id="CartDrawer"
+    class="cd-panel fixed top-0 right-0 bottom-0 flex flex-col"
+    style="{% render 'ai-color-tokens', color_scheme: color_scheme %}"
+    role="dialog"
+    aria-modal="true"
+    aria-label="{{ 'sections.cart.title' | t }}"
+    tabindex="-1"
+  >
+    {%- comment -%} ===== Header ===== {%- endcomment -%}
+    <div class="cd-header flex items-center justify-between">
+      <h2 class="cd-title">{{ 'sections.cart.title' | t }}</h2>
+      <button
+        class="cd-close"
+        type="button"
+        onclick="this.closest('ai-cart-drawer').close()"
+        aria-label="{{ 'accessibility.close' | t }}"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    {%- comment -%} ===== Body ===== {%- endcomment -%}
+    <div class="cd-body flex-1 overflow-y-auto {% if cart.items.size == 0 %}is-empty{% endif %}">
+
+      {%- comment -%} 空态 {%- endcomment -%}
+      {%- if cart.items.size == 0 -%}
+        <div class="cd-empty flex flex-col items-center">
+          <div class="cd-empty-content flex flex-col items-center">
+            <h2 class="cd-empty-title">{{ 'sections.cart.empty' | t }}</h2>
+            <a class="cd-continue-btn" href="{{ routes.all_products_collection_url }}">{{ continue_shopping }}</a>
+            {%- if customer == blank -%}
+              <p class="cd-login-title">{{ 'sections.cart.login.title' | t }}</p>
+              <p class="cd-login-paragraph">
+                {{ 'sections.cart.login.paragraph_html' | t: link: routes.account_login_url }}
+              </p>
+            {%- endif -%}
+          </div>
+          {%- if settings.cart_drawer_collection != blank -%}
+            <div class="cd-collection" {{ '' | genstore_vkey: key:'cart_drawer_collection', group:'settings' }}>
+              {% render 'ai-product-card', card_collection: settings.cart_drawer_collection, columns: 1 %}
+            </div>
+          {%- endif -%}
+        </div>
+      {%- else -%}
+        {%- comment -%} 有商品 {%- endcomment -%}
+        <div id="cart-drawer-container" class="cd-container js-contents {% if cart.groups.size == 1 %}is-one-group{% endif %}">
+          {% render 'ai-cart-items',
+            type: 'drawer',
+            layout: 'vertical',
+            cart: cart,
+            show_footer: true
+          %}
+        </div>
+      {%- endif -%}
+
+    </div>
+  </div>
+</ai-cart-drawer>

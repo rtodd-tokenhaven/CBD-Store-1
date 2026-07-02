@@ -1,0 +1,132 @@
+{
+  "sections": {
+    "ai-close-close-cta-banner": {
+      "settings": {
+        "heading": "Zero Compromise. Every Bottle.",
+        "button_url": "/collections",
+        "button_text": "Shop Now",
+        "subheading": "Third-party tested. Nature-sourced. Designed to fit your daily routine without confusion or compromise.",
+        "disclaimer": ""
+      },
+      "type": "ai-close-close-cta-banner"
+    },
+    "ai-showcase-showcase-product-grid": {
+      "settings": {
+        "heading": "The Full Range",
+        "products_to_show": 8,
+        "collection": "all",
+        "subheading": "Third-party tested. Zero compromise."
+      },
+      "blocks": {},
+      "type": "ai-showcase-showcase-product-grid",
+      "block_order": []
+    },
+    "ai-hook-hero-cinematic": {
+      "settings": {
+        "hero_image": "https://media.genstore.ai/ol-aB/4000257577735/99916731f7344d6d8de57de4a6f201de.webp",
+        "eyebrow": "Third-party tested",
+        "heading": "Backed by Nature. Verified by Science.",
+        "button_url": "/collections",
+        "button_text": "Shop the Collection",
+        "subheading": "Premium-grade CBD — zero compromise on sourcing, testing, or transparency."
+      },
+      "type": "ai-hook-hero-cinematic"
+    },
+    "ai-educate-educate-split": {
+      "settings": {
+        "image": "https://media.genstore.ai/ol-aB/4000257577735/ba5ac2268b0d49b99e268c2a5e4c7673.webp",
+        "heading": "Sourced with Intention. Tested Without Compromise.",
+        "label": "Our Process",
+        "subheading": "Every bottle traces a clear line from soil to shelf. Third-party tested. Zero compromise."
+      },
+      "blocks": {
+        "beat_1": {
+          "settings": {
+            "description": "Single-origin hemp, grown on certified organic farms in Colorado. No pesticides. No shortcuts.",
+            "title": "Hemp Origin"
+          },
+          "type": "beat"
+        },
+        "beat_2": {
+          "settings": {
+            "description": "Cold CO₂ extraction preserves the full cannabinoid profile without residual solvents or heat degradation.",
+            "title": "CO₂ Extraction"
+          },
+          "type": "beat"
+        },
+        "beat_3": {
+          "settings": {
+            "description": "Every batch tested by an independent ISO-certified lab. Full certificate of analysis available on every product page.",
+            "title": "Third-Party Testing"
+          },
+          "type": "beat"
+        },
+        "beat_4": {
+          "settings": {
+            "description": "Backed by nature and science — our quality seal means the potency on the label matches what is in the bottle.",
+            "title": "Quality Seal"
+          },
+          "type": "beat"
+        }
+      },
+      "type": "ai-educate-educate-split",
+      "block_order": [
+        "beat_1",
+        "beat_2",
+        "beat_3",
+        "beat_4"
+      ]
+    },
+    "ai-promise-promise-icon-bar": {
+      "settings": {},
+      "blocks": {
+        "promise_item_2": {
+          "settings": {
+            "icon": "leaf",
+            "description": "Hemp grown without pesticides or synthetic additives.",
+            "title": "Organic Sourcing"
+          },
+          "type": "promise_item"
+        },
+        "promise_item_3": {
+          "settings": {
+            "icon": "shield",
+            "description": "Backed by nature and science — nothing else inside.",
+            "title": "Zero Additives"
+          },
+          "type": "promise_item"
+        },
+        "promise_item_1": {
+          "settings": {
+            "icon": "lab",
+            "description": "Every batch verified by independent ISO-certified labs.",
+            "title": "Third-Party Tested"
+          },
+          "type": "promise_item"
+        },
+        "promise_item_4": {
+          "settings": {
+            "icon": "tag",
+            "description": "Full-spectrum disclosure. Zero compromise on clarity.",
+            "title": "Transparent Labeling"
+          },
+          "type": "promise_item"
+        }
+      },
+      "type": "ai-promise-promise-icon-bar",
+      "block_order": [
+        "promise_item_1",
+        "promise_item_2",
+        "promise_item_3",
+        "promise_item_4"
+      ]
+    }
+  },
+  "order": [
+    "ai-hook-hero-cinematic",
+    "ai-promise-promise-icon-bar",
+    "ai-educate-educate-split",
+    "ai-showcase-showcase-product-grid",
+    "ai-close-close-cta-banner"
+  ]
+}

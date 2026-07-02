@@ -1,0 +1,165 @@
+{% comment %}
+  Renders facets (filtering and sorting)
+
+  Accepts:
+  - results: {Object} Collection or Search object
+  - enable_filtering: {Boolean} Show filtering when true
+  - enable_sorting: {Boolean} Show sorting when true
+  - filter_type: {String} Type of filter
+  - paginate: {Object}
+
+  Usage:
+  {% render 'facets', results: collection, enable_filtering: true, enable_sorting: true, filter_type: 'vertical', paginate: paginate %}
+{% endcomment %}
+
+{{ 'component-show-more.css' | asset_url | stylesheet_tag }}
+{{ 'component-swatch-input.css' | asset_url | stylesheet_tag }}
+{{ 'component-swatch.css' | asset_url | stylesheet_tag }}
+{% comment %}
+  {%- liquid
+    assign sort_by = results.sort_by | default: results.default_sort_by
+    assign total_active_values = 0
+    assign default_presentation = 'text'
+    if results.url
+      assign results_url = results.url
+    else
+      assign terms = results.terms | escape
+      assign results_url = '?q=' | append: terms | append: '&options%5Bprefix%5D=last&sort_by=' | append: sort_by
+    endif
+  -%}
+{% endcomment %}
+{% liquid
+  assign user_agent = req.headers['user-agent']
+  assign filter_type = section.settings.filter_type
+  assign is_mobile = false
+  if user_agent contains 'Mobile' or user_agent contains 'Android' or user_agent contains 'iPhone'
+    assign filter_type = 'drawer'
+    assign is_mobile = true
+  endif
+%}
+{% capture selected_values %}
+  {% render 'facets-selected-values', filters: collection.filters %}
+{% endcapture %}
+
+<facet-filters-form>
+  <form id="{{ form_id }}">
+    <div
+      class="facets__wrapper {% if layout == 'horizontal' %} f-row align-center gap-800 {% else %} facets-l_{{ layout }} {% endif %}"
+    >
+      {% if filter_type == 'vertical' and is_mobile == false %}
+        {{ selected_values }}
+      {% endif %}
+      {% for filter in results.filters %}
+        {% liquid
+          assign filter_values = filter.values
+          assign filter_values_size = filter.values.size
+          if filter.presentation == 'swatch'
+            assign filter_values = filter.count_values
+            assign filter_values_size = filter.count_values.size
+          endif
+        %}
+        {% capture content %}
+          {% liquid
+            assign popup_style = ''
+            if filter.type == 'price_range' or filter.presentation == 'swatch' or filter.presentation == 'box_rectangle' or filter.presentation == 'swatch_text'
+              assign popup_style = 'flex-direction:row;align-items:center;flex-flow: wrap;'
+            endif
+          %}
+          {% if filter.type == 'price_range' %}
+            {% assign from = 'products.facets.from' | t %}
+            {% assign to = 'products.facets.to' | t %}
+            {% assign input_id = 'Filter-' | append: filter.param_name | escape | append: '-' | append: forloop.index %}
+            <div class="facets__price-wrapper">
+              {% render 'genstore-textField', maxlength: 6, remove_url: filter.url_to_remove, label: from, input_id: 'Filter-Price-GTE', input_name: filter.min_value.param_name, value: filter.min_value.value %}
+              {% render 'genstore-textField', maxlength: 6, remove_url: filter.url_to_remove, label: to, input_id: "Filter-Price-LTE", input_name: filter.max_value.param_name, value: filter.max_value.value %}
+            </div>
+          {% else %}
+            <div class="js-filter" id="Details-{{ filter.param_name | escape }}-{{ section.id }}-{{ layout }}">
+              {%- if layout == 'horizontal' -%}
+                <div class="facets__header">
+                  <div>
+                    <span class="facets__selected">
+                      {{- 'products.facets.filters_selected' | t: count: filter.active_values.size -}}
+                    </span>
+                  </div>
+                  <facet-remove>
+                    <a href="{{ filter.url_to_remove }}" class="facets__reset link underlined-link">
+                      {{ 'products.facets.reset' | t }}
+                    </a>
+                  </facet-remove>
+                </div>
+              {% endif %}
+              {% liquid
+                assign values_move = ''
+                if filter_type != 'horizontal' and filter.presentation == 'swatch' and filter_values.size > 18
+                  assign values_move = 'facets__move-' | append: filter.presentation
+                endif
+                if filter_type != 'horizontal' and filter.presentation == 'swatch_text' and filter_values.size > 12
+                  assign values_move = 'facets__move-' | append: filter.presentation
+                endif
+              %}
+              <fieldset class="facets__{{ filter.presentation }} {{ values_move }}">
+                {% for value in filter_values %}
+                  {% liquid
+                    assign input_id = 'Filter-' | append: form_id | escape | append: '-' | append: filter.param_name  | escape | append: '-' | append: forloop.index
+                    assign is_disabled = false
+                    if value.count == 0 and value.active == false
+                      assign is_disabled = true
+                    endif
+                    assign label_value = value.label | append: ' (' | append: value.count | append: ')'
+                    if filter.presentation == 'swatch_text' or filter.presentation == 'swatch'
+                      assign label_value = value.label
+                    endif
+                    assign presentation = filter.presentation
+                    if filter.presentation == 'swatch_text' and filter_type != 'horizontal'
+                      assign presentation = filter.presentation | append: '_vertical'
+                    endif
+                  %}
+                  <li class="swatch-input-wrapper">
+                    {% render 'genstore-swatch-input',
+                      input_id: input_id,
+                      input_name: value.param_name,
+                      form_id: form_id,
+                      label: label_value,
+                      value: value.value,
+                      swatch: value.swatch,
+                      selected: value.active,
+                      option_disabled: is_disabled,
+                      picker_type: presentation,
+                      type: filter.type
+                    %}
+                  </li>
+                {% endfor %}
+              </fieldset>
+              {%- if values_move != blank -%}
+                <div class="facets__list-add-move">
+                  <span class="facets__list-add-more-btn">
+                    {% render 'genstore-icon', icon_name: 'facets-move-icon' %}
+                    <span class="facets__list-add-move-text">{{ 'templates.search.move' | t }}</span>
+                  </span>
+                </div>
+              {%- endif -%}
+            </div>
+          {% endif %}
+        {% endcapture %}
+        {%- if filter_values_size > 0 or filter.type == 'price_range' -%}
+          {% render 'genstore-popup-base',
+            popup_text: filter.label,
+            popup_content: content,
+            style: popup_style,
+            layout: layout
+          %}
+        {%- endif -%}
+      {% endfor %}
+      {% if filter_type == 'horizontal' and results.filters.size > 5 %}
+        <span
+          class="facets-more-btn"
+          data-move="{{ 'templates.search.move' | t }}"
+          data-hide="{{ 'templates.search.fold_up' | t }}"
+        >
+          {{- 'templates.search.move' | t -}}
+        </span>
+      {% endif %}
+    </div>
+  </form>
+</facet-filters-form>

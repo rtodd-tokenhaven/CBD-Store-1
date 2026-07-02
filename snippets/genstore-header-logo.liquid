@@ -1,0 +1,58 @@
+{% liquid
+  assign root_url = routes.root_url
+  assign root_url = root_url | split: '/' | last
+  assign root_url = '/' | append: root_url
+  assign enable_head_invert_colors = false
+  assign is_transparent = false
+  if section != blank and section.settings != blank  and settings.reverse_logo != blank
+    if section.settings.enable_transparent_for_homepage == true and template.name == 'index'
+      assign is_transparent = true
+    endif
+    if section.settings.enable_transparent_for_product == true and template.name == 'product'
+      assign is_transparent = true
+    endif
+    if section.settings.enable_transparent_for_collection == true and template.name == 'collection'
+      assign is_transparent = true
+    endif
+    if is_transparent == true and section.settings.transparent_for_homepage_btn_type != 'none'
+      assign enable_head_invert_colors = true
+    endif 
+  endif
+%}
+<a href='{{ root_url }}' class='header__heading-link link link--text focus-inset'>
+  {%- if settings.logo != blank -%}
+    <div class='header__heading-logo-wrapper  {% if enable_head_invert_colors == true %} header__heading-logo-wrapper-no-invert {% endif %}'>
+      {%- assign logo_alt = settings.logo.alt | default: shop.name | escape -%}
+      {%- assign logo_height = settings.logo_width | divided_by: settings.logo.aspect_ratio -%}
+      {% capture sizes %}(max-width: {{ settings.logo_width | times: 2 }}px) 50vw, {{ settings.logo_width }}px{% endcapture %}
+      {% capture widths %}{{ settings.logo_width }}, {{ settings.logo_width | times: 1.5 | round }}, {{ settings.logo_width | times: 2 }}{% endcapture %}
+      <img
+        {{ '' | genstore_vkey: key:'logo', group:'settings'}} 
+        src='{{ settings.logo | image_url: width:300 }}'
+        width='{{ settings.logo_width }}'
+        height='auto'
+        class='header__heading-logo motion-reduce'
+        alt='{{ shop.name }}'
+      >
+    </div>
+  {%- endif -%}
+    {%- if settings.reverse_logo != blank and  enable_head_invert_colors == true -%}
+      <div class='header__heading-logo-wrapper  header__heading-logo-wrapper-invert'>
+      {%- assign logo_alt = settings.reverse_logo.alt | default: shop.name | escape -%}
+      {%- assign logo_height = settings.logo_width | divided_by: settings.reverse_logo.aspect_ratio -%}
+      {% capture sizes %}(max-width: {{ settings.logo_width | times: 2 }}px) 50vw, {{ settings.logo_width }}px{% endcapture %}
+      {% capture widths %}{{ settings.logo_width }}, {{ settings.logo_width | times: 1.5 | round }}, {{ settings.logo_width | times: 2 }}{% endcapture %}
+      <img
+        {{ '' | genstore_vkey: key:'reverse_logo', group:'settings'}} 
+        src='{{ settings.reverse_logo | image_url: width:300 }}'
+        width='{{ settings.logo_width }}'
+        height='auto'
+        class='header__heading-logo motion-reduce'
+        alt='{{ shop.name }}'
+      >
+    </div>
+  {%- endif -%}
+  <h1 class="{% if settings.logo != blank or enable_head_invert_colors == true %}visually-hidden{% endif %}">
+    {% render 'genstore-text-block', text: shop.name, text_size: 'large', reset_letter_spacing: true %}
+  </h1>
+</a>

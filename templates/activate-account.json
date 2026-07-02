@@ -1,0 +1,16 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-activate-account",
+      "settings": {
+        "layout_position": "left",
+        "enable_card": true,
+        "padding_top": "l",
+        "padding_bottom": "l"
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

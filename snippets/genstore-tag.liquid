@@ -1,0 +1,22 @@
+{% comment %}
+  --close_icon: boolean, default: false
+  --text: string, default: ''
+{% endcomment %}
+
+<genstore-tag
+  class='genstore-tag {{ className }}'
+  data-value='{{ value }}'
+  {% if attributes %}
+    {{ attributes }}
+  {% endif %}
+  {% if scope %}
+    data-scope='{{ scope }}'
+  {% endif %}
+>
+  <span class='genstore-tag__text'>{{ text }}</span>
+  {% if close_icon != blank or close_icon != null or close_icon != false %}
+    {{ close_icon }}
+  {% else %}
+    {% render 'genstore-svg', icon_name: 'icon-close', attributes: 'data-close-icon' %}
+  {% endif %}
+</genstore-tag>

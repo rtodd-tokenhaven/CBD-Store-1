@@ -1,0 +1,36 @@
+{% comment %}
+  blocks
+  alignment
+  - text
+  - size
+  - is_selected
+{% endcomment %}
+{% comment %}
+  blocks
+  alignment
+{% endcomment %}
+{% liquid
+  assign content_alignment = ''
+  if alignment == 'center'
+    assign content_alignment = 'content-center'
+  endif
+  if alignment == 'right'
+    assign content_alignment = 'content-end'
+  endif
+%}
+<tab-nav-list
+  class="f-row gap-1800 {{ content_alignment }}"
+  data-control-id="{{ control_id }}"
+>
+  {% for block in section.blocks %}
+    <tab-nav-item
+      class="
+        tab-nav-item isolate
+        {% if section.blocks.size == 1 %}only-one{% endif %}
+        {% if forloop.first and section.blocks.size >1 %}is-selected{% endif %}
+      "
+    >
+      {% render 'genstore-heading', title: block.settings.title, heading_size: block.settings.title_size,block:block,visual_text_key:'title' %}
+    </tab-nav-item>
+  {% endfor %}
+</tab-nav-list>

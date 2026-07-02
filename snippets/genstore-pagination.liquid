@@ -1,0 +1,26 @@
+{% comment %}
+  - current_page: 当前页码
+  - total: 总数量
+  - className: 类名
+  - prev_icon: 上一页图标
+  - next_icon: 下一页图标
+{% endcomment %}
+{% assign current_page = current_page | default: 1 %}
+{% assign total_pages = total_pages | default: 1 %}
+<genstore-pagination
+  class='genstore-pagination {{ className }}'
+  data-current='{{ current }}'
+  data-total='{{ total }}'
+>
+  <button class='prev-btn'>
+    {% render 'genstore-svg', icon_name: 'icon-down', className: 'icon-arrow' %}
+  </button>
+  <div class='page-info'>
+    <span class='current'>{{ current }}</span>
+    <span>/</span>
+    <span class='total'>{{ total }}</span>
+  </div>
+  <button class='next-btn'>
+    {% render 'genstore-svg', icon_name: 'icon-down', className: 'icon-arrow' %}
+  </button>
+</genstore-pagination>

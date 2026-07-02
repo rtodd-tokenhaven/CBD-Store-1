@@ -1,0 +1,157 @@
+{{ 'profile.css' | asset_url | stylesheet_tag }}
+<link rel='stylesheet' href='/static/checkout/ext-address-form.app.css'>
+<script src='{{ 'profile.js' | asset_url }}' defer></script>
+<script src="/static/checkout/ext-address-form.app.js" defer="defer"></script>
+
+
+{%- if section.settings.enable_shop_login_button == false -%}
+  {%- assign hide_shop_login_button = true -%}
+{%- endif -%}
+{% capture content %}
+<div class='gradient color-{{ section.settings.color_scheme }}'>
+  <div class='customer profile section-{{ section.id }}-padding' data-customer-profile>
+    <div class="customer_profile_form">
+      <div style="display: none">
+        <div class="save_success">
+          {{ 'customer.addresses.success' | t }}
+        </div>
+        <div class="error_info_password">
+          {{ 'customer.profile_page.password_error' | t }}
+        </div>
+        <div class="error_info_new_password">
+          {{ 'customer.profile_page.new_password_error' | t }}
+        </div>
+        <div class="error_info_password_less">
+          {{ 'customer.profile_page.password_less_error' | t }}
+        </div>
+        <div class="error_info_password_long">
+          {{ 'customer.profile_page.password_long_error' | t }}
+        </div>
+        <div class="error_info_confirm_password">
+          {{ 'customer.profile_page.confirm_password_error' | t }}
+        </div>
+        <div class="error_info_password_unique">
+          {{ 'customer.profile_page.password_unique_error' | t }}
+        </div>
+        <div class="error_info_password_format">
+          {{ 'customer.profile_page.password_format_error' | t }}
+        </div>
+      </div>
+      {%- if recover_success == true -%}
+        <h3 class='form__message' tabindex='-1' autofocus>
+          <span class='svg-wrapper'>
+            {{- 'icon-success.svg' | inline_asset_content -}}
+          </span>
+          {{ 'customer.recover_password.success' | t }}
+        </h3>
+      {%- endif -%}
+      {%- form 'edit_profile', novalidate: 'novalidate', id: 'profile-info-form' -%}
+        {%- if form.errors -%}
+          <h2 class='form__message' tabindex='-1' autofocus>
+            <span class='visually-hidden'>{{ 'accessibility.error' | t }} </span>
+            <span class='svg-wrapper'>
+              {{- 'icon-error.svg' | inline_asset_content -}}
+            </span>
+            {{ 'templates.contact.form.error_heading' | t }}
+          </h2>
+          {{ form.errors | default_errors }}
+        {%- endif -%}
+
+        <div class='profile_info_main'>
+          <div class="profile_form_main">
+            <div class='profile_info_con'>
+              <div class='profile_info_title'>
+                {{ 'customer.profile_page.title' | t }}
+              </div>
+              <div class='profile_info_basic_top'>
+                {% render 'input-field',
+                  id: 'CustomerFirstName',
+                  name: 'firstName',
+                  value: customer.profile.firstName,
+                  placeholder: 'customer.profile_page.first_name'
+                %}
+                {% render 'input-field',
+                  id: 'CustomerLastName',
+                  name: 'lastName',
+                  value: customer.profile.lastName,
+                  placeholder: 'customer.profile_page.last_name'
+                %}
+              </div>
+              <div id='common-address-form'></div>
+            </div>
+            <div class='profile_info_con'>
+              <div class='profile_info_title'>
+                {{ 'customer.profile_page.account_password' | t }}
+                <a
+                  href='#'
+                  id='changePasswordLink'
+                  data-text-change-password='{{ 'customer.profile_page.change_password' | t }}'
+                  data-text-cancel='{{ 'customer.profile_page.cancel' | t }}'
+                >
+                  <svg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'>
+                    <g fill="none"><path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z"/><path fill="currentColor" d="M13 3a1 1 0 0 1 .117 1.993L13 5H5v14h14v-8a1 1 0 0 1 1.993-.117L21 11v8a2 2 0 0 1-1.85 1.995L19 21H5a2 2 0 0 1-1.995-1.85L3 19V5a2 2 0 0 1 1.85-1.995L5 3zm6.243.343a1 1 0 0 1 1.497 1.32l-.083.095l-9.9 9.899a1 1 0 0 1-1.497-1.32l.083-.094z"/></g>
+                  </svg>
+                  {{ 'customer.profile_page.change_password' | t }}
+                </a>
+              </div>
+              <input type='hidden' name='is_change_password' value='false'>
+              <input type='hidden' name='has_password' value='{{ customer.has_password }}'>
+              {% if customer.has_password %}
+                {% render 'input-field',
+                  id: 'CustomerPassword',
+                  name: 'current_password',
+                  type: 'password',
+                  value: customer.profile.password,
+                  class: 'change-password-form',
+                  style: 'display: none;',
+                  placeholder: 'customer.profile_page.current_password'
+                %}
+              {% endif %}
+              {% render 'input-field',
+                id: 'CustomerNewPassword',
+                name: 'new_password',
+                type: 'password',
+                value: '',
+                class: 'change-password-form',
+                style: 'display: none;',
+                placeholder: 'customer.profile_page.new_password'
+              %}
+
+              {% render 'input-field',
+                id: 'CustomerConfirmPassword',
+                name: 'confirm_password',
+                type: 'password',
+                value: '',
+                class: 'change-password-form',
+                style: 'display: none;',
+                placeholder: 'customer.profile_page.confirm_new_password'
+              %}
+            </div>
+          </div>
+
+         
+        </div>
+      {%- endform -%}
+      <div class='profile_info_action'>
+        <button class='button button--secondary profile_info_cancel' id='profile-page-cancel'>
+          {{ 'customer.profile_page.cancel' | t }}
+        </button>
+        <button class='profile_info_submit'>
+          {{ 'customer.profile_page.save' | t }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endcapture %}
+
+{% render 'genstore-container', 
+  section: section,
+  content: content,
+  className: "card-transparent"
+%}
+<script>
+  window.addEventListener('load', () => {
+    typeof CustomerProfile !== 'undefined' && new CustomerProfile();
+  });
+</script>

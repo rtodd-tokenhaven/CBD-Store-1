@@ -1,0 +1,104 @@
+{% comment %}
+  Renders a collection card
+
+  Accepts:
+  - card_collection: {Object} Collection Liquid object
+  - media_aspect_ratio: {String} Size of the product image card. Values are
+  "square" and "portrait". Default is "square" (optional)
+  - columns: {Number}
+  - extend_height: {Boolean} Card height extends to available container space.
+  Default: false (optional)
+  - wrapper_class: {String} Wrapper class for card (optional)
+  - placeholder_image: {String} Placeholder image when collection is empty
+  - content_alignment: {String} Content alignment (optional)
+  - link_content: {String} Link content (optional)
+  Usage:
+  {% render 'card-collection' %}
+{% endcomment %}
+{%- liquid
+  assign ratio = 1
+  if media_aspect_ratio == 'portrait'
+    assign ratio = 0.75
+  elsif media_aspect_ratio == 'adapt'
+    assign ratio = 'auto'
+  endif
+  if ratio == 0 or ratio == null
+    assign ratio = 1
+  endif
+  assign color_scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign color_mode = settings.collection_card_color_mode
+  assign color_style = settings.collection_card_color_style
+
+  assign index = color_scheme | split: 'scheme-' | last
+  if color_mode == 'dark'
+    assign index = index | times: 2
+  else
+    assign index = index | times: 2 | minus: 1
+  endif
+  assign color_scheme = 'color-scheme-' | append: index
+
+  assign card_style = settings.collection_card_style
+
+  if card_style == 'standard'
+    assign color_scheme = ''
+    assign color_mode = ''
+    assign color_style = ''
+  endif
+  assign card_content_alignment = settings.collection_card_text_alignment
+  if content_alignment != blank
+    assign card_content_alignment = content_alignment
+  endif
+  assign empty_img_url = ''
+  if card_collection == blank or card_collection.url == blank
+    assign empty_img_url = 'prevent-click'
+  endif
+-%}
+<div class="card-wrapper   {{ color_scheme }} {{ color_mode }} {{ color_style }} {{ empty_img_url }}">
+  <a
+    href="{{ card_collection.url }}"
+    class="image-box {{ empty_img_url }}"
+    {% if empty_img_url %}
+      onclick="event.preventDefault();"
+    {% endif %}
+  >
+    <div
+      class="card-face animate--magnify"
+      data-aspect-ratio="{{ ratio }}"
+      style="--aspect-ratio: {{ ratio }};--aspect-padding: calc(100% / (var(--aspect-ratio)));"
+    >
+      {% if card_collection == blank or card_collection == empty %}
+        <img src="{{ 'product-mock.png' | asset_url }}">
+      {% elsif card_collection.image == blank %}
+        {% render 'genstore-placeholder', image_ratio: ratio, className: 'no-image' %}
+      {% else %}
+        {% assign image_width = card_collection.image.width | default: 1500 %}
+        <img
+          src="{{ card_collection.image | image_url: width: image_width }}"
+          height="{{ card_collection.image.height }}"
+          width="{{ image_width }}"
+          loading="lazy"
+        >
+      {% endif %}
+    </div>
+  </a>
+  <div
+    class="card-content f-column gap-200 p-y-600 p-x-200 {{ card_content_alignment }}"
+    data-text-limit="{{ settings.collection_card_text_limit }}"
+    style="--card-text-limit:{{ settings.collection_card_text_limit }};"
+  >
+    <div class="card-content-title genstore-text-letter-spacing">
+      {% if card_collection == blank or card_collection == empty %}
+        {% if type == 'collection-list' %}
+          {{ 'onboarding.collection_title' | t }}
+        {% else %}
+          {{ 'onboarding.product_title' | t }}
+        {% endif %}
+      {% else %}
+        <a href="{{ card_collection.url }}">{{ card_collection.title }}</a>
+      {% endif %}
+    </div>
+    {% if link_content != blank %}
+      {% render 'genstore-text-link', text: link_content, url: card_collection.url, className: 'card-link',visual_text_key:visual_text_key,block:block %}
+    {% endif %}
+  </div>
+</div>

@@ -1,0 +1,30 @@
+{% comment %}
+   size:
+          s  小
+          m  中
+          l  大
+          xl  特大
+          xxl 极大
+          3xl 特特大
+    title: 标题
+    underline_style: 下划线样式
+    no_letter_spacing: 无字间距
+                    visual_text_key:'scroll_text',
+                  vkey_group:'header',
+                  visual_block:block
+{% endcomment %}
+{% liquid
+  assign key_group = ''
+  if vkey_group != blank
+      assign key_group = vkey_group
+  endif 
+  assign  visual_block = ''
+  if block != blank
+    assign  visual_block = block
+  endif    
+
+ %}
+<h2
+  class="heading-{{ heading_size }} {{ underline_style | default: "" }} {{ className }}" {{ genstore_attributes | default: '' }}>
+  <div {{ '' | genstore_vkey: key:visual_text_key, block:visual_block,group:key_group }} class="{% if no_letter_spacing == true %} genstore-not-letter-spacing {% endif %}">{{ title }}</div>
+</h2>

@@ -1,0 +1,27 @@
+{
+  "sections": {
+    "main": {
+      "settings": {
+        "color_scheme": "scheme-1",
+        "products_per_page": 16,
+        "columns_desktop": 4,
+        "color_mode": "light",
+        "color_style": "pure",
+        "columns_mobile": 2,
+        "gap": "m",
+        "image_ratio": "portrait",
+        "show_secondary_image": true,
+        "quick_add": "none",
+        "enable_filtering": true,
+        "filter_type": "vertical",
+        "enable_sorting": true,
+        "padding_top": "l",
+        "padding_bottom": "l"
+      },
+      "type": "main-search"
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

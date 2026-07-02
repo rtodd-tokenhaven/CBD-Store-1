@@ -1,0 +1,42 @@
+{% comment %}
+  text 文本
+  text_size 文本尺寸
+  is_bolder 是否加粗
+  is_crosee 是否有中划线
+  genstore_attributes
+  no_letter_spacing 无字间距 默认有
+  reset_letter_spacing 重置字间距 默认否
+  -- visual_text_key
+  -- vkey_group
+{% endcomment %}
+{% assign iconenable = has_icon | default: false %}
+{% assign icon = icon_name | append: '.svg' %}
+{% liquid
+  assign visual_block = ''
+  if block != blank
+     assign visual_block = block
+  endif
+  assign  visual_group = ''
+  if vkey_group != blank 
+    assign  visual_group = vkey_group
+  endif
+%}
+<div
+  class="
+  genstore-text-block  {{ className }}
+  {% if no_letter_spacing == blank %} genstore-text-letter-spacing {% endif %}
+  {% if reset_letter_spacing == true %} genstore-not-letter-spacing {% endif %}
+  {% if is_bolder == true %} bolder {% endif %}
+  {% if is_cross == true %} cross {% endif %}
+  {{ text_size | default: 'small' }}"
+  {{ genstore_attributes }}
+  {{ '' | genstore_vkey: key:visual_text_key, block:visual_block , group:visual_group }}
+  {% if color_from_props != blank %}
+    style="--genstore-text-color:{{ color_from_props }};"
+  {% endif %}
+  >
+  {{ text }}
+</div>
+{% if iconenable == true %}
+  {{- icon | inline_asset_content -}}
+{% endif %}

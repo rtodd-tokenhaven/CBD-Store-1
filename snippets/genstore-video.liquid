@@ -1,0 +1,83 @@
+{% comment %}
+  渲染一个视频组件
+  参数说明
+   - enable_autoplay: 是否启用自动播放
+   - cover_image: 封面图片
+   - image_ratio: 封面图片的宽高比
+   - video_ratio: 封面视频宽高比例
+   - video: 视频文件
+   - full_width: 是否启用全屏
+   - enable_video_looping: 是否启用视频循环
+   - controls: 是否启用视频控制条
+   - video_id: 视频ID video.id
+   - muted: 是否静音
+   - contain_video 包含视频不裁剪
+{% endcomment %}
+{% liquid 
+  assign video_id = video.id
+  assign controls = controls | default: false
+  assign muted = muted | default: true
+  assign video_ratio =  video_ratio | default: 'auto'
+  assign placeholder_ratio = 1.78
+  assign  video_url  = ''
+  if video and video.sources
+     assign  video_url = video.sources[0].url
+  endif
+%}
+<deferred-media
+    {% if enable_fullscreen %}enableFullscreen='true'{% endif %}
+    class='deferred-media
+    {% if section.settings.full_width %} global-media-settings--full-width{% endif %}
+    {% if fix_ratio %} media-fit-cover{% endif %}
+    {% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}
+    {% if contain_video %} media-fit-contain genstore-video{% endif%} 
+    '
+    {% if  video_id != nil%}
+        data-media-id='{{ video_id }}'
+    {% endif %}
+    {% if enable_autoplay == true %}
+        data-autoplay='true'
+    {% endif %}
+    style='{% if image_ratio %}--aspect-ratio: {{ image_ratio }};{% endif %} --aspect-video-ratio:{{ video_ratio }}'
+>
+    <button
+        id='Deferred-Poster-Modal-{{ video_id }}'
+        class='video-section__poster {% if image == blank  and video == blank %} video-placeholder {% endif %} media deferred-media__poster media--landscape'
+        type='button'
+        aria-label='{{ alt }}'
+    >
+        {%- if cover_image != blank -%}
+            {% assign image_width = cover_image.width | default: 1500 %}
+            {{ cover_image | image_url: width: image_width | image_tag | genstore_vkey: key:visual_image_key, block:block}}
+        {%- elsif video.preview_image !=blank -%}
+           {{
+              video.preview_image
+              | image_url: width: 1920
+              | image_tag: sizes: '100vw', widths: '375, 750, 1100, 1500, 1780, 2000', alt: alt,class:img_class
+              | genstore_vkey: key:visual_video_key, block:block
+              }}
+            {% else %}
+            {% render 'genstore-placeholder',
+              show_product_placeholder: true,
+              icon_name: 'section-placeholder-1',
+              image_ratio: placeholder_ratio,
+              block: block,
+              visual_image_key: visual_image_key
+            %}
+        {%- endif -%}
+        <span class='deferred-media__poster-button motion-reduce'>
+            <div class='icon-play-container footer-video-play-icon'>
+                {% render 'genstore-svg', icon_name: 'icon-play', icon_weight: 'fill' %}
+            </div>
+        </span>
+    </button>
+    <template>
+        {%- liquid
+          assign loop = ''
+          if enable_video_looping
+            assign loop = '&loop=1&playlist=' | append: video_id
+          endif
+        -%}
+        {{  video | video_tag: autoplay: enable_autoplay, loop: loop,controls: controls, muted: muted | genstore_vkey: key:visual_video_key, block:block,value:video_url }}
+    </template>
+</deferred-media>

@@ -1,0 +1,190 @@
+{% layout none %}
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+  <head>
+    <script src="{{ 'qrcode.js' | asset_url }}" defer></script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="{{ settings.color_background }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+
+    {%- assign formatted_balance = gift_card.balance | money_without_trailing_zeros | strip_html -%}
+
+    <title>{{ 'gift_cards.issued.title' | t: value: formatted_balance, shop: shop.name }}</title>
+    {% style %}
+      h2,
+      p {
+        margin: 0;
+      }
+    {% endstyle %}
+
+    <meta name="description" content="{{ 'gift_cards.issued.subtext' | t }}">
+
+    {{ content_for_header }}
+
+    {%- liquid
+      assign body_font_bold = settings.type_body_font | font_modify: 'weight', 'bold'
+      assign body_font_italic = settings.type_body_font | font_modify: 'style', 'italic'
+      assign body_font_bold_italic = body_font_bold | font_modify: 'style', 'italic'
+    %}
+
+    {%- unless settings.type_body_font.system? -%}
+      {% comment %}theme-check-disable AssetPreload{% endcomment %}
+      <link
+        rel="preload"
+        as="font"
+        href="{{ settings.type_body_font | font_url }}"
+        type="font/woff2"
+        crossorigin>
+      {% comment %}theme-check-enable AssetPreload{% endcomment %}
+    {%- endunless -%}
+    {%- unless settings.type_header_font.system? -%}
+      {% comment %}theme-check-disable AssetPreload{% endcomment %}
+      <link
+        rel="preload"
+        as="font"
+        href="{{ settings.type_header_font | font_url }}"
+        type="font/woff2"
+        crossorigin>
+      {% comment %}theme-check-enable AssetPreload{% endcomment %}
+    {%- endunless -%}
+    {{ 'template-giftcard.css' | asset_url | stylesheet_tag }}
+  </head>
+
+  <body class="gradient gift-card color-scheme-1 brand light">
+    <header>
+      <div class="gift-card__price">
+        <h1>
+          {% if settings.currency_code_enabled %}
+            {{ gift_card.balance | money_with_currency }}
+          {% else %}
+            {{ gift_card.balance | money }}
+          {% endif %}
+        </h1>
+        {%- if gift_card.enabled == false or gift_card.expired -%}
+          <p class="badge badge--expired">{{ 'gift_cards.issued.expired' | t }}</p>
+        {%- endif -%}
+      </div>
+      {% if gift_card.expires_on %}
+        {%- assign gift_card_expiration_date = gift_card.expires_on | time_tag: '%B %e, %Y' -%}
+        <p class="gift-card__text">
+          {{ 'gift_cards.issued.expiration_date' | t: expires_on: gift_card_expiration_date }}
+        </p>
+      {% endif %}
+    </header>
+
+    <main>
+      <div class="gift-card__image-wrapper">
+        {%- if settings.gift_card_banner != blank -%}
+          {%- assign logo_alt = settings.gift_card_banner.alt | default: shop.name | escape -%}
+          {{ settings.gift_card_banner | image_url: width: 570 | image_tag: class: 'gift-card__image', alt: logo_alt }}
+        {%- elsif settings.logo != blank -%}
+          {%- assign logo_alt = settings.logo.alt | default: shop.name | escape -%}
+          {{ settings.logo | image_url: width: 570 | image_tag: class: 'gift-card__image', alt: logo_alt }}
+          {%- else %}
+          {% comment %} {% render 'genstore-icon', icon_name: "card" %} {% endcomment %}
+          {{ './gift-card.svg' | asset_url | image_tag: class: 'gift-card__image', alt: logo_alt }}
+        {%- endif %}
+      </div>
+      <h2>{{ shop.name }}</h2>
+      <div class="gift-card__text-wrapper">
+        <p class="gift-card__text">{{ 'gift_cards.issued.how_to_use_gift_card' | t }}</p>
+      </div>
+      <div class="gift-card__qr-code" data-identifier="{{ gift_card.qr_identifier }}"></div>
+      <p id="gift-card-code" class="gift-card__number">{{ gift_card.code }}</p>
+      <div class="gift-card__buttons no-print">
+        <span class="gift-card__copy-success form__message" role="status"></span>
+        <template>
+          <span class="svg-wrapper">
+            {{- 'icon-success.svg' | inline_asset_content -}}
+          </span>
+          {{ 'gift_cards.issued.copy_code_success' | t }}
+        </template>
+        <button class="button gift-card__copy-button">{{ 'gift_cards.issued.copy_code' | t }}</button>
+        <a
+          href="{{ shop.pathPrefix }}"
+          class="button button--secondary"
+          target="_blank"
+          rel="noopener"
+          aria-describedby="a11y-new-window-message">
+          {{ 'gift_cards.issued.shop_link' | t }}
+
+        </a>
+      </div>
+    </main>
+
+    <div hidden>
+      <span id="a11y-new-window-message">{{ 'accessibility.link_messages.new_window' | t }}</span>
+    </div>
+  </body>
+</html>
+
+<script>
+  var string = {qrImageAlt: {{ 'gift_cards.issued.qr_image_alt' | t | json }} };
+  document.addEventListener('DOMContentLoaded', function () {
+    new QRCode(document.querySelector('.gift-card__qr-code'), {
+      text: document.querySelector('.gift-card__qr-code').dataset.identifier,
+      width: 72,
+      height: 72,
+      imageAltText: string.qrImageAlt
+    });
+  });
+  var template = document.getElementsByTagName("template")[0];
+  var clonedTemplate = template.content.cloneNode(true);
+  var isMessageDisplayed = false
+  document
+    .querySelector('.gift-card__copy-button')
+    .addEventListener('click', () => {
+      const codeText = document.getElementById('gift-card-code').innerText;
+      
+      // Try using modern Clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(codeText)
+          .then(function () {
+            showSuccessMessage();
+          })
+          .catch(function() {
+            // Fallback to older method if Clipboard API fails
+            copyTextToClipboardFallback(codeText);
+          });
+      } else {
+        // For browsers that don't support Clipboard API
+        copyTextToClipboardFallback(codeText);
+      }
+    });
+    
+  function copyTextToClipboardFallback(text) {
+    // Create a temporary textarea element
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    
+    // Make it invisible but part of the document
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    
+    // Select and copy the text
+    textArea.select();
+    let successful = false;
+    try {
+      successful = document.execCommand('copy');
+    } catch (err) {
+      console.error('Unable to copy', err);
+    }
+    
+    // Clean up
+    document.body.removeChild(textArea);
+    
+    if (successful) {
+      showSuccessMessage();
+    }
+  }
+  
+  function showSuccessMessage() {
+    if (!isMessageDisplayed) {
+      document.querySelector('.gift-card__copy-success').appendChild(clonedTemplate);
+      isMessageDisplayed = true;
+    }
+  }
+</script>

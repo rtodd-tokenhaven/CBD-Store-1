@@ -1,0 +1,56 @@
+{% comment %}
+  通用 Dialog 弹出框壳子
+
+  参数:
+  - dialog_id: 弹窗ID (必需)
+  - dialog_title: 标题 (可选)
+  - dialog_content: 内容 (必需，外部传入)
+  - cancel_text: 取消按钮文字 (可选，默认"取消")
+  - save_text: 保存按钮文字 (可选，默认"保存")
+  - show_footer: 是否显示底部按钮 (可选，默认true)
+  - dialog_width: 弹窗宽度 (可选，默认60rem)
+{% endcomment %}
+
+{% liquid
+  assign dialog_id = dialog_id | default: 'genstore-dialog'
+  assign cancel_text = cancel_text
+  assign save_text = save_text
+  assign show_footer = show_footer | default: true
+  assign dialog_width = dialog_width | default: '60rem'
+%}
+
+<modal-dialog
+  class='genstore-dialog  color-scheme-1 light pure'
+  id='{{ dialog_id }}'
+  style='--dialog-width: {{ dialog_width }};'
+>
+  <div class='genstore-common-dialog__wrapper' role='dialog'>
+    <div class='genstore-popup-header'>
+      {% if dialog_title != blank %}
+        {% render 'genstore-heading', heading_size: 's', title: dialog_title, no_letter_spacing:true %}
+      {% endif %}
+      <button type='button' class='dialog-close' id='ModalClose-dialog' data-dialog-close>
+        {% render 'genstore-svg', icon_name: 'icon-close' %}
+      </button>
+    </div>
+
+    <div class='genstore-dialog-content custom-scrollbar '>
+      {{ dialog_content }}
+    </div>
+
+    {% if show_footer %}
+      {% if footer_content != blank %}
+        {{ footer_content }}
+      {% else %}
+        <div class='genstore-dialog-footer f-row content-end gap-600'>
+          <button type='button' class='genstore-btn default medium brand genstore-not-letter-spacing' data-dialog-cancel>
+            {{ cancel_text }}
+          </button>
+          <button type='button' class='genstore-btn primary medium brand genstore-not-letter-spacing' data-dialog-save>
+            {{ save_text }}
+          </button>
+        </div>
+      {% endif %}
+    {% endif %}
+  </div>
+</modal-dialog>

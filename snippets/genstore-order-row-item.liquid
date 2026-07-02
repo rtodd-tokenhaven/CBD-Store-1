@@ -1,0 +1,108 @@
+<div class="order-row-item {{className}}">
+  <div class="f-row gap-600">
+    <a href="{{ item.url }}">
+      <div class="order-face">
+        {% if item.image_url != blank %}
+          <img src="{{ item.image_url }}" width="72" height="72" alt="{{ item.title }}">
+        {% else %}
+          {% render 'genstore-placeholder', icon_name: 'icon-img' %}
+        {% endif %}
+      </div>
+    </a>
+    <div class="order-row-item-content f-row content-between flex-start">
+      <div class="f-column gap-200">
+        <div class="row-item-title">
+          <a href="{{ item.url }}">{{ item.title }}</a>
+        </div>
+        <div class="row-item-sku">{{ item.sku }}</div>
+        <div class="row-item-price f-row align-center gap-200 f-row-wrap">
+          <span> {{ item.final_price | money: order.currency_code }}</span>
+          {% if item.discounts.size > 0 %}
+            {% for discount in item.discounts %}
+              <div class="discount_tag">
+                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 2048 2048">
+                  <path fill="currentColor" d="M1472 576q-27 0-50-10t-40-27t-28-41t-10-50q0-27 10-50t27-40t41-28t50-10q27 0 50 10t40 27t28 41t10 50q0 27-10 50t-27 40t-41 28t-50 10M1024 0h896v896L896 1920L0 1024zm768 843V128h-715l-896 896l715 715z"/>
+                </svg>
+                <p>{{ discount.name }}</p>
+              </div>
+            {%- endfor -%}
+          {% endif %}
+        </div>
+        {% if item.rightsNote != blank %}
+          <div class="row-item-sku">{{ 'customer.order.note' | t }}: {{ item.rightsNote }}</div>
+        {% endif %}
+        {% if item.selling_plan_allocation != empty
+          and item.selling_plan_allocation.selling_plan != empty
+          and item.selling_plan_allocation.selling_plan.name != empty
+        %}
+          <div class="preorder-tag">
+            <span>{{ item.selling_plan_allocation.selling_plan.name }}</span>
+          </div>
+        {% endif %}
+      </div>
+      <div class="f-row gap-8" style="min-width: 200px; justify-content: flex-end;">
+        {% if item.isDigitalGoods == true %}
+          <div class="product_download_info flex-1">
+            {% if item.digitalGoods.url %}
+              {% if item.digitalGoods.canDownloadCount == item.digitalGoods.completeDownloadCount
+                and item.digitalGoods.canDownloadCount != 0
+              %}
+                <div class="product_download_url disabled">{{ 'customer.order.product_download' | t }}</div>
+              {% else %}
+                <div class="product_download_url_con">
+                  <div class="product_download_url" href="{{ item.digitalGoods.url }}">
+                    <div>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.29163 2.04199L7.29163 9.0184L9.33329 6.97674L9.74577 7.38921L6.99996 10.135L4.25415 7.38921L4.66663 6.97674L6.70829 9.0184L6.70829 2.04199L7.29163 2.04199Z" fill="currentColor" fill-opacity="0.9"/>
+                        <path d="M2.04163 11.7642L11.9583 11.7642V12.3475H2.04163L2.04163 11.7642Z" fill="currentColor" fill-opacity="0.9"/>
+                      </svg>
+                    </div>
+                    {{- 'customer.order.product_download' | t -}}
+                  </div>
+                  <div class="product_download_url_loading_con">
+                    <div class="product_download_url_loading"></div>
+                  </div>
+                </div>
+              {% endif %}
+              <div class="product_download_desc">
+                {{ 'customer.order.product_download_count' | t }}
+                {% if item.digitalGoods.canDownloadCount == 0 %}
+                  {{ 'customer.order.unlimited_downloads' | t }}
+                {% else %}
+                  {{ item.digitalGoods.completeDownloadCount }}/
+                  {{- item.digitalGoods.canDownloadCount }}
+                {% endif %}
+              </div>
+              <div class="product_download_desc">
+                {{ 'customer.order.product_download_expired' | t }}
+                {% if item.digitalGoods.isNoDeadline == true %}
+                  {{ 'customer.order.unlimited_timeframe' | t }}
+                {% else %}
+                  {{ item.digitalGoods.endTime | time_tag: format: 'date_at_time' }}
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+        <div class="f-column align-end content-between row-item-quantity" style="min-width: auto;">
+          <div class="{%  if fulfillmentStatus != "5" %}fulfillment-status{% endif %}">{{ fulfillmentStatusName }}</div>
+          <div>x {{ item.quantity }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% if show_trace_no == true %}
+    {% if item.material_flow.size > 0 %}
+      <div class="material_flow_con m-t-400">
+        <div class="material_flow f-row align-center gap-200">
+          <div class="material_flow_title">{{ 'customer.order.material_flow' | t }}</div>
+          <div class="material_flow_list">
+            {% for flow in item.material_flow %}
+              <span class="flow_tag" type="1" carrier="{{ flow.shippingCarrierCode }}">{{ flow.trackingNumber }}</span>
+            {%- endfor -%}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  {% endif %}
+</div>

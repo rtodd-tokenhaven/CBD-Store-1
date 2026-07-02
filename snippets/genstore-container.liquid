@@ -1,0 +1,60 @@
+{% comment %}
+  -- section 配置信息
+  -- content 内容,dom节点
+  -- className
+  -- disable_color_scheme
+
+  section-mark用来标记这是一个section
+{% endcomment %}
+
+{% liquid
+  assign disabled_color_scheme = disable_color_scheme | default: false
+  assign padding_top = padding_top
+  if padding_top == blank
+    assign padding_top = 'padding-top-' | append: section.settings.padding_top | default: 's'
+  else
+    assign padding_top = 'padding-top-' | append: padding_top
+  endif
+  assign padding_bottom = padding_bottom
+  if padding_bottom == blank
+    assign padding_bottom = 'padding-bottom-' | append: section.settings.padding_bottom | default: 's'
+  else
+    assign padding_bottom = 'padding-bottom-' | append: padding_bottom
+  endif
+  assign is_rounded = section.settings.is_rounded | default: false
+  assign color_scheme = color_scheme | default: 'scheme-1'
+  assign color_mode = color_mode | default: 'light'
+  assign color_style = color_style | default: 'brand'
+  assign enable_padding_top = enable_padding_top | default: true
+  assign enable_padding_bottom = enable_padding_bottom | default: true
+
+  assign index = color_scheme | split: 'scheme-' | last
+  if color_mode == 'dark'
+    assign index = index | times: 2
+  else
+    assign index = index | times: 2 | minus: 1
+  endif
+  assign color_scheme = 'color-scheme-' | append: index
+
+  if enable_padding_top == false or enable_padding_top == 'none'
+    assign padding_top = ''
+  endif
+  if enable_padding_bottom == false or enable_padding_bottom == 'none'
+    assign padding_bottom = ''
+  endif
+  assign full_width = full_width
+  if full_width == nil
+    assign full_width = section.settings.full_width
+  endif
+%}
+<div
+  class="genstore-container section-mark {% if is_rounded == true %} rounded {% endif %}
+  {% if disabled_color_scheme == false %} {{ color_scheme }} {{ color_mode }} {{ color_style }} {% endif %}
+  {{ className | default: '' }} var-{{ padding_bottom }} var-{{ padding_top }}
+  {% if full_width == true %} full-screen {% endif %}
+"
+  id="{{ id }}"
+  {{ attributes }}
+  style="{{ style }}">
+  {{ content }}
+</div>

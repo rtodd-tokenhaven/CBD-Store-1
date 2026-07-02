@@ -1,0 +1,23 @@
+{%- comment -%}
+  ai-grid — 响应式网格容器
+  封装 CSS Grid + 响应式列数
+
+  参数：
+    content         (capture, 必填)  Grid 子项
+    columns         (number)         桌面端列数，默认 3
+    columns_mobile  (number)         移动端列数，默认 1
+    gap             (string)         间距档位 sm/md/lg，默认 md
+    class           (string)         额外 CSS 类
+    style           (string)         额外内联样式
+{%- endcomment -%}
+
+{%- liquid
+  assign _cols = columns | default: 3
+  assign _cols_m = columns_mobile | default: 1
+  assign _gap = gap | default: 'md'
+-%}
+
+<div class="ai-grid ai-grid--{{ _gap }}{% if class != blank %} {{ class }}{% endif %}"
+     style="--columns: {{ _cols }}; --columns-mobile: {{ _cols_m }};{% if style != blank %} {{ style }}{% endif %}">
+  {{ content }}
+</div>

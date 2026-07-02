@@ -1,0 +1,111 @@
+{% comment %}
+  Renders a list of product's price (regular, sale)
+
+  Accepts:
+  - product: {Object} Product Liquid object (optional)
+  - placeholder: {Boolean} Renders a placeholder price (optional)
+  - use_variant: {Boolean} Renders selected or first variant price instead of overall product pricing (optional)
+  - show_badges: {Boolean} Renders 'Sale' and 'Sold Out' tags if the product matches the condition (optional)
+  - price_class: {String} Adds a price class to the price element (optional)
+  - show_compare_at_price: {Boolean} Renders the compare at price if the product matches the condition (optional)
+  - text_size: {String} Adds a text size to the price element (optional)
+  - is_bolder: {Boolean} Adds a bold text to the price element (optional)
+  - badge_position: {String} Adds a badge position to the price element (optional)
+  - badge_type: {String} Adds a badge type to the price element (optional)
+  - badge_color: {String} Adds a badge color to the price element (optional)
+  - show_price_type: {String} 是否展示价格范围，默认值为min
+  - extra_content: {DomElement} 价格元素的额外内容
+  - price_color: {String} 价格颜色
+  Usage:
+  {% render 'price', product: product %}
+{% endcomment %}
+{%- liquid
+  if use_variant
+    assign target = product.selected_or_first_available_variant
+  elsif placeholder
+    assign target = null
+  else
+    assign target = product
+  endif
+  assign price_type = show_price_type | default: 'min'
+  assign compare_at_price = target.compare_at_price | to_integer
+  assign price = target.price | default: 1999 | to_integer
+  assign price_min = product.price_min
+  assign price_max = product.price_max
+  assign available = target.available | default: false
+  assign money_price = price | money
+  assign money_price_min = price_min | money
+  assign money_price_max = price_max | money
+  if settings.currency_code_enabled
+    assign money_price = price | money_with_currency
+    assign money_price_min = price_min | money_with_currency
+    assign money_price_max = price_max | money_with_currency
+  endif
+  assign color_from_props = ''
+  assign compare_color_from_props = ''
+  if price_color != blank
+    assign color_from_props = price_color
+    assign compare_color_from_props = price_color | hex_to_rgba: 0.5
+  endif
+-%}
+{%- unless target == null and placeholder == null -%}
+  <div
+    class='
+      price
+      {%- if price_class %} {{ price_class }}{% endif -%}
+      {%- if available == false %} price--sold-out{% endif -%}
+      {%- if compare_at_price > price and product.quantity_price_breaks_configured != true %} price--on-sale{% endif -%}
+      {%- if compare_at_price > price and product.quantity_price_breaks_configured? %} volume-pricing--sale-badge{% endif -%}
+      {%- if product.price_varies == false and product.compare_at_price_varies %} price--no-compare{% endif -%}
+      {%- if show_badges %} price--show-badge{% endif -%}
+      {{ className }}
+    '
+  >
+    {% liquid
+      if price_type == 'range' and money_price_max != money_price_min
+        assign money_price = money_price_min | append: '-' | append: money_price_max
+      endif
+      if price_type == 'from'
+        if product.price_min == product.price_max
+          assign money_price = money_price_min
+        else
+          assign money_price = 'From' | append: ' ' | append: money_price_min
+        endif
+      endif
+    %}
+    <div class='price__container' data-compare-at-price='{{ show_compare_at_price }}'>
+      {%- comment -%}
+        Explanation of description list:
+          - div.price__regular: Displayed when there are no variants on sale
+          - div.price__sale: Displayed when a variant is a sale
+      {%- endcomment -%}
+      <div class='price__sale'>
+        {% render 'genstore-text-block',
+          text: money_price,
+          text_size: text_size,
+          is_bolder: is_bolder,
+          color_from_props: color_from_props,
+          no_letter_spacing: true
+        %}
+        {% if compare_at_price > price and show_compare_at_price == true %}
+          {% liquid
+            if settings.currency_code_enabled
+              assign compare_at_price = compare_at_price | money_with_currency
+            else
+              assign compare_at_price = compare_at_price | money
+            endif
+          %}
+          {% render 'genstore-text-block',
+            text: compare_at_price,
+            is_cross: true,
+            text_size: text_size,
+            is_bolder: is_bolder,
+            color_from_props: compare_color_from_props,
+            no_letter_spacing: true
+          %}
+        {% endif %}
+      </div>
+      {{ extra_content }}
+    </div>
+  </div>
+{% endunless %}

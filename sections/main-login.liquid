@@ -1,0 +1,689 @@
+{{ 'login.css' | asset_url | stylesheet_tag }}
+{%- liquid
+  assign section_id = section.id
+  assign layout = section.settings.layout_position
+  assign enable_card = section.settings.enable_card
+  assign scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign get_code_t = 'customer.login_page.get_login_code' | t
+  assign email_t = 'customer.login_page.email' | t
+  assign password_t = 'customer.login_page.password' | t
+  assign code_t = 'customer.login_page.code' | t
+-%}
+
+{%- style -%}
+  .section-{{ section_id }} {}
+{%- endstyle -%}
+
+{% assign shopGroupName = '' | shop_group: 'name' %}
+
+{% capture content %}
+  <div class="card-{{ enable_card }} login-container">
+    <section class="recoverBox {{ layout }}" id="recover">
+      <div class="v-space-200">
+        <div class="title">{{ 'customer.recover_password.title' | t }}</div>
+        <div class="sub_title">{{ 'customer.recover_password.subtext' | t }}</div>
+      </div>
+      {% render 'genstore-input-1', label:email_t, className: "s_input reset_email_input", input_id: "RecoverEmail", input_name: "email", input_mode:"email" %}
+      <div class="v-space-600">
+        <div class="genstore-btn xl primary brand genstore-not-letter-spacing" onclick="onSubmitRecover(event)">
+          {{ 'customer.login_page.submit' | t }}
+        </div>
+        <div onclick="onCancelRecover(event)" class="center text" style="color: #2A6AE9">
+          {% assign text = 'customer.login_page.cancel' | t %}
+          {% render 'genstore-text-link', text: text, className: "content-center" %}
+        </div>
+      </div>
+    </section>
+    <section class="loginBox {{ layout }}" id="login">
+      <div class="title">{{ 'customer.login_page.title' | t }}</div>
+      <div class="v-space-400">
+        {% if shopGroupName == 'genstore' %}
+          <div class="thirdBox">
+            <div onclick="onThirdLogin('facebook')" class="genstore-btn xl default neutral thirdBtn genstore-not-letter-spacing">
+              <img src="{{ '/web/static/storefront/password/facebook_icon.png' | shop_group: 'assets_cdn' }}" alt=""
+                  style="width: 18px; margin-inline-end: 6px">
+              <span>{{ 'customer.login_page.sign_facebook' | t }}</span>
+            </div>
+            <div onclick="onThirdLogin('google')" class="genstore-btn xl default neutral thirdBtn genstore-not-letter-spacing">
+              <img src="{{ '/web/static/storefront/password/google_icon.png' | shop_group: 'assets_cdn' }}" alt=""
+                  style="width: 16px; margin-inline-end: 6px">
+              <span>{{ 'customer.login_page.sign_google' | t }}</span>
+            </div>
+          </div>
+          <div class="or h-center">
+            <div class="line"></div>
+            <span>{{ 'customer.login_page.or' | t }}</span>
+            <div class="line"></div>
+          </div>
+        {% endif %}
+        {% render 'genstore-input-1', label:email_t, className: "s_input email_input", input_id: "CustomerEmail", input_name: "email", input_mode:"email" %}
+        <div class="password_input password_section">
+          {% render 'genstore-input-1', label:password_t, className: "s_input", input_id: "CustomerPassword", input_name: "password", input_type: "password" %}
+          {% render 'password-eye', input_id:'CustomerPassword', class: 'eye' %}
+        </div>
+        <div id="code_field" style="display: none;" class="s_field code_filed relative">
+          {% render 'genstore-input-1', label:code_t, className: "s_input code_input", input_id: "CustomerCode", input_name: "code" %}
+          <span id="s_code" class="s_code" onclick="onSendCode(event)">{{ get_code_t }}</span>
+        </div>
+        <span class="tips">
+          {{ 'customer.login_page.forgot_password' | t }} <a class="s_link" onclick="onToRecover(event)">{{ 'customer.reset_password.submit' | t }}</a>
+        </span>
+      </div>
+      <div class="v-space-600">
+        <div class="genstore-btn xl primary brand genstore-not-letter-spacing" onclick="onLogin(event)">
+          {{ 'customer.login_page.sign_in' | t }}
+        </div>
+        <div class="genstore-btn xl default brand genstore-not-letter-spacing" id="signByPwdBtn" onclick="triggerSignType(event,'signByPwd')" style="display: none;">
+          {{ 'customer.login_page.sign_in_by_password' | t }}
+        </div>
+        <div class="genstore-btn xl default brand genstore-not-letter-spacing" id="signByCodeBtn" onclick="triggerSignType(event,'signByCode')">
+          {{ 'customer.login_page.sign_in_by_code' | t }}
+        </div>
+        <span class="tips">
+          {{ 'customer.login_page.not_registered' | t }} <a class="s_link" href="{{ routes.account_register_url }}">{{ 'customer.login_page.sign_up' | t }}</a>
+        </span>
+      </div>
+    </section>
+  </div>
+{% endcapture %}
+{% render 'genstore-container'
+  , color_scheme: settings.theme_color_scheme
+  , color_mode: section.settings.color_mode
+  , color_style: section.settings.color_style
+  , section: section
+  , content: content %}
+
+<script>
+  let method_type = 'signByPwd';
+  let is_email_sent = false;
+  let email_input = document.querySelector('.email_input');
+  let reset_email_input = document.querySelector('.reset_email_input');
+  let password_input = document.querySelector('.password_input .s_input');
+  let code_input = document.querySelector('.code_input');
+
+  function onSubmitRecover(){
+    if (is_email_sent) {
+      onCancelRecover();
+      return;
+    }
+    const email = document.querySelector('#RecoverEmail').value;
+    if (!email) {
+      reset_email_input.showError('{{ "customer.login_page.email_required" | t }}');
+      return;
+    }else if (!isEmail(email)) {
+      reset_email_input.showError('{{ "customer.login_page.email_invalid" | t }}');
+      return;
+    }
+    hideAllErrors();
+    fetch("{{ shop.routesRoot }}account/recover/ajax", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({email})
+    })
+    .then(res => res.json())
+    .then((res) => {
+      if (res.errcode != 0) {
+        reset_email_input.showError(res.errmsg);
+        return;
+      }
+      is_email_sent = true;
+      document.querySelector('.reset_email_input').style.display = 'none';
+      document.querySelector('.recoverBox .sub_title').innerHTML = "{{ 'customer.recover_password.success' | t }}";
+      document.querySelector('.recoverBox .text').style.display = 'none';
+      document.querySelector('.recoverBox .primary').innerHTML = "{{ 'customer.login_page.back_sign_in' | t }}"
+    });
+  }
+
+  function onCancelRecover(){
+    hideAllErrors();
+    document.querySelector('.recoverBox').style.display = 'none';
+    document.querySelector('.loginBox').style.display = 'flex';
+  }
+
+  function onLogin() {
+    const email = document.querySelector('#CustomerEmail').value;
+    const password = document.querySelector('#CustomerPassword').value;
+    const code = document.querySelector('#CustomerCode').value;
+    if (!beforeValidate()) {
+      return;
+    }
+    fetch("{{ shop.routesRoot }}account/login/ajax", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({email, password, code, method_type})
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.errcode != 0) {
+        if (method_type === 'signByPwd') {
+          password_input.showError(res.errmsg); 
+        }else{
+          code_input.showError(res.errmsg);
+        }
+      }else{
+        onEnter();
+      }
+    });
+  }
+
+  function beforeValidate() {
+    hideAllErrors();
+    const email = document.querySelector('#CustomerEmail').value;
+    const password = document.querySelector('#CustomerPassword').value;
+    const code = document.querySelector('#CustomerCode').value;
+    let result = true;
+    if (method_type === 'signByPwd') {
+      if (!email) {
+        email_input.showError('{{ "customer.login_page.email_required" | t }}');
+        result = false;
+      } else if (!isEmail(email)) {
+        email_input.showError('{{ "customer.login_page.email_invalid" | t }}');
+        result = false;
+      }
+      if (!password) {
+        password_input.showError('{{ "customer.login_page.password_required" | t }}');
+        result = false;
+      }
+    } else {
+      if (!code) {
+        code_input.showError('{{ "customer.login_page.code_required" | t }}');
+        result = false;
+      }
+    }
+    return result;
+  }
+
+  function isEmail(email) {
+    return /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(email);
+  }
+
+  function onSendCode(event) {
+    const ele = event.target;
+    const email = document.querySelector('#CustomerEmail').value;
+    const isDisabled = ele.className.includes('s_disabled');
+    if (isDisabled) {
+      return;
+    }
+    if (!email) {
+      email_input.showError('{{ "customer.login_page.email_required" | t }}');
+      return;
+    }
+    fetch("{{ shop.routesRoot }}account/getLoginCode", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({email}),
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.errcode != 0) {
+        email_input.showError(res.errmsg);
+      }else{
+        email_input.hiddenError();
+      if (!ele.className.includes('s_disabled')) {
+        ele.classList.add('s_disabled');
+      }
+      onCountdown(60, (remainingTime) => {
+        ele.innerHTML = `${remainingTime} s`;
+      }, () => {
+        ele.innerHTML = '{{ get_code_t }}';
+        ele.classList.remove('s_disabled');
+      });
+      }
+    });
+  }
+
+  function hideAllErrors() {
+    reset_email_input.hiddenError();
+    email_input.hiddenError();
+    password_input.hiddenError();
+    code_input.hiddenError();
+  }
+
+  function onCountdown(seconds, onTick, onComplete) {
+    let remainingTime = seconds;
+    const intervalId = setInterval(() => {
+      if (remainingTime > 0) {
+        onTick(remainingTime);
+        remainingTime--;
+      } else {
+        clearInterval(intervalId);
+        onComplete();
+      }
+    }, 1000);
+  }
+
+  function onToRecover(e) {
+    is_email_sent = false;
+    hideAllErrors();
+    document.querySelector('.recoverBox').style.display = 'flex';
+    document.querySelector('.loginBox').style.display = 'none'; 
+    document.querySelector('.recoverBox .text').style.display = 'block';
+    document.querySelector('.reset_email_input').style.display = 'block';
+    document.querySelector('.recoverBox .primary').innerHTML = "{{ 'customer.login_page.submit' | t }}"
+    const email = document.querySelector('#CustomerEmail').value;
+    if (email){
+      const recover = document.querySelector('#RecoverEmail');
+      recover.value = email;
+    }
+  }
+
+  function triggerSignType(e, type) {
+    method_type = type;
+    hideAllErrors();
+    const isPwdMethod = method_type === 'signByPwd';
+    const displayStates = {
+      '#signByPwdBtn': isPwdMethod ? 'none' : 'flex',
+      '#signByCodeBtn': isPwdMethod ? 'flex' : 'none',
+      '.password_input': isPwdMethod ? 'block' : 'none',
+      '#code_field': isPwdMethod ? 'none' : 'block'
+    };
+    for (const [selector, display] of Object.entries(displayStates)) {
+      document.querySelector(selector).style.display = display;
+    }
+  }
+
+  async function onThirdLogin(platform) {
+    const popup = window.open('', 'OAuth', 'left=80,top=0,width=600,height=600,toolbar=0,scrollbars=0,status=0');
+    const url = {
+      'google': "{{ shop.routesRoot }}account/get-google-login-params",
+      'facebook': "{{ shop.routesRoot }}account/get-facebook-login-params"
+    }[platform];
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    let result = await response.json();
+    result = result.data;
+    console.log('onThirdLogin params', result);
+
+    const width = 600;
+    const height = 600;
+    const left = (window.innerWidth - width) / 2;
+    const top = (window.innerHeight - height) / 2;
+    const targetOrigin = 'https://oauth.genmystore.com';
+
+    const targetUrl = `${targetOrigin}/index.html?state=${result.state}&clientId=${result.clientId}&platform=${platform}&source=${location.origin}`
+    popup.location.href = targetUrl;
+    window.addEventListener('message', function(event) {
+      // Ensure message is from the expected origin
+      if (event.origin === targetOrigin) {
+        const data = event.data;
+        console.log('Received data from websiteB:', data);
+
+        if (data.code) {
+          if (platform == 'google') {
+            triggerGoogleLogin(data);
+          } else if (platform == 'facebook') {
+            triggerFacebookLogin(data);
+          }
+
+          if (popup && !popup.closed) {
+            popup.close();
+          }
+        }
+      }
+    });
+  }
+
+  function triggerGoogleLogin(params) {
+    fetch('{{ shop.routesRoot }}account/login-google', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        parameter: params
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      console.log('data1', data);
+      if (data.errcode == 0) {
+        onEnter();
+      }else{
+        alert(data.errmsg)
+      }
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+  }
+
+  function triggerFacebookLogin(params) {
+    fetch('{{ shop.routesRoot }}account/login-facebook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        parameter: params
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      console.log('data1', data);
+      if (data.errcode == 0) {
+        onEnter();
+      }else{
+        alert(data.errmsg)
+      }
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
+  }
+
+  function onEnter() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectUrl = urlParams.get('redirect');
+    if (redirectUrl) {
+      location.replace(redirectUrl);
+    } else {
+      location.replace('{{ shop.pathPrefix }}/account');
+    }
+  }
+
+</script>
+
+
+{% schema %}
+  {
+    "name": "t:sections.main-login.name",
+    "settings": [
+      {
+        "default": "left",
+        "options": [
+          {
+            "label": "t:sections.header.settings.logo_position.options__2.label",
+            "value": "left"
+          },
+          {
+            "label": "t:sections.header.settings.logo_position.options__1.label",
+            "value": "center"
+          }
+        ],
+        "id": "layout_position",
+        "label": "t:sections.header.settings.logo_position.label",
+        "type": "select"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_card",
+        "default": false,
+        "label": "t:sections.all.card_mode.label"
+      },
+      {
+        "type": "header",
+        "content": "t:sections.all.design.name"
+      },
+      {
+        "default": "light",
+        "options": [
+          {
+            "label": "t:sections.all.color_mode.options__1.label",
+            "value": "light"
+          },
+          {
+            "label": "t:sections.all.color_mode.options__2.label",
+            "value": "dark"
+          }
+        ],
+        "id": "color_mode",
+        "label": "t:sections.all.color_mode.label",
+        "type": "select"
+      },
+      {
+        "id": "color_style",
+        "label": "t:sections.all.color_style.label",
+        "type": "select_draw",
+        "default": "pure",
+        "visible_if": "{{ block.settings.color_mode == 'dark' }}",
+        "options": [
+          {
+            "label": "t:sections.all.color_style.transparent.label",
+            "value": "transparent"
+          },
+          {
+            "label": "t:sections.all.color_style.pure.label",
+            "value": "pure",
+            "definition": {
+              "background": "{{ settings.theme_color_scheme.dark-background }}",
+              "text": "#fff"
+            }
+          },
+          {
+            "label": "t:sections.all.color_style.neutral.label",
+            "value": "neutral",
+            "definition": {
+              "background": "{{ settings.theme_color_scheme.dark-neutral }}",
+              "background_gradient": [
+                "{{ settings.theme_color_scheme.dark-neutral }}",
+                20,
+                "{{ settings.theme_color_scheme.dark-neutral }}",
+                20,
+                "#141414",
+                100
+              ],
+              "text": "#fff"
+            }
+          },
+          {
+            "label": "t:sections.all.color_style.brand.label",
+            "value": "brand",
+            "definition": {
+              "background": "{{ settings.theme_color_scheme.dark-brand }}",
+              "background_gradient": [
+                "{{ settings.theme_color_scheme.dark-brand }}",
+                70,
+                "{{ settings.theme_color_scheme.dark-brand }}",
+                70,
+                "#141414",
+                100
+              ],
+              "text": "#fff"
+            }
+          },
+          {
+            "label": "t:sections.all.color_style.secondary.label",
+            "value": "secondary",
+            "definition": {
+              "background": "{{ settings.theme_color_scheme.dark-secondary }}",
+              "background_gradient": [
+                "{{ settings.theme_color_scheme.dark-secondary }}",
+                70,
+                "{{ settings.theme_color_scheme.dark-secondary }}",
+                70,
+                "#141414",
+                100
+              ],
+              "text": "#fff"
+            }
+          },
+          {
+            "label": "t:sections.all.color_style.striking.label",
+            "value": "striking",
+            "definition": {
+              "background": "{{ settings.theme_color_scheme.dark-striking }}",
+              "background_gradient": [
+                "{{ settings.theme_color_scheme.dark-striking }}",
+                70,
+                "{{ settings.theme_color_scheme.dark-striking }}",
+                70,
+                "#141414",
+                100
+              ],
+              "text": "#fff"
+            }
+          }
+        ]
+      },
+      {
+        "id": "color_style",
+        "label": "t:sections.all.color_style.label",
+        "type": "select_draw",
+        "default": "pure",
+        "visible_if": "{{ block.settings.color_mode == 'light' }}",
+        "options": [
+          {
+            "label": "t:sections.all.color_style.transparent.label",
+            "value": "transparent"
+          },
+          {
+            "label": "t:sections.all.color_style.pure.label",
+            "value": "pure",
+            "definition": {
+              "background": "{{ settings.theme_color_scheme.light-background }}",
+              "text": "#141414"
+            }
+          },
+          {
+            "label": "t:sections.all.color_style.neutral.label",
+            "value": "neutral",
+            "definition": {
+              "background": "{{ settings.theme_color_scheme.light-neutral }}",
+              "background_gradient": [
+                "{{ settings.theme_color_scheme.light-neutral }}",
+                40,
+                "{{ settings.theme_color_scheme.light-neutral }}",
+                40,
+                "#fff",
+                100
+              ],
+              "text": "#141414"
+            }
+          },
+          {
+            "label": "t:sections.all.color_style.brand.label",
+            "value": "brand",
+            "definition": {
+              "background": "{{ settings.theme_color_scheme.light-brand }}",
+              "background_gradient": [
+                "{{ settings.theme_color_scheme.light-brand }}",
+                10,
+                "{{ settings.theme_color_scheme.light-brand }}",
+                10,
+                "#fff",
+                100
+              ],
+              "text": "#141414"
+            }
+          },
+          {
+            "label": "t:sections.all.color_style.secondary.label",
+            "value": "secondary",
+            "definition": {
+              "background": "{{ settings.theme_color_scheme.light-secondary }}",
+              "background_gradient": [
+                "{{ settings.theme_color_scheme.light-secondary }}",
+                10,
+                "{{ settings.theme_color_scheme.light-secondary }}",
+                10,
+                "#fff",
+                100
+              ],
+              "text": "#141414"
+            }
+          },
+          {
+            "label": "t:sections.all.color_style.striking.label",
+            "value": "striking",
+            "definition": {
+              "background": "{{ settings.theme_color_scheme.light-striking }}",
+              "background_gradient": [
+                "{{ settings.theme_color_scheme.light-striking }}",
+                10,
+                "{{ settings.theme_color_scheme.light-striking }}",
+                10,
+                "#fff",
+                100
+              ],
+              "text": "#141414"
+            }
+          }
+        ]
+      },
+      {
+        "options": [
+          {
+            "label": "t:sections.all.padding.options__1.label",
+            "value": "none"
+          },
+          {
+            "label": "t:sections.all.padding.options__2.label",
+            "value": "xxs"
+          },
+          {
+            "label": "t:sections.all.padding.options__3.label",
+            "value": "xs"
+          },
+          {
+            "label": "t:sections.all.padding.options__4.label",
+            "value": "s"
+          },
+          {
+            "label": "t:sections.all.padding.options__5.label",
+            "value": "m"
+          },
+          {
+            "label": "t:sections.all.padding.options__6.label",
+            "value": "l"
+          },
+          {
+            "label": "t:sections.all.padding.options__7.label",
+            "value": "xl"
+          }
+        ],
+        "default": "l",
+        "id": "padding_top",
+        "label": "t:sections.all.padding.padding_top",
+        "type": "select"
+      },
+      {
+        "options": [
+          {
+            "label": "t:sections.all.padding.options__1.label",
+            "value": "none"
+          },
+          {
+            "label": "t:sections.all.padding.options__2.label",
+            "value": "xxs"
+          },
+          {
+            "label": "t:sections.all.padding.options__3.label",
+            "value": "xs"
+          },
+          {
+            "label": "t:sections.all.padding.options__4.label",
+            "value": "s"
+          },
+          {
+            "label": "t:sections.all.padding.options__5.label",
+            "value": "m"
+          },
+          {
+            "label": "t:sections.all.padding.options__6.label",
+            "value": "l"
+          },
+          {
+            "label": "t:sections.all.padding.options__7.label",
+            "value": "xl"
+          }
+        ],
+        "default": "l",
+        "id": "padding_bottom",
+        "label": "t:sections.all.padding.padding_bottom",
+        "type": "select"
+      }
+    ]
+  }
+{% endschema %}

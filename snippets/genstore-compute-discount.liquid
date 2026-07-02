@@ -1,0 +1,32 @@
+{% comment %}
+  主要用来做计算的，和label的生成
+  -- cpmpare_at_price 比较价格
+  -- price 价格
+  -- badge_type 徽标类型
+  -- badge_format 徽标格式
+{% endcomment %}
+{% liquid
+  assign discount = cpmpare_at_price | minus: price
+  assign discount_percent = discount | divided_by: cpmpare_at_price | times: 100 | ceil
+  assign prepend_str = ''
+  assign discount_str = discount
+  if badge_type == 'save'
+    assign prepend_str = 'products.product.save' | t
+  else
+    assign prepend_str = 'products.product.off' | t
+  endif
+  if badge_format == 'percentage'
+    assign discount_str = discount_percent | append: '%'
+  else
+    if settings.currency_code_enabled
+      assign discount_str = discount | money_with_currency
+    else
+      assign discount_str = discount | money
+    endif
+  endif
+  assign label = prepend_str | append: ' ' | append: discount_str
+  if badge_type == 'sale'
+    assign label = discount_str | append: ' ' | append: prepend_str
+  endif
+%}
+{{ label }}

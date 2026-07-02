@@ -1,0 +1,148 @@
+{% comment %}
+  参数说明:
+  - id: 下拉菜单的唯一ID (必需)
+  - options: 选项数组，格式为 [{value: "val1", label: "Label 1"}, ...]
+  - selected_value: 当前选中的值
+  - button_class: 按钮的额外CSS类
+  - dropdown_class: 下拉菜单的额外CSS类
+{% endcomment %}
+
+{% assign dropdown_id = 'dropdown-' | append: section.id %}
+{% assign default_label = 'featured-faq.filter.default.label' | t %}
+
+<div class='dropdown-container' style='position: relative; display: inline-block;'>
+  {% comment %} 获取当前选中的label {% endcomment %}
+  {% assign selected_label = '' %}
+  {% for option in options %}
+    {% if option.value == selected_value %}
+      {% assign selected_label = option.label %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %} 主按钮 {% endcomment %}
+  <button
+    class='dropdown-button disclosure__button {{ button_class }} disclosure__button localization-form__select localization-selector link link--text caption-large'
+    onclick="document.getElementById('{{ dropdown_id }}').classList.toggle('show')"
+    style='
+      display: flex;
+      min-width: 44px;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+    '
+  >
+    <span class='dropdown-selected-label genstore-text-block'>
+      {{ selected_label | default: default_label }}
+    </span>
+    {% render 'genstore-svg', icon_name: 'icon-down', className: 'icon-caret' %}
+  </button>
+
+  {% comment %} 下拉菜单 {% endcomment %}
+  <div
+    id='{{ dropdown_id }}'
+    class='dropdown-menu {{ dropdown_class }}'
+    style='
+      display: none;
+      position: absolute;
+      background-color: #fff;
+      min-width: 160px;
+      box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+      z-index: 1;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    '
+  >
+    {% for option in options %}
+      <a
+        href='#'
+        class='dropdown-item {% if option.value == selected_value %}selected{% endif %}'
+        onclick="
+          event.preventDefault();
+          // 更新选中的标签
+          const container = this.closest('.dropdown-container');
+          container.querySelector('.dropdown-selected-label').textContent = '{{ option.label }}';
+
+          // 更新所有选项的选中状态
+          container.querySelectorAll('.dropdown-item').forEach(item => {
+          item.classList.remove('selected');
+          item.querySelector('.checkmark')?.remove();
+          });
+
+          // 添加选中样式和勾选标记
+          this.classList.add('selected');
+          const checkmark = document.createElement('span');
+          checkmark.className = 'checkmark';
+          checkmark.innerHTML = '✓';
+          checkmark.style.marginLeft = '8px';
+          this.appendChild(checkmark);
+
+          // 关闭下拉菜单
+          document.getElementById('{{ dropdown_id }}').classList.remove('show');
+
+          // 获取所有FAQ单元
+          const allFaqUnits = document.querySelectorAll('.faq-unit');
+          // 获取当前选中的值
+          const selectedValue = '{{ option.value }}';
+
+          // 遍历所有FAQ单元
+          allFaqUnits.forEach(unit => {
+          if (selectedValue === 'All') {
+          // 如果选择'All'，显示所有单元
+          unit.style.display = 'block';
+          } else {
+          // 否则只显示匹配当前分类的单元
+          const unitCategory = unit.dataset.category;
+          unit.style.display = unitCategory === selectedValue ? 'block' : 'none';
+          }
+          });
+          "
+        style='
+          color: #333;
+          padding: 8px 16px;
+          text-decoration: none;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        '
+        onmouseover="this.style.backgroundColor='#f5f5f5'"
+        onmouseout="this.style.backgroundColor='#fff'"
+      >
+        {{ option.label }}
+        {% if option.value == selected_value %}
+          <span class="checkmark">
+            ✓
+          </span>
+        {% endif %}
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+{% comment %} 点击外部关闭下拉菜单的脚本 {% endcomment %}
+<script>
+  window.addEventListener('click', function (event) {
+    var dropdowns = document.querySelectorAll('.dropdown-menu');
+    dropdowns.forEach(function (dropdown) {
+      if (!event.target.closest('.dropdown-button') && !event.target.closest('.dropdown-menu')) {
+        dropdown.classList.remove('show');
+      }
+    });
+  });
+</script>
+
+<style>
+  .dropdown-menu.show {
+    display: block !important;
+  }
+  .dropdown-selected-label {
+    font-feature-settings: 'liga' off;
+    text-overflow: ellipsis;
+    font-family: Outfit;
+    font-size: var(--fontSizes-250, 13px);
+    font-style: normal;
+    font-weight: var(--fontWeights-regular, 400);
+    line-height: 24px; /* 184.615% */
+  }
+</style>

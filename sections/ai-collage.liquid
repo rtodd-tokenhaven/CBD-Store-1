@@ -1,0 +1,306 @@
+{% liquid
+  assign block_count = section.blocks.size
+  assign product_block = section.blocks | where: 'type', 'product' | first
+  assign layout = 'full'
+  if block_count < 4 and block_count > 1
+    assign layout = 'column3'
+  elsif block_count == 4
+    assign layout = 'column4'
+  elsif block_count == 5
+    assign layout = 'column5'
+  endif
+%}
+
+{% if product_block != blank %}
+  {{ 'component-card.css' | asset_url | stylesheet_tag }}
+  {{ 'component-price.css' | asset_url | stylesheet_tag }}
+  {{ 'component-slider.css' | asset_url | stylesheet_tag }}
+  {{ 'template-collection.css' | asset_url | stylesheet_tag }}
+  {{ 'component-product-variant-picker.css' | asset_url | stylesheet_tag }}
+  {{ 'featured-collection-tabs.css' | asset_url | stylesheet_tag }}
+  {%- unless settings.card_quick_add == 'none' -%}
+    {{ 'quick-add.css' | asset_url | stylesheet_tag }}
+    <script src="{{ 'genstore-product-form.js' | asset_url }}" defer="defer"></script>
+  {%- endunless -%}
+
+  {%- if settings.card_quick_add == 'standard' -%}
+    <script src="{{ 'quick-add.js' | asset_url }}" defer="defer"></script>
+  {%- endif -%}
+
+  {%- if settings.card_quick_add == 'bulk' -%}
+    <script src="{{ 'quick-add-bulk.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'quantity-popover.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'price-per-item.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'quick-order-list.js' | asset_url }}" defer="defer"></script>
+  {%- endif -%}
+{% endif %}
+
+{% capture content %}
+  <div class="page-width"
+  style="--page-width: {{ settings.page_width | default: '1280' }}px;
+   {% if section.settings.gap == 's' %}
+    --collage-gap: 0.5rem;
+   {% elsif section.settings.gap == 'm' %}
+    --collage-gap: 1rem;
+   {% elsif section.settings.gap == 'l' %}
+    --collage-gap: 1.5rem;
+   {% endif %}"
+  >
+    {% if section.settings.title != blank %}
+      {% liquid
+        assign class_name = section.settings.title_alignment | default: 'left' | append: ' m-b-1800'
+      %}
+      {% render 'genstore-heading', title: section.settings.title, heading_size: section.settings.heading_size, className: class_name, visual_text_key: 'title' %}
+    {% endif %}
+    <collage-block class="gen-collage {{ layout }} collage-gap-{{ section.settings.gap }} {% if section.blocks.size == 1 %}one-block{% endif %} column-{{ section.settings.desktop_layout }} mobile-column-{{ section.settings.mobile_layout }}">
+      {% if section.settings.desktop_layout == 'right' %}
+        <div class="gen-collage-item-wrapper">
+          {%- for block in section.blocks -%}
+            {% if forloop.index < section.blocks.size %}
+              {% render 'collage-block', block: block, index: forloop.index, section_id: section.id %}
+            {% endif %}
+          {% endfor %}
+        </div>
+        {% render 'collage-block', block: section.blocks.last, index: section.blocks.size, section_id: section.id, className: 'last-block' %}
+      {% endif %}
+      {% if section.settings.desktop_layout == 'left' %}
+        {% render 'collage-block', block: section.blocks.first, index: 1, section_id: section.id, className: 'first-block' %}
+        <div class="gen-collage-item-wrapper">
+          {%- for block in section.blocks -%}
+            {% if forloop.index > 1 %}
+              {% render 'collage-block', block: block, index: forloop.index, section_id: section.id %}
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    </collage-block>
+  </div>
+{% endcapture %}
+
+{% render 'genstore-container',
+  section: section,
+  color_scheme: settings.theme_color_scheme,
+  color_mode: section.settings.color_mode,
+  color_style: section.settings.color_style,
+  content: content,
+  className: 'collage-container'
+%}
+
+{% schema %}
+{
+  "name": "t:sections.collage.name",
+  "tag": "section",
+  "class": "section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "default": "t:sections.collage.name",
+      "label": "t:sections.collage.settings.heading.label"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "options": [
+        { "label": "t:sections.all.size.xxs", "value": "xxs" },
+        { "label": "t:sections.all.size.xs", "value": "xs" },
+        { "label": "t:sections.all.size.s", "value": "s" },
+        { "label": "t:sections.all.size.m", "value": "m" },
+        { "label": "t:sections.all.size.l", "value": "l" },
+        { "label": "t:sections.all.size.xl", "value": "xl" },
+        { "label": "t:sections.all.size.xxl", "value": "xxl" }
+      ],
+      "default": "m",
+      "label": "t:sections.all.heading_size.label_1"
+    },
+    {
+      "type": "text_alignment",
+      "id": "title_alignment",
+      "options": [
+        { "value": "left", "label": "t:sections.all.alignment.left" },
+        { "value": "center", "label": "t:sections.all.alignment.center" },
+        { "value": "right", "label": "t:sections.all.alignment.right" }
+      ],
+      "default": "left",
+      "label": "t:sections.all.title_alignment.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.carousel.blocks.content.label"
+    },
+    {
+      "type": "select",
+      "id": "desktop_layout",
+      "options": [
+        { "value": "left", "label": "t:sections.collage.settings.desktop_layout.options__1.label" },
+        { "value": "right", "label": "t:sections.collage.settings.desktop_layout.options__2.label" }
+      ],
+      "default": "left",
+      "label": "t:sections.collage.settings.desktop_layout.label"
+    },
+    {
+      "default": "m",
+      "options": [
+        { "label": "t:sections.all.size.s", "value": "s" },
+        { "label": "t:sections.all.size.m", "value": "m" },
+        { "label": "t:sections.all.size.l", "value": "l" }
+      ],
+      "id": "gap",
+      "label": "t:sections.all.gap.label_size",
+      "type": "select"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.mobile_device.label"
+    },
+    {
+      "type": "select",
+      "id": "mobile_layout",
+      "options": [
+        { "value": "top", "label": "t:sections.collage.settings.mobile_layout.options__1.label" },
+        { "value": "bottom", "label": "t:sections.collage.settings.mobile_layout.options__2.label" }
+      ],
+      "default": "top",
+      "label": "t:sections.all.layout.mobile.name"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.header.settings.header__10.content"
+    },
+    {
+      "default": "light",
+      "options": [
+        { "label": "t:sections.all.color_mode.options__1.label", "value": "light" },
+        { "label": "t:sections.all.color_mode.options__2.label", "value": "dark" }
+      ],
+      "id": "color_mode",
+      "label": "t:sections.all.color_mode.label",
+      "type": "select"
+    },
+    {
+      "id": "color_style",
+      "label": "t:sections.all.color_style.label",
+      "type": "select_draw",
+      "default": "pure",
+      "options": [
+        { "label": "t:sections.all.color_style.transparent.label", "value": "transparent" },
+        { "label": "t:sections.all.color_style.pure.label", "value": "pure" },
+        { "label": "t:sections.all.color_style.neutral.label", "value": "neutral" },
+        { "label": "t:sections.all.color_style.brand.label", "value": "brand" },
+        { "label": "t:sections.all.color_style.secondary.label", "value": "secondary" },
+        { "label": "t:sections.all.color_style.striking.label", "value": "striking" }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "options": [
+        { "label": "t:sections.all.padding.options__1.label", "value": "none" },
+        { "label": "t:sections.all.padding.options__2.label", "value": "xxs" },
+        { "label": "t:sections.all.padding.options__3.label", "value": "xs" },
+        { "label": "t:sections.all.padding.options__4.label", "value": "s" },
+        { "label": "t:sections.all.padding.options__5.label", "value": "m" },
+        { "label": "t:sections.all.padding.options__6.label", "value": "l" },
+        { "label": "t:sections.all.padding.options__7.label", "value": "xl" }
+      ],
+      "default": "m",
+      "id": "padding_top",
+      "label": "t:sections.all.padding.padding_top",
+      "type": "select"
+    },
+    {
+      "options": [
+        { "label": "t:sections.all.padding.options__1.label", "value": "none" },
+        { "label": "t:sections.all.padding.options__2.label", "value": "xxs" },
+        { "label": "t:sections.all.padding.options__3.label", "value": "xs" },
+        { "label": "t:sections.all.padding.options__4.label", "value": "s" },
+        { "label": "t:sections.all.padding.options__5.label", "value": "m" },
+        { "label": "t:sections.all.padding.options__6.label", "value": "l" },
+        { "label": "t:sections.all.padding.options__7.label", "value": "xl" }
+      ],
+      "default": "m",
+      "id": "padding_bottom",
+      "label": "t:sections.all.padding.padding_bottom",
+      "type": "select"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "image",
+      "name": "t:sections.collage.blocks.image.name",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "info": "t:sections.image-banner.settings.image.info"
+        },
+        {
+          "id": "link",
+          "label": "t:sections.all.button_link.link.label",
+          "type": "url"
+        }
+      ]
+    },
+    {
+      "type": "product",
+      "name": "t:sections.collage.blocks.product.name",
+      "settings": [
+        {
+          "type": "product",
+          "id": "product"
+        }
+      ]
+    },
+    {
+      "type": "collection",
+      "name": "t:sections.collage.blocks.collection.name",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection"
+        }
+      ]
+    },
+    {
+      "type": "video",
+      "name": "t:sections.collage.blocks.video.name",
+      "settings": [
+        {
+          "type": "video",
+          "id": "video",
+          "info": "t:sections.all.video.settings.info",
+          "label": "t:sections.video.settings.video.label"
+        },
+        {
+          "type": "image_picker",
+          "id": "cover_image",
+          "info": "t:sections.image-banner.settings.image.info",
+          "label": "t:sections.collage.blocks.video.settings.cover_image.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_video_looping",
+          "label": "t:sections.video.settings.enable_video_looping.label",
+          "default": false
+        }
+      ]
+    }
+  ],
+  "max_blocks": 5,
+  "presets": [
+    {
+      "name": "t:sections.collage.presets.name",
+      "blocks": [
+        { "type": "image" },
+        { "type": "product" },
+        { "type": "collection" }
+      ]
+    }
+  ]
+}
+{% endschema %}

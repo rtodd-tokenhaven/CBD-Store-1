@@ -1,0 +1,79 @@
+{
+  "sections": {
+    "ai-ai-trust-badges-promise-icon-bar-cart": {
+      "settings": {},
+      "blocks": {
+        "badge_4": {
+          "settings": {
+            "subtitle": "Zero compromise, full refund",
+            "icon": "guarantee",
+            "title": "30-Day Guarantee"
+          },
+          "type": "badge"
+        },
+        "badge_2": {
+          "settings": {
+            "subtitle": "No hidden costs",
+            "icon": "shipping",
+            "title": "Free Shipping Over $50"
+          },
+          "type": "badge"
+        },
+        "badge_3": {
+          "settings": {
+            "subtitle": "256-bit SSL encryption",
+            "icon": "secure",
+            "title": "Secure Checkout"
+          },
+          "type": "badge"
+        },
+        "badge_1": {
+          "settings": {
+            "subtitle": "Independent lab verified",
+            "icon": "lab",
+            "title": "Third-Party Tested"
+          },
+          "type": "badge"
+        }
+      },
+      "type": "ai-trust-badges-promise-icon-bar",
+      "block_order": [
+        "badge_1",
+        "badge_2",
+        "badge_3",
+        "badge_4"
+      ]
+    },
+    "main": {
+      "settings": {
+        "layout": "horizontal",
+        "is_card": false,
+        "padding_top": "m",
+        "padding_bottom": "m",
+        "heading_size": "l"
+      },
+      "blocks": {
+        "footer_000": {
+          "settings": {
+            "show_dynamic_checkout": true,
+            "content_alignment": "left",
+            "color_style_button": "brand",
+            "enable_sub_total": true,
+            "enable_buy_buttons": true,
+            "button_style_secondary": "primary",
+            "button_size": "xl"
+          },
+          "type": "footer"
+        }
+      },
+      "type": "ai-main-cart-items",
+      "block_order": [
+        "footer_000"
+      ]
+    }
+  },
+  "order": [
+    "main",
+    "ai-ai-trust-badges-promise-icon-bar-cart"
+  ]
+}

@@ -1,0 +1,56 @@
+{% comment %}
+  -- sort_options --排序选项
+  -- default_sort_by --当前选中的排序
+{% endcomment %}
+<form id="FacetSortForm">
+  {% assign matchedSort = sort_options | where: 'value', default_sort_by %}
+  {% comment %} {% assign desc = 'products.facets.sort_by_label' | t | append: ' ' | append: matchedSort[0].name %} {% endcomment %}
+  {% assign desc = 'products.facets.sort_by_label' | t %}
+  {% capture content %}
+    {% for option in sort_options %}
+      {% liquid
+        assign active = false
+        if option.value == default_sort_by
+          assign active = true
+        endif
+      %}
+      <li onclick="changeSortBy('{{ option.value }}')">
+        {% comment %} {% render 'genstore-text', text: option.name, text_size: 'small' %} {% endcomment %}
+        {% comment %} {% if active == true %}
+          {% render 'genstore-icon', icon_name: 'icon-checkmark' %}
+        {% endif %} {% endcomment %}
+        {% render 'genstore-swatch-input',
+          input_id: forloop.index,
+          input_name: 'sort_by',
+          form_id: '',
+          type: 'radio',
+          label: option.name,
+          value: option.value,
+          selected: active
+        %}
+      </li>
+    {% endfor %}
+  {% endcapture %}
+  <input type="hidden" id="SortBy" name="sort_by" value="{{ matchedSort[0].value }}">
+  {% capture extra_content %}
+    {% render 'genstore-svg', icon_name: 'icon-sort',className: 'icon-sort' %}
+  {% endcapture %}
+  {% render 'genstore-popup-base',
+    popup_text: desc,
+    popup_content: content,
+    layout: 'horizontal',
+    extra_content: extra_content
+  %}
+</form>
+<script>
+  function changeSortBy(value) {
+    const sort = document.querySelector('#SortBy');
+    if (sort) {
+      sort.value = value;
+    }
+    const facetForm = document.querySelector('facet-filters-form');
+    if (facetForm) {
+      facetForm.onSubmitHandler(event);
+    }
+  }
+</script>

@@ -1,0 +1,13 @@
+<a href="{{ routes.root_url }}" class="header__heading-link link link--text focus-inset">
+  {%- if settings.logo != blank -%}
+    <img
+      src="{{ settings.logo | image_url: width: 240 }}"
+      alt="{{ shop.name | escape }}"
+      width="180"
+      height="auto"
+      loading="eager"
+    >
+  {%- else -%}
+    <span class="h2">{{ shop.name }}</span>
+  {%- endif -%}
+</a>

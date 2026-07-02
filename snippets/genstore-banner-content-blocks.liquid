@@ -1,0 +1,32 @@
+{{ 'image-blocks.css' | asset_url | stylesheet_tag }}
+{% if section and section.blocks.size > 0 %}
+  <div
+    class="banner__box f-column title-column"
+    style="--opacity:{{ opacity }}"
+  >
+    {%- for block in section.blocks -%}
+      {%- case block.type -%}
+        {%- when 'introduction' -%}
+          <div
+            class="banner__text genstore-text-letter-spacing {{ block.settings.text_size }}"
+            {{ '' | genstore_vkey: key:'text', block:block }}
+            {{ block.genstore_attributes }}
+          >
+            {{ block.settings.text }}
+          </div>
+        {%- when 'heading' -%}
+          {% render 'genstore-heading',
+            title: block.settings.heading,
+            heading_size: block.settings.heading_size,
+            genstore_attributes: block.genstore_attributes,
+            block:block,
+            visual_text_key:'heading'
+          %}
+        {%- when 'text' -%}
+          <div  {{ '' | genstore_vkey: key:'text', block:block }} class="banner__text genstore-text-letter-spacing rte rich-text-content section-reset {{ block.settings.text_size }}" {{ block.genstore_attributes }}>
+            {{ block.settings.text }}
+          </div>
+      {%- endcase -%}
+    {%- endfor -%}
+  </div>
+{% endif %}

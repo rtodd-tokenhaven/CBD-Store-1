@@ -1,0 +1,30 @@
+{% comment %}
+
+  -- total_pages: {{ total_pages }}
+  -- current_page: {{ current_page }}
+{% endcomment %}
+
+<carousel-indicators
+  class="{{className}}"
+  data-current-page="{{current_page}}"
+  data-total-pages="{{total_pages}}">
+  <span class="arrow-left">
+    {% render 'genstore-svg'
+      , icon_name: 'icon-down' %}
+  </span>
+  <span class="paginate-content">
+    <span class="current-page">
+      1
+    </span>
+    <span>
+      /
+    </span>
+    <span class="total-page">
+      {{ total_pages }}
+    </span>
+  </span>
+  <span class="arrow-right">
+    {% render 'genstore-svg'
+      , icon_name: 'icon-down' %}
+  </span>
+</carousel-indicators>

@@ -1,0 +1,78 @@
+{%- liquid
+  assign total_img_str = ''
+  if section.settings.image != blank or section.settings.mobile_image != blank
+    assign total_img_str = total_img_str | append: 'image' | append: '-'
+  endif
+  if section.settings.image_2 != blank or section.settings.mobile_image_2 != blank
+    assign total_img_str = total_img_str | append: 'image_2' | append: '-'
+  endif
+  if section.settings.image_3 != blank or section.settings.mobile_image_3 != blank
+    assign total_img_str = total_img_str | append: 'image_3' | append: '-'
+  endif
+  if total_img_str == ''
+    assign total_img_str = 'image-'
+  endif
+  assign length = total_img_str.size | minus: 1
+  assign total_img_str = total_img_str | slice: 0, length
+  assign image_arr = total_img_str | split: '-'
+  assign total_count = image_arr.size
+
+  assign media_class = 'banner__media'
+  if section.settings.image_behavior != 'none'
+    assign media_class = media_class | append: ' animate--' | append: section.settings.image_behavior
+  endif
+  if settings.animations_reveal_on_scroll
+    assign media_class = media_class | append: ' scroll-trigger animate--fade-in'
+  endif
+
+  assign image_wrapper = 'full'
+  if total_count > 1
+    if section.settings.image_horizontal_percent == 'three-quarters'
+      assign image_wrapper = 'banner__media-image-left-3'
+    endif
+    if section.settings.image_horizontal_percent == 'seven-quarters'
+      assign image_wrapper = 'banner__media-image-left-7'
+    endif
+    if section.settings.image_horizontal_percent == 'four-quarters'
+      assign image_wrapper = 'banner__media-image-left-4'
+    endif
+    if section.settings.image_horizontal_percent == 'six-quarters'
+      assign image_wrapper = 'banner__media-image-left-6'
+    endif
+    if section.settings.image_horizontal_percent == 'half'
+      assign image_wrapper = 'banner__media-image-left-5'
+    endif
+  endif
+
+  assign image_wrapper_vertical = ''
+  if total_count > 1
+    if section.settings.image_vertical_percent == 'three-quarters'
+      assign image_wrapper_vertical = 'banner__media-image-top-3'
+    endif
+    if section.settings.image_vertical_percent == 'seven-quarters'
+      assign image_wrapper_vertical = 'banner__media-image-top-7'
+    endif
+    if section.settings.image_vertical_percent == 'four-quarters'
+      assign image_wrapper_vertical = 'banner__media-image-top-4'
+    endif
+    if section.settings.image_vertical_percent == 'six-quarters'
+      assign image_wrapper_vertical = 'banner__media-image-top-6'
+    endif
+    if section.settings.image_vertical_percent == 'half'
+      assign image_wrapper_vertical = 'banner__media-image-top-5'
+    endif
+  endif
+
+  assign image_wrapper_layout = ''
+  if total_count > 2
+    assign image_wrapper_layout = 'vertical'
+  endif
+-%}
+{
+  "image_arr": {{ image_arr | json }},
+  "total_count": {{ total_count | json }},
+  "media_class": {{ media_class | json }},
+  "image_wrapper": {{ image_wrapper | json }},
+  "image_wrapper_vertical": {{ image_wrapper_vertical | json }},
+  "image_wrapper_layout": {{ image_wrapper_layout | json }}
+}

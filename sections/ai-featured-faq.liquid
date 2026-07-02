@@ -1,0 +1,296 @@
+{% comment %}
+  Featured FAQ section
+  - Supports a category filter, category cards, and collapsible FAQ items
+{% endcomment %}
+
+{{ 'section-featured-faq.css' | asset_url | stylesheet_tag }}
+
+{% liquid
+  assign container_color_mode = section.settings.color_mode | default: 'light'
+  assign container_color_style = section.settings.color_style | default: 'pure'
+  assign open_first_accordion = section.settings.open_first_accordion | default: false
+  assign show_filter = section.settings.enable_filter | default: true
+  assign show_cards = section.settings.show_category_card | default: false
+%}
+
+{% capture content %}
+  <div class="faq-section{% if section.settings.alignment == 'content-alignment' %} page-width{% else %} fixed-width{% endif %}{% if section.settings.layout == 'vertical' %} f-column{% else %} f-row{% endif %}">
+    {% unless section.settings.title == blank and section.settings.title_desc == blank %}
+      <div class="faq-header-column{% if section.settings.layout == 'horizontal' %} left-w{% else %} normal-w{% endif %}">
+        <div class="faq-header">
+          {% unless section.settings.title == blank %}
+            <h2 class="faq-title">{{ section.settings.title }}</h2>
+          {% endunless %}
+          {% unless section.settings.title_desc == blank %}
+            <div class="faq-title-desc">{{ section.settings.title_desc }}</div>
+          {% endunless %}
+        </div>
+      </div>
+    {% endunless %}
+
+    <div class="right-w">
+      {% if show_filter %}
+        <div class="faq-filter">
+          <div class="faq-filter-title">
+            <span class="faq-filter-icon">⚲</span>
+            <span>{{ 'featured-faq.filter.title' | t }}</span>
+          </div>
+          <select id="faq-category-filter-{{ section.id }}" class="faq-filter-select">
+            <option value="all">{{ 'featured-faq.filter.default.label' | t }}</option>
+            {% for block in section.blocks %}
+              {% if block.type == 'faq-category-card' and block.settings.category_name != blank %}
+                <option value="{{ block.settings.category_name | strip_html | handle }}">{{ block.settings.category_name | strip_html }}</option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+
+      {% if show_cards %}
+        <div class="faq-category-card-list">
+          {% for block in section.blocks %}
+            {% if block.type == 'faq-category-card' and block.settings.category_name != blank %}
+              <div class="faq-category-card" data-category="{{ block.settings.category_name | strip_html | handle }}">
+                <span class="faq-category-card__name">{{ block.settings.category_name }}</span>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% assign current_category = '' %}
+      {% assign unit_open = false %}
+      {% assign category_counter = 0 %}
+
+      {% for block in section.blocks %}
+        {% case block.type %}
+          {% when 'faq-category-card' %}
+            {% if unit_open %}
+              </div>
+            {% endif %}
+            {% assign current_category = block.settings.category_name | strip_html %}
+            {% assign category_counter = category_counter | plus: 1 %}
+            <div class="faq-unit" data-category="{{ current_category | handle }}">
+              {% unless current_category == blank %}
+                <h3 class="faq-unit-title">{{ current_category }}</h3>
+              {% endunless %}
+              {% assign unit_open = true %}
+
+          {% when 'collapsible_tab' %}
+            {% assign accordion_default_open = false %}
+            {% if open_first_accordion and forloop.index0 == 0 %}
+              {% assign accordion_default_open = true %}
+            {% endif %}
+
+            <details class="faq-accordion"{% if accordion_default_open %} open{% endif %}>
+              <summary class="faq-accordion-summary">
+                <span class="faq-accordion-title">{{ block.settings.question }}</span>
+                <span class="faq-accordion-icon">+</span>
+              </summary>
+              <div class="faq-accordion-content">
+                {{ block.settings.answer }}
+              </div>
+            </details>
+        {% endcase %}
+
+        {% if forloop.last and unit_open %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+{% endcapture %}
+
+{% render 'genstore-container',
+  section: section,
+  content: content,
+  color_mode: container_color_mode,
+  color_style: container_color_style,
+  padding_top: section.settings.padding_top,
+  padding_bottom: section.settings.padding_bottom
+%}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var filter = document.getElementById('faq-category-filter-{{ section.id }}');
+    if (!filter) return;
+
+    var units = Array.prototype.slice.call(document.querySelectorAll('#shopify-section-{{ section.id }} .faq-unit'));
+
+    filter.addEventListener('change', function () {
+      var selected = this.value;
+      units.forEach(function (unit) {
+        var category = unit.getAttribute('data-category');
+        if (selected === 'all' || category === selected) {
+          unit.style.display = '';
+        } else {
+          unit.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Featured FAQ",
+  "tag": "section",
+  "class": "section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "label": "Title",
+      "default": "FAQ"
+    },
+    {
+      "type": "richtext",
+      "id": "title_desc",
+      "label": "Description",
+      "default": "<p>Use this section to answer common customer questions.</p>"
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "Layout width",
+      "default": "content-alignment",
+      "options": [
+        { "value": "content-alignment", "label": "Content aligned" },
+        { "value": "fixed-width", "label": "Fixed width" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout direction",
+      "default": "vertical",
+      "options": [
+        { "value": "vertical", "label": "Vertical" },
+        { "value": "horizontal", "label": "Horizontal" }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_filter",
+      "label": "Enable category filter",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_category_card",
+      "label": "Show category cards",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "open_first_accordion",
+      "label": "Open the first FAQ item by default",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "color_mode",
+      "label": "Color mode",
+      "default": "light",
+      "options": [
+        { "label": "Light", "value": "light" },
+        { "label": "Dark", "value": "dark" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "color_style",
+      "label": "Color style",
+      "default": "pure",
+      "options": [
+        { "label": "Pure", "value": "pure" },
+        { "label": "Transparent", "value": "transparent" },
+        { "label": "Neutral", "value": "neutral" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "padding_top",
+      "label": "Top padding",
+      "default": "m",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xs", "label": "Extra small" },
+        { "value": "s", "label": "Small" },
+        { "value": "m", "label": "Medium" },
+        { "value": "l", "label": "Large" },
+        { "value": "xl", "label": "Extra large" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "default": "m",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "xs", "label": "Extra small" },
+        { "value": "s", "label": "Small" },
+        { "value": "m", "label": "Medium" },
+        { "value": "l", "label": "Large" },
+        { "value": "xl", "label": "Extra large" }
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "type": "faq-category-card",
+      "name": "FAQ category card",
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "category_name",
+          "label": "Category name",
+          "default": "General"
+        }
+      ]
+    },
+    {
+      "type": "collapsible_tab",
+      "name": "FAQ item",
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "question",
+          "label": "Question",
+          "default": "How can I get help?"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "default": "<p>Add your answer here.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Featured FAQ",
+      "blocks": [
+        {
+          "type": "faq-category-card",
+          "settings": {
+            "category_name": "General"
+          }
+        },
+        {
+          "type": "collapsible_tab",
+          "settings": {
+            "question": "How can I contact support?",
+            "answer": "<p>You can reach our support team through the contact page.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

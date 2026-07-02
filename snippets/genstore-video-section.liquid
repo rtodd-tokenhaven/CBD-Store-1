@@ -1,0 +1,139 @@
+{% comment %}
+  settings.video 视频
+  settings.pc_cover_image pc封面
+  settings.mobile_cover_image 移动封面
+  settings.full_width 全屏
+  settings.enable_autoplay 自动播放
+  settings.enable_video_looping 循环播放
+  settings.pc_image_ratio
+  settings.mobile_image_ratio
+  video_title_content
+  pc_imag_key
+{% endcomment %}
+{%- liquid
+  assign pc_cover_image_key = pc_cover_image_key | default: 'pc_cover_image'
+    assign pc_image_ratio_key = pc_image_ratio_key | default: 'pc_image_ratio'
+  assign pc_image_ratio = settings[pc_image_ratio_key]
+  assign mobile_cover_image_key = mobile_cover_image_key | default: 'mobile_cover_image'
+  assign video_id = settings.video.id | default: settings.video_url.id
+  assign video_alt = settings.video.alt | default: settings.description
+  assign alt = 'sections.video.load_video' | t: description: video_alt | escape
+  assign pc_cover_image = settings[pc_cover_image_key]
+  assign mobile_cover_image = settings[mobile_cover_image_key]
+  assign poster = settings.video.preview_image
+  if pc_cover_image
+    assign poster = pc_cover_image
+  elsif mobile_cover_image
+    assign poster = mobile_cover_image
+  endif
+  assign video_url = ''
+  if settings.video != null
+    if settings.video.sources
+       assign video_url = settings.video.sources[0].url
+    endif
+    assign sub_cover_img_pc = pc_cover_image | default: settings.video.preview_image
+    assign ratio_diff_pc = settings.video.aspect_ratio | minus: sub_cover_img_pc.aspect_ratio | abs
+    if ratio_diff_pc < 0.01 and ratio_diff_pc > 0
+      assign fix_ratio_pc = true
+    endif
+    assign sub_cover_img_mobile = mobile_cover_image | default: settings.video.preview_image
+    assign ratio_diff_mobile = settings.video.aspect_ratio | minus: sub_cover_img_mobile.aspect_ratio | abs
+    if ratio_diff_mobile < 0.01 and ratio_diff_mobile > 0
+      assign fix_ratio_mobile = true
+    endif
+  endif
+-%}
+<div class="video-section isolate{% unless settings.full_width %} page-width{% endunless %}">
+  <deferred-media
+    class="video-section__media new-video deferred-media  global-media-settings{% if settings.full_width %} global-media-settings--full-width{% endif %}{% if fix_ratio_pc %} media-fit-cover-pc {% endif %} {% if fix_ratio_mobile %} media-fit-cover-mobile {% endif %} {% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %} {% if poster == blank %} new-video-media {% endif %}"
+    data-media-id="{{ video_id }}"
+    {% if settings.enable_autoplay %}
+      data-autoplay="true"
+    {% endif %}
+    style="--aspect-ratio: {{ settings.image_ratio }};--aspect-ratio-pc: {{ pc_image_ratio }};--aspect-ratio-mobile: {{ settings.mobile_image_ratio }};"
+  >
+    {% if poster == blank %}
+      <div class="video-block-wrap">
+        {{ video_title_content }}
+      </div>
+    {% endif %}
+    <button
+      id="Deferred-Poster-Modal-{{ video_id }}"
+      class="video-section__poster media deferred-media__poster media--landscape"
+      type="button"
+      aria-label="{{ alt }}"
+    >
+      {% comment %} 优先以pc封面图为主 如果 pc没有封面图并且没有上传视频则展示默认图 如果上传视频则展示视频封面图，pc有图 移动没图 都展示pc图，pc和移动都有图各自展示 {% endcomment %}
+      {%- if poster != blank -%}
+        {% if pc_cover_image == blank and settings.video == blank %}
+          {% render 'genstore-placeholder',
+            show_product_placeholder: true,
+            icon_name: 'section-placeholder-1',
+            image_ratio: 1.78,
+            visual_image_key:pc_cover_image_key
+          %}
+        {% else %}
+          {% if pc_cover_image %}
+            {% assign img_class = '' %}
+            {% if pc_cover_image and mobile_cover_image %}
+              {% assign img_class = 'pc_img' %}
+            {% endif %}
+            {{
+              pc_cover_image
+              | image_url: width: 1920
+              | image_tag: sizes: '100vw', widths: '375, 750, 1100, 1500, 1780, 2000', alt: alt, class: img_class
+              | genstore_vkey: key:pc_cover_image_key
+            }}
+          {% else %}
+            {{
+              settings.video.preview_image
+              | image_url: width: 1920
+              | image_tag: sizes: '100vw', widths: '375, 750, 1100, 1500, 1780, 2000', alt: alt, class: img_class
+              | genstore_vkey: key: pc_cover_image_key
+            }}
+          {% endif %}
+        {% endif %}
+        {% if mobile_cover_image %}
+          {{
+            mobile_cover_image
+            | image_url: width: 1920
+            | image_tag: sizes: '100vw', widths: '375, 750, 1100, 1500, 1780, 2000', alt: alt, class: 'mobile_img'
+            | genstore_vkey: key:mobile_cover_image_key
+          }}
+        {% endif %}
+        <span class="deferred-media__poster-button motion-reduce new-title-wrap">
+          {{ video_title_content }}
+          <div class="icon-play-container {% if pc_cover_image == blank and settings.video == blank %} pc_play_hidden {% endif %}">
+            {% render 'genstore-svg', icon_name: 'icon-play', icon_weight: 'fill' %}
+          </div>
+        </span>
+      {%- else -%}
+        {% render 'genstore-placeholder',
+          show_product_placeholder: true,
+          icon_name: 'section-placeholder-1',
+          image_ratio: 1.78,
+          visual_image_key: pc_cover_image_key,
+          visual_image_mobile_key: mobile_cover_image_key
+        %}
+      {%- endif -%}
+    </button>
+    <template>
+      {%- liquid
+        assign loop = ''
+        if settings.enable_video_looping
+          assign loop = '&loop=1&playlist=' | append: video_id
+        endif
+      -%}
+      {{
+        settings.video
+        | video_tag:
+          image_size: '1100x',
+          autoplay: false,
+          loop: settings.enable_video_looping,
+          controls: true,
+          muted: false
+        | genstore_vkey: key:'video',value:video_url
+      }}
+    </template>
+  </deferred-media>
+</div>

@@ -1,0 +1,32 @@
+{% comment %} 
+  -- tag_size 
+  -- link 
+  -- is_active 
+  -- slot_content 
+  -- url 
+  -- enable_menu_image 
+  -- image_ratio 
+  -- className
+{% endcomment %}
+{% capture pre_slot_content %}
+    {% if enable_menu_image == true %}
+      {% if link.image != blank %}
+        <div class="menu-image-container">
+          {% render 'banner-media', image: link.image, aspect_ratio: image_ratio  %}
+        </div>
+      {% endif %}
+    {% endif %}
+  {% endcapture %}
+{% liquid
+  assign class = className
+  assign class = className | append: ' has-image'
+%}
+{% render 'genstore-text-tag'
+  , url: url
+  , pre_content: pre_slot_content
+  , text: link.title
+  , is_active: is_active
+  , slot_content: slot_content
+  , tag_size: tag_size
+  , className: class
+%}

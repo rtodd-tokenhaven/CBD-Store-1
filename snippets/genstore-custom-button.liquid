@@ -1,0 +1,32 @@
+{% comment %}
+  自定义按钮样式
+
+  参数:
+  - data_type: 按钮类型 (必需)
+  - btn_title: 按钮内容 (必需)
+  - other_class: 按钮其他类（非必需）
+  - btn_size: 按钮大小（非必需）
+  - btn_style_type: 按钮样式类型（非必须）
+  - icon_name: icon名称（非必需）
+  - icon_weight: icon粗细（非必需）
+  - icon_style: icon样式类型(非必须)
+  - data_name:
+  - btn_id:
+  - extra_attrs: 属性太多的在外层用capture包裹
+  - no_letter_spacing: 无字间距 默认有
+{% endcomment %}
+ {% liquid
+  assign data_type = data_type | default: 'genstore-custom-button'
+  assign button_title = btn_title
+  assign btn_size = btn_size | default:'xl'
+  assign btn_style_type = btn_style_type | default:'default'
+%}
+<custom-button data-type="{{data_type}}">
+    <button id="{{ btn_id }}"
+        {% if extra_attrs  %}{{ extra_attrs }}{% endif %}
+         type='button' class='genstore-btn genstore-custom-button hiddenIcon {{ btn_style_type }} {{ btn_size }} {{ other_class }} {% if no_letter_spacing == true %} genstore-not-letter-spacing {% endif %}' {{ other_attr }}>
+          {% if icon_name != blank %}{% render 'genstore-svg', icon_name: icon_name ,icon_style:icon_style,icon_weight:icon_weight%}{% endif %}
+          {% render 'loading-spinner', class: 'loading-spin' %}
+           {{ button_title }}
+    </button>
+</custom-button>

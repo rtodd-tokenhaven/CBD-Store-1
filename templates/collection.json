@@ -1,0 +1,65 @@
+{
+  "sections": {
+    "product-grid": {
+      "settings": {
+        "quick_add": "none",
+        "enable_filtering": true,
+        "color_mode": "light",
+        "padding_top": "s",
+        "filters": {
+          "values": {
+            "4-4": {
+              "values": {},
+              "name": "",
+              "id": "4",
+              "type": 4,
+              "order": []
+            },
+            "6-6": {
+              "values": {},
+              "name": "",
+              "id": "6",
+              "type": 6,
+              "order": []
+            }
+          },
+          "order": [
+            "6-6",
+            "4-4"
+          ]
+        },
+        "color_style": "pure",
+        "enable_sorting": true,
+        "show_vendor": true,
+        "filter_type": "horizontal",
+        "gap": "l",
+        "show_secondary_image": true,
+        "image_ratio": "portrait",
+        "products_per_page": 16,
+        "color_scheme": "scheme-1",
+        "padding_bottom": "s",
+        "columns_desktop": 3,
+        "columns_mobile": "2"
+      },
+      "type": "main-collection-product-grid"
+    },
+    "banner": {
+      "settings": {
+        "color_mode": "light",
+        "show_collection_image": true,
+        "show_collection_description": true,
+        "color_scheme": "scheme-1",
+        "image_ratio": 3.56,
+        "pc_layout": "image-cover",
+        "image_overlay_opacity": 10
+      },
+      "type": "main-collection-banner",
+      "blocks": {},
+      "block_order": []
+    }
+  },
+  "order": [
+    "banner",
+    "product-grid"
+  ]
+}

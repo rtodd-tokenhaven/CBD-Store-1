@@ -1,0 +1,72 @@
+{% comment %} 
+  -- product 商品详情 
+  -- id 调用方的id
+{% endcomment %}
+
+{% liquid
+  assign options_with_swatch = blank
+  assign first = product.options_with_values.first
+  if first.values[0].swatch != blank
+    if first.values[0].swatch.image != blank or first.values[0].swatch.color != blank
+      assign options_with_swatch = first
+    endif
+  endif
+  assign shape = settings.card_color_picker_shape | default: 'circle'
+  assign card_color_picker_number = settings.card_color_picker_number | at_most: 4
+%}
+{% if options_with_swatch != blank %}
+  <card-options-picker
+    data-handle="{{product.handle}}"
+    data-option-id="{{options_with_swatch.id}}"
+    class="{{ settings.card_text_alignment }} g-p-1">
+    <script type="application/json" option-values>
+      {{product.options_with_values | json}}
+    </script>
+    <script type="application/json" variants>
+      {{product.variants | json}}
+    </script>
+    {% liquid
+      assign input_name = options_with_swatch.name | append: '-' | append: options_with_swatch.position | append: '-' | append: id
+    %}
+    {%- for value in options_with_swatch.values -%}
+      {% if forloop.index <= card_color_picker_number %}
+        {% liquid
+          assign picker_type = 'color'
+          if value.swatch.image != blank
+            assign picker_type = 'image'
+          endif
+        %}
+        {% assign id = id | append: '-' | append: forloop.index %}
+        {% assign input_dataset = 'data-option-value-id="'
+          | append: value.id
+          | append: '"' %}
+        {% render 'genstore-swatch-input'
+          ,
+ input_id: id
+          ,
+ selected: false
+          ,
+ shape: shape
+          ,
+ input_name: input_name
+          ,
+ picker_type: picker_type
+          ,
+ value: value
+          ,
+ input_dataset: input_dataset
+        %}
+      {% endif %}
+    {% endfor %}
+    {% if options_with_swatch.values.size > card_color_picker_number %}
+      {% liquid
+        assign diff = options_with_swatch.values.size | minus: card_color_picker_number
+        assign more = '+' | append: diff
+      %}
+      {% render 'genstore-text-link'
+        , text: more
+        , url: product.url
+        , className: 'more' %}
+    {% endif %}
+  </card-options-picker>
+{% endif %}

@@ -1,0 +1,152 @@
+{% comment %}
+  Renders icon with text block
+
+  Accepts:
+  - block: {Object} passes in the block information.
+  -className
+
+  Usage:
+  {% render 'icon-with-text',
+    block: block
+  %}
+{% endcomment %}
+{%- liquid
+  assign heading_1_empty = false
+  assign heading_2_empty = false
+  assign heading_3_empty = false
+  assign heading_4_empty = false
+  assign text_only_all_items = true
+
+  if block.settings.heading_1 == empty
+    assign heading_1_empty = true
+  endif
+
+  if block.settings.heading_2 == empty
+    assign heading_2_empty = true
+  endif
+
+  if block.settings.heading_3 == empty
+    assign heading_3_empty = true
+  endif
+  
+  if block.settings.heading_4 == empty
+    assign heading_4_empty = true
+  endif
+  if heading_1_empty == false and block.settings.icon_1 != 'none' or block.settings.image_1 != null
+    assign text_only_all_items = false
+  elsif heading_2_empty == false and block.settings.icon_2 != 'none' or block.settings.image_2 != null
+    assign text_only_all_items = false
+  elsif heading_3_empty == false and block.settings.icon_3 != 'none' or block.settings.image_3 != null
+    assign text_only_all_items = false
+  elsif heading_4_empty == false and block.settings.icon_4 != 'none' or block.settings.image_4 != null
+    assign text_only_all_items = false
+  endif
+  assign style = "gap:16px;--icon-size:32px"
+  assign dynamic_class = "f-column align-center gap-200"
+  if block.settings.layout == 'vertical'
+    assign style = "gap:16px;--icon-size:24px"
+    assign dynamic_class = "f-row  align-center gap-400"
+  endif
+-%}
+<ul
+  class="icon-with-text {% if block.settings.layout == 'vertical' %}f-column {% else %}f-row {% endif %} {% if text_only_all_items %} icon-with-text--text-only{% endif %} {{ className }}"
+  {{ block.genstore_attributes }}
+  style="{{ style }}"
+>
+  {%- unless heading_1_empty -%}
+    <li
+      class=" {{ dynamic_class }}  flex-1  font-300 color-900">
+      {%- if block.settings.image_1 == null -%}
+        {%- render 'icon-accordion', icon: block.settings.icon_1,visual_icon_key:'icon_1',block:block -%}
+      {%- else -%}
+        <img
+          {{ '' | genstore_vkey: key:'image_1',block:block }}
+          src="{{ block.settings.image_1 | image_url }}"
+          {% if block.settings.image_1.alt != blank %}
+            alt="{{ block.settings.image_1.alt | escape }}"
+          {% else %}
+            role="presentation"
+          {% endif %}
+          height="auto"
+          width="auto"
+          loading="lazy"
+        >
+      {%- endif -%}
+      <span  {{ '' | genstore_vkey: key:'heading_1',block:block }}>
+        {{- block.settings.heading_1 -}}
+      </span>
+    </li>
+  {%- endunless -%}
+  {%- unless heading_2_empty -%}
+    <li
+      class="{{ dynamic_class }} flex-1  font-300 color-900">
+      {%- if block.settings.image_2 == null -%}
+        {% render 'icon-accordion', icon: block.settings.icon_2,visual_icon_key:'icon_2',block:block -%}
+      {%- else -%}
+        <img
+          {{ '' | genstore_vkey: key:'image_2',block:block }}
+          src="{{ block.settings.image_2 | image_url }}"
+          {% if block.settings.image_2.alt != blank %}
+            alt="{{ block.settings.image_2.alt | escape }}"
+          {% else %}
+            role="presentation"
+          {% endif %}
+          height="auto"
+          width="auto"
+          loading="lazy"
+        >
+      {%- endif -%}
+      <span {{ '' | genstore_vkey: key:'heading_2',block:block }}>
+        {{- block.settings.heading_2 -}}
+      </span>
+    </li>
+  {%- endunless -%}
+  {%- unless heading_3_empty -%}
+    <li
+      class="{{ dynamic_class }}  flex-1  font-300 color-900">
+      {%- if block.settings.image_3 == null -%}
+        {% render 'icon-accordion', icon: block.settings.icon_3,visual_icon_key:'icon_3',block:block -%}
+      {%- else -%}
+        <img
+          {{ '' | genstore_vkey: key:'image_3',block:block }}
+          src="{{ block.settings.image_3 | image_url }}"
+          {% if block.settings.image_3.alt != blank %}
+            alt="{{ block.settings.image_3.alt | escape }}"
+          {% else %}
+            role="presentation"
+          {% endif %}
+          height="auto"
+          width="auto"
+          loading="lazy"
+        >
+      {%- endif -%}
+      <span {{ '' | genstore_vkey: key:'heading_3',block:block }}>
+        {{- block.settings.heading_3 -}}
+      </span>
+    </li>
+  {%- endunless -%}
+    {%- unless heading_4_empty -%}
+    <li
+      class="{{ dynamic_class }}  flex-1  font-300 color-900">
+      {%- if block.settings.image_4 == null -%}
+        {% render 'icon-accordion', icon: block.settings.icon_4,visual_icon_key:'icon_4',block:block -%}
+      {%- else -%}
+        <img
+          {{ '' | genstore_vkey: key:'image_4',block:block }}
+          src="{{ block.settings.image_4 | image_url }}"
+          {% if block.settings.image_4.alt != blank %}
+            alt="{{ block.settings.image_4.alt | escape }}"
+          {% else %}
+            role="presentation"
+          {% endif %}
+          height="auto"
+          width="auto"
+          loading="lazy"
+        >
+      {%- endif -%}
+      <span   {{ '' | genstore_vkey: key:'heading_4',block:block }}>
+        {{- block.settings.heading_4 -}}
+      </span>
+    </li>
+  {%- endunless -%}
+</ul>

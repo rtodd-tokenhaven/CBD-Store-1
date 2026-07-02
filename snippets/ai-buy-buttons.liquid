@@ -1,0 +1,200 @@
+{% comment %}
+  Renders product buy-buttons.
+  Accepts:
+  -className
+  - product: {Object} product object.
+  - block: {Object} passing the block information.
+  - product_form_id: {String} product form id.
+  - section_id: {String} id of section to which this snippet belongs.
+  - show_pickup_availability: {Boolean} for the pickup availability. If true the pickup availability is rendered, false - not rendered (optional).
+  - enable_dynamic_checkout: 外部传参，是否启用动态checkout，默认false
+  - is_always_existed_buynow : {Boolean} 是否总是存在buynow按钮,true时,show_dynamic_checkout为false,也会展示buynow按钮
+  - buy_type :'buynow'
+  Usage:
+  {% render 'buy-buttons', block: block, product: product, product_form_id: product_form_id, section_id: section.id, show_pickup_availability: true %}
+{% endcomment %}
+
+{{ 'buy-buttons.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign quantity_rule_soldout = false
+  assign gift_card_recipient_feature_active = false
+  if block.settings.show_gift_card_recipient and product.gift_card == true
+    assign gift_card_recipient_feature_active = true
+  endif
+  assign is_always_existed_buynow = is_always_existed_buynow | default: false
+  assign buy_type = buy_type | default: ''
+  assign show_dynamic_checkout = show_dynamic_checkout | default: false
+  if block.settings.show_dynamic_checkout == true
+    assign show_dynamic_checkout = true
+  endif
+  # 配置不需要动态按钮，则强制展示buynow按钮, 如果配置了动态按钮，则正常逻辑
+  if is_always_existed_buynow == true and show_dynamic_checkout == false
+    assign buy_type = 'buynow'
+    assign show_dynamic_checkout = true
+  endif
+  assign check_against_inventory = false
+  assign inventory_policy = product.selected_or_first_available_variant.inventory_policy
+  if inventory_policy != 'continue'
+    assign check_against_inventory = true
+  endif
+  if product.selected_or_first_available_variant.quantity_rule.min > product.selected_or_first_available_variant.inventory_quantity and check_against_inventory
+    assign quantity_rule_soldout = true
+  endif
+  assign min = product.selected_or_first_available_variant.quantity_rule.min
+  assign max = product.selected_or_first_available_variant.quantity_rule.max
+  assign step = product.selected_or_first_available_variant.quantity_rule.increment
+-%}
+<product-form
+  class="product-form {{ className }}"
+  data-hide-errors="{{ gift_card_recipient_feature_active }}"
+  data-section-id="{{ section.id }}"
+  data-product-id="{{ product.id }}"
+  data-variant-id="{{ product.selected_or_first_available_variant.id }}"
+  {{ block.genstore_attributes }}
+>
+  <div class="product-form__error-message-wrapper" role="alert" hidden>
+    {% render 'genstore-icon', icon_name: 'icon-error' %}
+    <span class="product-form__error-message"></span>
+  </div>
+  {%- form 'product',
+    product,
+    id: product_form_id,
+    class: 'form',
+    novalidate: 'novalidate',
+    data-type: 'add-to-cart-form'
+  -%}
+    <input
+      type="hidden"
+      name="id"
+      value="{{ product.selected_or_first_available_variant.id }}"
+      {% if product.selected_or_first_available_variant.available == false
+        or quantity_rule_soldout
+        or product.selected_or_first_available_variant == null
+      %}
+        disabled
+      {% endif %}
+      class="product-variant-id "
+    >
+    {%- if gift_card_recipient_feature_active -%}
+      {%- render 'gift-card-recipient-form', product: product, form: form, section: section -%}
+    {%- endif -%}
+    <div
+      class="buy-action-inputs {{ block.settings.layout }} {% if block.settings.enable_sticky_cart == true %} hidden-in-mobile{% endif %}"
+      id="buy-action-inputs-{{ section_id }}"
+    >
+      {% if block.settings.show_quantity_input == true %}
+        {% render 'genstore-quantity-input',
+          max: 99999,
+          min: 1,
+          value: 1,
+          step: step,
+          product_form_id: product_form_id,
+          input_size: 'xl',
+          enable_loading: false
+        %}
+      {% endif %}
+      <div class="product-form__buttons">
+        {%- liquid
+          assign check_against_inventory = true
+          if inventory_policy == 'continue'
+            assign check_against_inventory = false
+          endif
+          if product.selected_or_first_available_variant.quantity_rule.min > product.selected_or_first_available_variant.inventory_quantity and check_against_inventory
+            assign quantity_rule_soldout = true
+          endif
+
+          assign product_sku_isDisabled = false
+          if quantity_rule_soldout == false and product.selected_or_first_available_variant.available == false
+            assign product_sku_isDisabled = true
+          endif
+        -%}
+        <button
+          id="ProductSubmitButton-{{ section_id }}"
+          type="submit"
+          name="add"
+          data-button-color-style="{{ block.settings.button_color_style | default: "brand" }}"
+          class="
+            product-form__submit genstore-btn {{ block.settings.button_size | default: "xl" }}
+            {{ block.settings.button_style | default: "primary" }}
+            {{ block.settings.button_color_style | default: "brand" }}
+            {% if quantity_rule_soldout == true or product_sku_isDisabled%} disabled{% endif %}
+          "
+          style="{{ button_style }}{% if product_sku_isDisabled %}; opacity: 0.5; cursor: not-allowed;{% endif %}"
+          {% if quantity_rule_soldout == true or product_sku_isDisabled %}
+            disabled
+          {% endif %}
+        >
+          <span class="btn-label">
+            {%- if product.selected_or_first_available_variant == null -%}
+              {{ 'products.product.unavailable' | t }}
+            {%- elsif quantity_rule_soldout -%}
+              {{ 'products.product.sold_out' | t }}
+            {%- else -%}
+              {{ 'products.product.add_to_cart' | t }}
+            {%- endif -%}
+          </span>
+          {%- render 'loading-spinner' -%}
+          <span class="cart-added">
+            <span class="svg-wrapper">
+              {{- 'icon-checkmark.svg' | inline_asset_content -}}
+            </span>
+          </span>
+        </button>
+      </div>
+      {%- if show_dynamic_checkout and enable_dynamic_checkout == true and product != blank -%}
+        <div
+          class="express-pay-container"
+          data-buy-button-size="{{ block.settings.button_size | default: "xl" }}"
+          data-buy-button-style="{{ block.settings.buy_button_style | default: "primary" }}"
+          data-buy-button-color-style="{{ block.settings.buy_button_color_style | default: "brand" }}"
+        >
+          {{ form | payment_button: section_id, buy_type }}
+          <div class="express-pay-product-detail" style="display:none">
+            <div value="{{ product.type }}" class="express-pay-product-type">{{ product.type }}</div>
+            <div value="{{ product.vid }}" class="express-pay-product-vid">{{ product.vid }}</div>
+            <div value="{{ product.id }}" class="express-pay-product-goodsId">{{ product.id }}</div>
+            <div value="{{ product_sku_isDisabled }}" class="express-pay-product_sku_isDisabled">
+              {{ product_sku_isDisabled }}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  {% endform %}
+</product-form>
+
+<script>
+  async function buyNow(event) {
+    const formData = {
+      quantity: document.querySelector('.quantity__input').value,
+      variant_id: document.querySelector('.product-variant-id').value,
+      product_id: '{{ product.id }}',
+      orderPageSource: 1,
+    };
+    const form = document.querySelector('#{{ product_form_id }}');
+    const data = new FormData(form);
+    data.forEach((value, key) => {
+      if (['recipientEmail', 'recipientName', 'message'].includes(key)) {
+        formData[key] = value;
+      }
+    });
+    formData['send_gift_card_to_recipient'] = document.getElementsByName('send_gift_card_to_recipient')[0].checked;
+    const res = await fetch(`${window.genstore.routes.root}/pay-now`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
+    const result = await res.json();
+    console.log(result, 'result');
+    if (result.errcode + '' === '0') {
+      window.location.href = `/checkout/${result.data.confirmOrderKey}`;
+      return;
+    }
+    const errMsgDom = document.querySelector('#buy-now-error-message');
+    errMsgDom.classList.remove('hidden');
+    errMsgDom.innerHTML = result.errmsg;
+  }
+</script>

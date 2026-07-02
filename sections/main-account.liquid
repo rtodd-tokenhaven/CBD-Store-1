@@ -1,0 +1,86 @@
+{{ 'pikaday.css' | asset_url | stylesheet_tag }}
+{{ 'main-account.css' | asset_url | stylesheet_tag }}
+{{ 'component-select.css' | asset_url | stylesheet_tag }}
+{{ 'main-addresses.css' | asset_url | stylesheet_tag }}
+<script src='{{ 'libphonenumber.js' | asset_url }}'></script>
+<script src='{{ 'moment.min.js' | asset_url }}' defer='defer'></script>
+<script src='{{ 'pickday.min.js' | asset_url }}' defer='defer'></script>
+<script src='{{ 'main-account.js' | asset_url }}' defer></script>
+<script src='{{ 'genstore-select.js' | asset_url }}' defer></script>
+
+<div style='display: none;'>
+  <div class='add_cart_success_txt'>
+    {{ 'customer.order.add_cart_success' | t }}
+  </div>
+  <div class='add_cart_part_success_txt'>
+    {{ 'customer.order.add_cart_part_success' | t }}
+  </div>
+  <div class='add_cart_error_txt'>
+    {{ 'customer.order.add_cart_error' | t }}
+  </div>
+</div>
+
+{% capture content %}
+    <div class="page-width f-column gap-1200 full-height">
+      <div class="customer-title f-row justify-between items-center">
+        {%  capture title_content %}
+          <span>{{ 'customer.account.hi' | t }},</span>
+          <span class="customer-name">
+            {{ customer.firstName }} {{ customer.lastName }}
+          </span>
+        {% endcapture %}
+        {%  render 'genstore-heading', title: title_content ,heading_size:'s',className:"flex-1",no_letter_spacing:true%}
+        <a class='logout' href='{{ routes.account_logout_url }}'>
+          <svg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'>
+            <path fill="currentColor" d="M5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h7v2H5v14h7v2zm11-4l-1.375-1.45l2.55-2.55H9v-2h8.175l-2.55-2.55L16 7l5 5z"/>
+            </svg>
+          {{ 'customer.log_out' | t }}
+        </a>
+      </div>
+      <div class="customer-container flex-1">
+        <!-- Radio inputs for tab control -->
+        <input type="radio" name="customer-tab" id="tab-profile" class="customer-tab-radio" >
+        <input type="radio" name="customer-tab" id="tab-addresses" class="customer-tab-radio">
+        <input type="radio" name="customer-tab" id="tab-orders" class="customer-tab-radio" checked>
+
+        <div class="customer-slides">
+          <label for="tab-profile" class="customer-slide-item">
+            {% render 'genstore-svg' , icon_name: 'icon-user',icon_style:"general",icon_weight:"normal" %}
+            <span>{{ 'customer.account.my_profile' | t }}</span>
+          </label>
+          <label for="tab-addresses" class="customer-slide-item">
+            {% render 'genstore-svg' , icon_name: 'icon-locate' ,icon_style:"general",icon_weight:"normal"%}
+            <span>{{ 'customer.account.my_address' | t }}</span>
+          </label>
+          <label for="tab-orders" class="customer-slide-item">
+            {% render 'genstore-svg' , icon_name: 'icon-news',icon_style:"general",icon_weight:"normal" %}
+            <span>{{ 'customer.account.my_orders' | t }}</span>
+          </label>
+        </div>
+
+        <div class="customer-box">
+          <div class="customer-box-item f-column  full-height" data-tab="profile" >
+            {% render 'genstore-profile', customer:customer %}
+          </div>
+          <div class="customer-box-item" data-tab="addresses">
+            {% render 'genstore-addresses', customer:customer %}
+          </div>
+
+          <div class="customer-box-item" data-tab="orders">
+            {% render 'genstore-account', customer:customer %}
+          </div>
+        </div>
+      </div>
+    </div>
+{% endcapture %}
+{% render 'genstore-container', section: section, content: content, className: 'section-account-orders' %}
+
+{% schema %}
+{
+  "name": "t:sections.main-account.name",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+  ]
+}
+{% endschema %}

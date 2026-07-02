@@ -1,0 +1,160 @@
+{
+  "sections": {
+    "main": {
+      "settings": {
+        "enable_sticky_info": true,
+        "media_size": "large",
+        "color_mode": "light",
+        "mobile_thumbnails": "hide",
+        "constrain_to_viewport": true,
+        "padding_top": "m",
+        "gallery_layout": "thumbnail_slider",
+        "color_style": "pure",
+        "media_fit": "cover",
+        "enable_video_looping": false,
+        "emphasize_main_image": true,
+        "image_zoom": 2,
+        "media_position": "left",
+        "color_scheme": "scheme-1",
+        "hide_variants": true,
+        "padding_bottom": "m"
+      },
+      "blocks": {
+        "icon_with_text_NT3DCd": {
+          "settings": {
+            "layout": "horizontal",
+            "heading_1": "标题显示",
+            "heading_2": "标题",
+            "heading_3": "标题点点滴滴说",
+            "icon_2": "return",
+            "icon_3": "truck",
+            "icon_1": "iron"
+          },
+          "type": "icon-with-text"
+        },
+        "description-2G9XCO": {
+          "settings": {
+            "text_size": "s",
+            "show_in_gallery": true
+          },
+          "type": "description"
+        },
+        "vendor_and_delivery": {
+          "settings": {
+            "show_vendor": true,
+            "show_delivery": true
+          },
+          "type": "vendor_and_delivery"
+        },
+        "description": {
+          "settings": {
+            "show_in_gallery": true
+          },
+          "type": "description"
+        },
+        "collapsible_tab_nRh8EJ": {
+          "settings": {
+            "heading": "可折叠行s",
+            "icon": "chat_bubble",
+            "page": "",
+            "content": "<p>sqsdwddwqdwqdwqdwdd</p>"
+          },
+          "type": "collapsible_tab"
+        },
+        "title": {
+          "settings": {
+            "heading_size": "s"
+          },
+          "type": "title"
+        },
+        "tags": {
+          "settings": {},
+          "type": "tags"
+        },
+        "buy_buttons": {
+          "settings": {
+            "layout": "column",
+            "show_dynamic_checkout": true,
+            "button_style": "primary",
+            "button_color_style": "secondary",
+            "show_gift_card_recipient": true,
+            "show_quantity_input": true,
+            "button_size": "xl"
+          },
+          "type": "buy_buttons"
+        },
+        "price": {
+          "settings": {
+            "show_compare_at_price": true
+          },
+          "type": "price"
+        },
+        "separator_line_1": {
+          "type": "separator_line"
+        },
+        "separator_line_2": {
+          "type": "separator_line"
+        },
+        "separator_line_3": {
+          "type": "separator_line"
+        },
+        "variant_picker": {
+          "settings": {
+            "picker_type": "button",
+            "swatch_shape": "square"
+          },
+          "type": "variant_picker"
+        },
+        "inventory_and_share-JoarX3": {
+          "type": "inventory_and_share",
+          "settings": {
+            "enable_inventory": true,
+            "inventory_threshold": 10,
+            "show_inventory_quantity": true,
+            "share_enable": true,
+            "share_label": "分享"
+          }
+        }
+      },
+      "type": "main-product",
+      "block_order": [
+        "tags",
+        "title",
+        "price",
+        "variant_picker",
+        "buy_buttons",
+        "inventory_and_share-JoarX3",
+        "description-2G9XCO"
+      ]
+    },
+    "related_products": {
+      "settings": {
+        "title_size": "32",
+        "color_mode": "light",
+        "margin_top": "20",
+        "space_type": "12",
+        "mobile_slide": false,
+        "view_all_btn": true,
+        "title": "You may also like",
+        "show_brand": true,
+        "mobile_line_count": "1",
+        "color_style": "transparent",
+        "margin_bottom": "20",
+        "full_screen_mode": false,
+        "pic_ratio": "3/4",
+        "view_all_btn_type": "fill",
+        "pc_slide": false,
+        "cart_btn_type": "standard",
+        "hover_show_pic": true,
+        "pc_line_count": 4,
+        "max_product_count": 8
+      },
+      "disabled": true,
+      "type": "related-products"
+    }
+  },
+  "order": [
+    "main",
+    "related_products"
+  ]
+}

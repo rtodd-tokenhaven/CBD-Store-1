@@ -1,0 +1,113 @@
+{% comment %}
+  -- downloadable: 标识是否是虚拟商品可下载
+  -- card_style 全局配置中产品卡片的类型
+  -- card_color_scheme 全局配置中产品卡片的配色方案
+  -- card_badge_position 全局配置中产品卡片的标签位置
+  -- card_text_alignment 全局配置中产品卡片的文字对齐方式
+  -- card_layout 全局配置中产品卡片的布局 inside 内部，outside外部
+  -- image_ratio : 正方形 square 正方形 portrait 竖屏 adapt 自适应
+  -- hover_type : scale 缩放 | secondary 显示第二张图片
+  -- show_product_placeholder 是否显示产品占位图
+  -- index 产品卡片的序号
+  -- enable_animation外部控制是否需要动画
+{% endcomment %}
+{% liquid
+  assign card_style = settings.card_style
+  assign color_scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign color_mode = settings.card_color_mode | default: 'light'
+  assign color_style = settings.card_color_style | default: 'brand'
+  assign index = color_scheme | split: 'scheme-' | last
+  assign hover_type = hover_type | default: 'scale'
+  if color_mode == 'dark'
+    assign index = index | times: 2
+  else
+    assign index = index | times: 2 | minus: 1
+  endif
+  assign color_scheme = 'color-scheme-' | append: index
+  if card_style == 'standard'
+    assign color_scheme = ''
+    assign color_mode = ''
+    assign color_style = ''
+  endif
+  assign card_badge_position = settings.card_badge_position
+  assign card_text_alignment = settings.card_text_alignment
+  assign card_layout = settings.card_layout
+  assign show_image = show_image | default: true
+  assign animate_slide_in = 'scroll-trigger animate--slide-in'
+  assign shape = shape | default: 'none'
+  assign widths = '165,330,535,750'
+  assign empty_url = ''
+  unless url
+    assign empty_url = 'prevent-click'
+  endunless
+%}
+{% capture cart_btn_content %}
+  {% if button_content != blank %}
+  <span onclick="event.stopPropagation(){% if isSingleVariant == false %},event.preventDefault();{% endif %}">
+    {{- button_content -}}
+  </span>
+{% endif %}
+{% endcapture %}
+
+<div
+  class="
+    card-container {{ card_style }}  {{ color_scheme }} {{ color_mode }} {{ color_style }} {{ card_text_alignment }} {{ card_layout }} {{ class_name }} {{ animate_slide_in }}
+    {% if show_product_placeholder == true %} placeholder {% endif %} {% if disable_hover %} disable-hover {% endif %}
+  "
+  id="{{ id }}"
+  {{ attributes }}
+  data-cascade
+  style="
+     --animation-order: {{ card_index }};
+    --card-image-padding: {{ settings.card_image_padding }}px;
+    --card-border-width: {{ settings.card_border_thickness }}px;
+    --card-shadow-horizontal-offset: {{ settings.card_shadow_horizontal_offset }}px;
+    --card-shadow-vertical-offset: {{ settings.card_shadow_vertical_offset }}px;
+    --card-shadow-blur: {{ settings.card_shadow_blur }}px;
+    --card-shadow-opacity: {{ settings.card_shadow_opacity }};
+  "
+>
+  {% assign link_id = section_id | append: '-' | append: id %}
+  <div class="card-wrapper f-column">
+    <a
+      href="{{ url }}"
+      {% unless url %}
+        onclick="event.preventDefault();"
+      {% endunless %}
+      class="isolate image-box {{empty_url}}"
+      id="{{ link_id }}"
+    >
+      {% if media[0] == null %}
+        {% render 'genstore-placeholder',
+          show_product_placeholder: show_product_placeholder,
+          icon_name: 'product-mock',
+          type: 'product'
+        %}
+      {% else %}
+        {% liquid
+          assign face_image = media[0]
+          if face_image.src == blank
+            assign face_image = media[0].preview_image
+          endif
+        %}
+        {% render 'banner-media',
+          image: face_image,
+          aspect_ratio: image_ratio,
+          image_2: media[1],
+          hover_type: hover_type,
+          widths: widths,
+          sizes: '100vw',
+          width: 750,
+          badges: badges,
+          extra_content: cart_btn_content
+        %}
+      {% endif %}
+      {% if downloadable == true %}
+        <span class="downloadable-svg-wrapper">{{- 'icon-down.svg' | inline_asset_content -}}</span>
+      {% endif %}
+    </a>
+
+    {{ content }}
+  </div>
+  {{ extra_content }}
+</div>

@@ -1,0 +1,152 @@
+{% comment %}
+  Renders a standard dropdown style menu for the header.
+
+  Usage:
+  {% render 'header-dropdown-menu' %}
+{% endcomment %}
+{% capture slot_content %}
+  {% comment %} {% render 'genstore-svg', icon_name: 'icon-down', className: "icon-caret" %} {% endcomment %}
+   <span></span>
+{% endcapture %}
+{% liquid
+  assign tag_size = section.settings.menu_size | default: 's'
+  assign color_style = section.settings.menu_color_style | default: 'transparent'
+  assign color_mode = section.settings.menu_color_mode | default: 'light'
+  assign color_scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign index = color_scheme | split: 'scheme-' | last
+  if color_mode == 'dark'
+    assign index = index | times: 2
+  else
+    assign index = index | times: 2 | minus: 1
+  endif
+  assign color_scheme = 'color-scheme-' | append: index
+%}
+<header-nav class="header__inline-menu genstore-text-letter-spacing">
+  <ul
+    class="list-menu list-menu--inline menu-image-size-{{section.settings.menu_image_size}} image_shape-{{section.settings.menu_image_shape}}"
+    role="list"
+  >
+    {%- for link in section.settings.menu.links -%}
+      <li>
+        {%- if link.links != blank -%}
+          {% liquid
+            assign matched_mega_block = ''
+            for block in section.blocks
+              if block.type == 'mega_menu'
+                assign menu_item = block.settings.mega_menu_item | downcase
+                assign menu_title = link.title | downcase
+                if menu_item == menu_title
+                  assign matched_mega_block = block
+                endif
+              endif
+            endfor
+          %}
+          {% if matched_mega_block != blank %}
+            <menu-accordion class="header__menu-item list-menu__item" data-url="{{ link.url }}">
+              {% render 'genstore-header-item',
+                is_active: link.child_active,
+                link: link,
+                tag_size: tag_size,
+                slot_content: slot_content,
+                image_ratio: section.settings.menu_image_ratio,
+                enable_menu_image: section.settings.enable_menu_image,
+              %}
+              {% render 'genstore-mega-menu',
+                links: link.links,
+                block: matched_mega_block,
+                enable_menu_image: section.settings.enable_menu_image
+              %}
+            </menu-accordion>
+          {% else %}
+            <menu-dropdown
+              class="header__menu-item list-menu__item isolate"
+              data-url="{{ link.url }}"
+            >
+              {% render 'genstore-header-item',
+                is_active: link.child_active,
+                link: link,
+                tag_size: tag_size,
+                slot_content: slot_content,
+                image_ratio: section.settings.menu_image_ratio,
+                enable_menu_image: section.settings.enable_menu_image
+              %}
+              {% render 'genstore-dopdown-menu',
+                links: link.links,
+                section: section,
+                slot_content: slot_content,
+                id: forloop.index
+              %}
+            </menu-dropdown>
+          {% endif %}
+        {%- else -%}
+          {% assign is_active = link.current %}
+          {% render 'genstore-header-item',
+            url: link.url,
+            is_active: is_active,
+            link: link,
+            tag_size: tag_size,
+            image_ratio: section.settings.menu_image_ratio,
+            enable_menu_image: section.settings.enable_menu_image
+          %}
+        {%- endif -%}
+      </li>
+    {%- endfor -%}
+    {% comment %} 产品、产品系列导航 {% endcomment %}
+    {% liquid
+      assign product_block = section.blocks | where: 'type', 'header_product_list'
+      assign collection_product_block = section.blocks | where: 'type', 'header_collection_product_list'
+    %}
+    {% if product_block != blank or collection_product_block != blank %}
+      <nav class="header__inline-menu header__product-list">
+        {% liquid
+          assign tag_size = section.settings.menu_size | default: 's'
+        %}
+        <ul class="list-menu--inline" role="list">
+          {% capture slot_content %}
+              {% render 'genstore-svg', icon_name: 'icon-down', className: "product-list__nav__icon" %}
+            {% endcapture %}
+          {% for block in section.blocks %}
+            {% liquid
+              assign products = block.settings.collection.products
+              if block.type == 'header_product_list'
+                assign products = block.settings.products
+              endif
+            %}
+            <li class="header__product-list__item">
+              <div class="header__product-list__item__target">
+                {% if products.size > 0 %}
+                  {% render 'genstore-text-tag',
+                    text: block.settings.title,
+                    url: block.settings.link,
+                    slot_content: slot_content,
+                    tag_size: tag_size
+                  %}
+                  <div class="target__bridge"></div>
+                {% else %}
+                  {% render 'genstore-text-tag',
+                    text: block.settings.title,
+                    url: block.settings.link,
+                    tag_size: tag_size,
+                    block:block,
+                   visual_text_key:'title',
+                   visual_link_key: 'link'
+                  %}
+                {% endif %}
+              </div>
+              {% if products.size > 0 %}
+                {% render 'header-product-list',
+                  products: products,
+                  settings: block.settings,
+                  sale_badge_color_scheme: settings.sale_badge_color_scheme,
+                  card_badge_position: settings.card_badge_position,
+                  card_color_scheme: settings.card_color_scheme,
+                  card_text_limit: settings.card_text_limit
+                %}
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+    {% endif %}
+  </ul>
+</header-nav>

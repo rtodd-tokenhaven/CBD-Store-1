@@ -1,0 +1,62 @@
+{% comment %}
+  snippets/ai-price.liquid — 产品价格显示
+
+  参数:
+    product              — 必填，Product 对象
+    use_variant          — 可选，true 时取 selected_or_first_available_variant 的价格
+    show_compare_at_price — 可选，true 时显示划线原价
+    show_price_range     — 可选，'range' | 'from' | 'min'（默认 'min'）
+    block                — 可选，block 对象（用于 genstore_vkey）
+
+  输出：包含现价、原价（可选）的 HTML，class 名以 ai-price 为前缀
+{% endcomment %}
+{% liquid
+  if use_variant
+    assign target = product.selected_or_first_available_variant
+  else
+    assign target = product
+  endif
+
+  assign show_type = show_price_range | default: 'min'
+  assign current_price = target.price | default: 0
+  assign compare_price = target.compare_at_price | default: 0 | to_integer
+  assign price_min = product.price_min
+  assign price_max = product.price_max
+
+  if settings.currency_code_enabled
+    assign money_price = current_price | money_with_currency
+    assign money_price_min = price_min | money_with_currency
+    assign money_price_max = price_max | money_with_currency
+    assign money_compare = compare_price | money_with_currency
+  else
+    assign money_price = current_price | money
+    assign money_price_min = price_min | money
+    assign money_price_max = price_max | money
+    assign money_compare = compare_price | money
+  endif
+
+  if show_type == 'range' and money_price_max != money_price_min
+    assign display_price = money_price_min | append: ' - ' | append: money_price_max
+  elsif show_type == 'from' and price_min != price_max
+    assign display_price = 'From ' | append: money_price_min
+  else
+    assign display_price = money_price
+  endif
+
+  assign has_discount = false
+  if compare_price > current_price
+    assign has_discount = true
+  endif
+
+  assign is_sold_out = true
+  if target.available
+    assign is_sold_out = false
+  endif
+%}
+
+<div class="ai-price{% if has_discount %} ai-price--on-sale{% endif %}{% if is_sold_out %} ai-price--sold-out{% endif %}" {{ '' | genstore_vkey: key:'price', block:block }}>
+  <span class="ai-price__current" data-product-price>{{ display_price }}</span>
+  {% if has_discount and show_compare_at_price %}
+    <span class="ai-price__compare" data-product-compare-price>{{ money_compare }}</span>
+  {% endif %}
+</div>

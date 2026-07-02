@@ -1,0 +1,741 @@
+{%- comment -%}
+  sections/ai-header.liquid — Header fixed skeleton (V0)
+
+  All HTML structure and interaction logic are provided by the system.
+  AI only generates CSS.
+  - Injects styles via <style> tag
+  - All class names use stable `aih-*` prefix for AI CSS selectors
+  - Zero external dependency: does not depend on genstore-global.js
+  - No <details>/<summary>: uses explicit data-open / hidden / aria-expanded state model
+{%- endcomment -%}
+
+{%- liquid
+  assign color_scheme = settings.theme_color_scheme | default: 'scheme-1'
+  assign color_style = section.settings.color_style | default: 'brand'
+  assign color_scheme_index = color_scheme | split: 'scheme-' | last
+  assign color_scheme_class = 'color-scheme-' | append: color_scheme_index
+
+  assign is_transparent = false
+  if section.settings.enable_transparent_for_homepage == true and template.name == 'index'
+    assign is_transparent = true
+  endif
+  if section.settings.enable_transparent_for_product == true and template.name == 'product'
+    assign is_transparent = true
+  endif
+  if section.settings.enable_transparent_for_collection == true and template.name == 'collection'
+    assign is_transparent = true
+  endif
+
+  if is_transparent == true and section.settings.transparent_for_homepage_btn_type != 'none'
+    assign color_style = section.settings.transparent_for_btn_color_style
+  endif
+
+  assign localization_forms = false
+  if localization.available_countries.size > 1 and section.settings.enable_country_selector or section.settings.enable_language_selector and localization.available_languages.size > 1
+    assign localization_forms = true
+  endif
+
+  assign sticky_type = section.settings.sticky_header_type
+  if sticky_type == 'reduce-logo-size'
+    assign sticky_type = 'always'
+  endif
+-%}
+
+<style>
+  {{ ai_generated_css }}
+</style>
+
+<script src="{{ 'ai-header.js' | asset_url }}" defer></script>
+
+{%- comment -%} ===== Scroll tracker for IntersectionObserver solid state detection ===== {%- endcomment -%}
+<div class="aih-scroll-tracker" aria-hidden="true"></div>
+
+{%- comment -%} ===== Main header container ===== {%- endcomment -%}
+<ai-header
+  class="aih-root {{ color_style }} gradient"
+  data-sticky-type="{{ sticky_type }}"
+  {% if is_transparent %}
+    data-transparent="true"
+  {% endif %}
+  style="    {% render 'ai-color-tokens', color_scheme: color_scheme %}"
+>
+  <header class="aih-bar padding-top-{{ section.settings.padding_top }} padding-bottom-{{ section.settings.padding_bottom }}">
+    {%- comment -%} ===== Mobile drawer trigger ===== {%- endcomment -%}
+    {%- if section.settings.menu != blank -%}
+      <button
+        class="aih-drawer-trigger aih-icon"
+        aria-expanded="false"
+        aria-controls="aih-drawer"
+        aria-label="{{ 'sections.header.menu' | t | default: 'Menu' }}"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    {%- endif -%}
+
+    {%- comment -%} ===== Logo ===== {%- endcomment -%}
+    <a href="{{ routes.root_url }}" class="aih-logo">
+      {%- if settings.logo != blank -%}
+        <div class="aih-logo-default">
+          <img
+            {{ '' | genstore_vkey: key: 'logo', group: 'settings' }}
+            src="{{ settings.logo | image_url: width: 300 }}"
+            width="auto"
+            height="64"
+            class="aih-logo-img-default"
+            alt="{{ shop.name | escape }}"
+            loading="eager"
+          >
+        </div>
+      {%- endif -%}
+      {%- if settings.reverse_logo != blank -%}
+        <div class="aih-logo-transparent">
+          <img
+            {{ '' | genstore_vkey: key: 'reverse_logo', group: 'settings' }}
+            src="{{ settings.reverse_logo | image_url: width: 300 }}"
+            width="auto"
+            height="64"
+            class="aih-logo-img-transparent"
+            alt="{{ shop.name | escape }}"
+            loading="eager"
+          >
+        </div>
+      {%- endif -%}
+      {%- if settings.logo == blank and settings.reverse_logo == blank -%}
+        <span class="aih-logo-text h2">{{ shop.name }}</span>
+      {%- endif -%}
+    </a>
+
+    {%- comment -%} ===== Desktop navigation ===== {%- endcomment -%}
+    {%- if section.settings.menu != blank -%}
+      <nav class="aih-nav" {{ '' | genstore_vkey: key: 'menu' }}>
+        <ul class="aih-menu" role="list">
+          {%- for link in section.settings.menu.links -%}
+            {%- if link.links.size > 0 -%}
+              <li class="aih-menu-item aih-has-dropdown" data-open="false">
+                <a
+                  class="aih-menu-link"
+                  href="{{ link.url }}"
+                  {% if link.current %}
+                    aria-current="page"
+                  {% endif %}
+                >
+                  {{ link.title | escape }}
+                </a>
+                <button
+                  class="aih-dropdown-trigger"
+                  aria-expanded="false"
+                  aria-controls="aih-dropdown-{{ forloop.index }}"
+                  aria-label="{{ link.title | escape }} {{ 'sections.header.submenu' | t | default: 'submenu' }}"
+                >
+                  <svg
+                    class="aih-caret"
+                    width="10"
+                    height="10"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+                <ul class="aih-dropdown-panel" id="aih-dropdown-{{ forloop.index }}" hidden role="list">
+                  {%- for childlink in link.links -%}
+                    <li>
+                      <a
+                        class="aih-dropdown-link"
+                        href="{{ childlink.url }}"
+                        {% if childlink.current %}
+                          aria-current="page"
+                        {% endif %}
+                      >
+                        {{ childlink.title | escape }}
+                      </a>
+                    </li>
+                  {%- endfor -%}
+                </ul>
+              </li>
+            {%- else -%}
+              <li class="aih-menu-item">
+                <a
+                  class="aih-menu-link"
+                  href="{{ link.url }}"
+                  {% if link.current %}
+                    aria-current="page"
+                  {% endif %}
+                >
+                  {{ link.title | escape }}
+                </a>
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      </nav>
+    {%- endif -%}
+
+    {%- comment -%} ===== Actions (shared between desktop and mobile) ===== {%- endcomment -%}
+    <div class="aih-actions">
+      {%- if section.settings.enable_country_selector and localization.available_countries.size > 1 -%}
+        {%- form 'localization', class: 'aih-locale-form aih-desktop-only' -%}
+          <div class="aih-locale" data-open="false">
+            <input
+              type="hidden"
+              name="country_code"
+              class="aih-locale-submit-input"
+              value="{{ localization.country.iso_code }}"
+            >
+            <button
+              class="aih-locale-trigger"
+              type="button"
+              aria-expanded="false"
+              aria-controls="aih-country-desktop"
+            >
+              {{ localization.country.name }} ({{ localization.country.currency.iso_code }}
+              {{ localization.country.currency.symbol }})
+            </button>
+            <div class="aih-locale-panel" id="aih-country-desktop" hidden>
+              {%- for country in localization.available_countries -%}
+                <button
+                  class="aih-locale-option{% if country.iso_code == localization.country.iso_code %} aih-locale-option--active{% endif %}"
+                  type="button"
+                  data-value="{{ country.iso_code }}"
+                >
+                  {{ country.name }} ({{ country.currency.iso_code }}
+                  {{ country.currency.symbol }})
+                </button>
+              {%- endfor -%}
+            </div>
+          </div>
+        {%- endform -%}
+      {%- endif -%}
+
+      {%- if section.settings.enable_language_selector and localization.available_languages.size > 1 -%}
+        {%- form 'localization', class: 'aih-locale-form aih-desktop-only' -%}
+          <div class="aih-locale" data-open="false">
+            <input
+              type="hidden"
+              name="locale_code"
+              class="aih-locale-submit-input"
+              value="{{ localization.language.iso_code }}"
+            >
+            <button
+              class="aih-locale-trigger"
+              type="button"
+              aria-expanded="false"
+              aria-controls="aih-language-desktop"
+            >
+              {{ localization.language.endonym_name }}
+            </button>
+            <div class="aih-locale-panel" id="aih-language-desktop" hidden>
+              {%- for language in localization.available_languages -%}
+                <button
+                  class="aih-locale-option{% if language.iso_code == localization.language.iso_code %} aih-locale-option--active{% endif %}"
+                  type="button"
+                  data-value="{{ language.iso_code }}"
+                >
+                  {{ language.endonym_name }}
+                </button>
+              {%- endfor -%}
+            </div>
+          </div>
+        {%- endform -%}
+      {%- endif -%}
+
+      {%- comment -%} Cart {%- endcomment -%}
+      {% render 'cart-icon-bubble' %}
+      {%- comment -%} Account {%- endcomment -%}
+      {%- if shop.customer_accounts_enabled -%}
+        <a
+          href="{%- if customer -%}{{ routes.account_url }}{%- else -%}{{ routes.account_login_url }}{%- endif -%}"
+          class="aih-icon aih-account"
+          rel="nofollow"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M4 21c0-4 3.5-6.5 8-6.5s8 2.5 8 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <span class="visually-hidden">
+            {%- if customer -%}
+              {{ 'customer.account_fallback' | t }}
+            {%- else -%}
+              {{ 'customer.log_in' | t }}
+            {%- endif -%}
+          </span>
+        </a>
+      {%- endif -%}
+    </div>
+  </header>
+
+  {%- comment -%} ===== Mobile drawer ===== {%- endcomment -%}
+  {%- if section.settings.menu != blank -%}
+    <aside
+      class="aih-drawer"
+      id="aih-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-label="{{ 'sections.header.menu' | t | default: 'Menu' }}"
+      hidden
+    >
+      <div class="aih-drawer-overlay"></div>
+      <div class="aih-drawer-panel">
+        {%- comment -%} Drawer head {%- endcomment -%}
+        <div class="aih-drawer-head">
+          <a href="{{ routes.root_url }}" class="aih-drawer-logo">
+            {%- if settings.logo != blank -%}
+              <img
+                src="{{ settings.logo | image_url: width: 200 }}"
+                width="{{ settings.logo_width | default: 120 }}"
+                height="auto"
+                alt="{{ shop.name | escape }}"
+                loading="lazy"
+              >
+            {%- else -%}
+              <span class="aih-drawer-logo-text h2">{{ shop.name }}</span>
+            {%- endif -%}
+          </a>
+          <button class="aih-drawer-close" aria-label="{{ 'accessibility.close' | t | default: 'Close' }}">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        {%- comment -%} Drawer navigation (3-level drill-down) {%- endcomment -%}
+        <nav class="aih-drawer-nav">
+          <ul class="aih-drawer-menu" role="list">
+            {%- for link in section.settings.menu.links -%}
+              {%- assign parent_index = forloop.index -%}
+              {%- if link.links.size > 0 -%}
+                <li class="aih-drawer-item" data-open="false">
+                  <div class="aih-drawer-item-row">
+                    <a
+                      href="{{ link.url }}"
+                      class="aih-drawer-link"
+                      {% if link.current %}
+                        aria-current="page"
+                      {% endif %}
+                    >
+                      {{ link.title | escape }}
+                    </a>
+                    <button
+                      class="aih-drawer-submenu-trigger"
+                      aria-expanded="false"
+                      aria-controls="aih-drawer-sub-{{ forloop.index }}"
+                      aria-label="{{ link.title | escape }}"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="aih-subpanel" id="aih-drawer-sub-{{ forloop.index }}" hidden>
+                    <button class="aih-subpanel-back" aria-label="{{ 'sections.header.back' | t | default: 'Back' }}">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 2L4 6l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      {{ link.title | escape }}
+                    </button>
+                    <ul class="aih-drawer-submenu" role="list">
+                      {%- for childlink in link.links -%}
+                        {%- if childlink.links.size > 0 -%}
+                          <li class="aih-drawer-item" data-open="false">
+                            <div class="aih-drawer-item-row">
+                              <a
+                                href="{{ childlink.url }}"
+                                class="aih-drawer-submenu-link"
+                                {% if childlink.current %}
+                                  aria-current="page"
+                                {% endif %}
+                              >
+                                {{ childlink.title | escape }}
+                              </a>
+                              <button
+                                class="aih-drawer-submenu-trigger"
+                                aria-expanded="false"
+                                aria-controls="aih-drawer-sub-{{ parent_index }}-{{ forloop.index }}"
+                                aria-label="{{ childlink.title | escape }}"
+                              >
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 12 12"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path d="M4 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                              </button>
+                            </div>
+                            <div class="aih-subpanel" id="aih-drawer-sub-{{ parent_index }}-{{ forloop.index }}" hidden>
+                              <button
+                                class="aih-subpanel-back"
+                                aria-label="{{ 'sections.header.back' | t | default: 'Back' }}"
+                              >
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 12 12"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path d="M8 2L4 6l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                {{ childlink.title | escape }}
+                              </button>
+                              <ul class="aih-drawer-submenu" role="list">
+                                {%- for grandchildlink in childlink.links -%}
+                                  <li>
+                                    <a
+                                      href="{{ grandchildlink.url }}"
+                                      class="aih-drawer-submenu-link"
+                                      {% if grandchildlink.current %}
+                                        aria-current="page"
+                                      {% endif %}
+                                    >
+                                      {{ grandchildlink.title | escape }}
+                                    </a>
+                                  </li>
+                                {%- endfor -%}
+                              </ul>
+                            </div>
+                          </li>
+                        {%- else -%}
+                          <li>
+                            <a
+                              href="{{ childlink.url }}"
+                              class="aih-drawer-submenu-link"
+                              {% if childlink.current %}
+                                aria-current="page"
+                              {% endif %}
+                            >
+                              {{ childlink.title | escape }}
+                            </a>
+                          </li>
+                        {%- endif -%}
+                      {%- endfor -%}
+                    </ul>
+                  </div>
+                </li>
+              {%- else -%}
+                <li class="aih-drawer-item">
+                  <a
+                    href="{{ link.url }}"
+                    class="aih-drawer-link"
+                    {% if link.current %}
+                      aria-current="page"
+                    {% endif %}
+                  >
+                    {{ link.title | escape }}
+                  </a>
+                </li>
+              {%- endif -%}
+            {%- endfor -%}
+          </ul>
+        </nav>
+
+        {%- comment -%} Drawer utilities: locale selectors + cart link {%- endcomment -%}
+        <div class="aih-drawer-utils">
+          {%- if section.settings.enable_country_selector and localization.available_countries.size > 1 -%}
+            <div class="aih-locale" data-open="false">
+              <button
+                class="aih-locale-trigger"
+                type="button"
+                aria-expanded="false"
+                aria-controls="aih-country-drawer"
+              >
+                {{ localization.country.name }} ({{ localization.country.currency.iso_code }}
+                {{ localization.country.currency.symbol }})
+              </button>
+              <div class="aih-locale-panel" id="aih-country-drawer" hidden>
+                {%- for country in localization.available_countries -%}
+                  <button
+                    class="aih-locale-option{% if country.iso_code == localization.country.iso_code %} aih-locale-option--active{% endif %}"
+                    type="button"
+                    data-value="{{ country.iso_code }}"
+                  >
+                    {{ country.name }} ({{ country.currency.iso_code }}
+                    {{ country.currency.symbol }})
+                  </button>
+                {%- endfor -%}
+              </div>
+              {%- form 'localization', id: 'HeaderCountryDrawerForm' -%}
+                <input type="hidden" name="country_code" class="aih-locale-submit-input">
+              {%- endform -%}
+            </div>
+          {%- endif -%}
+
+          {%- if section.settings.enable_language_selector and localization.available_languages.size > 1 -%}
+            <div class="aih-locale" data-open="false">
+              <button
+                class="aih-locale-trigger"
+                type="button"
+                aria-expanded="false"
+                aria-controls="aih-language-drawer"
+              >
+                {{ localization.language.endonym_name }}
+              </button>
+              <div class="aih-locale-panel" id="aih-language-drawer" hidden>
+                {%- for language in localization.available_languages -%}
+                  <button
+                    class="aih-locale-option{% if language.iso_code == localization.language.iso_code %} aih-locale-option--active{% endif %}"
+                    type="button"
+                    data-value="{{ language.iso_code }}"
+                  >
+                    {{ language.endonym_name }}
+                  </button>
+                {%- endfor -%}
+              </div>
+              {%- form 'localization', id: 'HeaderLanguageDrawerForm' -%}
+                <input type="hidden" name="locale_code" class="aih-locale-submit-input">
+              {%- endform -%}
+            </div>
+          {%- endif -%}
+
+          <a href="{{ routes.cart_url }}" class="aih-drawer-cart-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 6h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 10a4 4 0 01-8 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            {{ 'templates.cart.cart' | t | default: 'Cart' }}
+          </a>
+
+          {%- if shop.customer_accounts_enabled -%}
+            <a
+              href="{%- if customer -%}{{ routes.account_url }}{%- else -%}{{ routes.account_login_url }}{%- endif -%}"
+              class="aih-drawer-account-link"
+              rel="nofollow"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M4 21c0-4 3.5-6.5 8-6.5s8 2.5 8 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              {%- if customer -%}
+                {{ 'customer.account_fallback' | t }}
+              {%- else -%}
+                {{ 'customer.log_in' | t }}
+              {%- endif -%}
+            </a>
+          {%- endif -%}
+        </div>
+      </div>
+    </aside>
+  {%- endif -%}
+</ai-header>
+
+{%- comment -%} ===== LD+JSON Structured Data ===== {%- endcomment -%}
+{%- assign ld_json_host = req.headers['x-genstore-host'] | default: shop.host | split: ':' | first -%}
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "Organization",
+    "name": {{ shop.name | json }},
+    {% if settings.logo %}
+    "logo": {{ settings.logo | image_url | json }},
+    {% endif %}
+    {%- assign ld_json_description = page_description | default: shop.description -%}
+    {% if ld_json_description %}
+    "description": {{ ld_json_description | json }},
+    {% endif %}
+    {%- liquid
+      assign ld_json_social_links = ''
+      assign ld_json_social_accounts = 'twitter,facebook,pinterest,instagram,tiktok,tumblr,snapchat,youtube,vimeo' | split: ','
+      for account in ld_json_social_accounts
+        assign ld_json_social_key = 'social_' | append: account | append: '_link'
+        assign ld_json_social_link = settings[ld_json_social_key] | json
+        if ld_json_social_link != 'null'
+          if ld_json_social_links != ''
+            assign ld_json_social_links = ld_json_social_links | append: ','
+          endif
+          assign ld_json_social_links = ld_json_social_links | append: ld_json_social_link
+        endif
+      endfor
+    -%}
+    "sameAs": [{{ ld_json_social_links }}],
+    "url": {{ ld_json_host | prepend: 'https://' | append: page.url | json }}
+  }
+</script>
+
+{%- if request.page_type == 'index' -%}
+  {% assign potential_action_target = ld_json_host
+    | prepend: 'https://'
+    | append: routes.search_url
+    | append: '?q={search_term_string}'
+  %}
+  <script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "WebSite",
+      "name": {{ shop.name | json }},
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {{ potential_action_target | json }},
+        "query-input": "required name=search_term_string"
+      },
+      "url": {{ ld_json_host | prepend: 'https://' | append: page.url | json }}
+    }
+  </script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.header.name",
+  "class": "section-header-wrapper",
+  "enabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "default": "middle",
+      "options": [
+        { "label": "t:sections.header.settings.layout.options__1.label", "value": "middle" },
+        { "label": "t:sections.header.settings.layout.options__2.label", "value": "top" }
+      ],
+      "id": "layout",
+      "label": "t:sections.header.settings.layout.label",
+      "type": "select"
+    },
+    {
+      "default": "left",
+      "options": [
+        { "label": "t:sections.header.settings.logo_position.options__1.label", "value": "center" },
+        { "label": "t:sections.header.settings.logo_position.options__2.label", "value": "left" }
+      ],
+      "id": "logo_position",
+      "label": "t:sections.header.settings.logo_position.label",
+      "type": "select"
+    },
+    {
+      "default": false,
+      "id": "full_width",
+      "label": "t:sections.header.settings.full_width.label",
+      "type": "checkbox"
+    },
+    {
+      "default": false,
+      "id": "enable_country_selector",
+      "label": "t:sections.header.settings.enable_country_selector.label",
+      "info": "t:sections.header.settings.enable_country_selector.info",
+      "type": "checkbox"
+    },
+    {
+      "default": false,
+      "id": "enable_language_selector",
+      "label": "t:sections.header.settings.enable_language_selector.label",
+      "info": "t:sections.header.settings.enable_language_selector.info",
+      "type": "checkbox"
+    },
+    {
+      "default": true,
+      "id": "show_line_separator",
+      "label": "t:sections.header.settings.show_line_separator.label",
+      "type": "checkbox"
+    },
+    {
+      "type": "select",
+      "id": "sticky_header_type",
+      "options": [
+        { "value": "none", "label": "t:sections.header.settings.sticky_header_type.options__1.label" },
+        { "value": "on-scroll-up", "label": "t:sections.header.settings.sticky_header_type.options__2.label" },
+        { "value": "always", "label": "t:sections.header.settings.sticky_header_type.options__3.label" },
+        { "value": "reduce-logo-size", "label": "t:sections.header.settings.sticky_header_type.options__3.label" }
+      ],
+      "default": "none",
+      "label": "t:sections.header.settings.sticky_header_type.label"
+    },
+    { "type": "header", "content": "t:sections.header.settings.enable_transparent.label" },
+    {
+      "type": "checkbox",
+      "id": "enable_transparent_for_homepage",
+      "label": "t:sections.header.settings.homepage.label",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_transparent_for_product",
+      "label": "t:sections.header.settings.product.label",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_transparent_for_collection",
+      "label": "t:sections.header.settings.collection.label",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "transparent_for_homepage_btn_type",
+      "options": [
+        { "value": "none", "label": "t:sections.header.settings.enable_transparent.label_1" },
+        { "value": "reverse_color", "label": "t:sections.header.settings.enable_transparent.label_2" }
+      ],
+      "default": "reverse_color",
+      "label": "t:sections.header.settings.enable_transparent.label_3"
+    },
+    {
+      "id": "transparent_for_btn_color_style",
+      "label": "t:sections.all.color_style.label",
+      "type": "select",
+      "default": "pure",
+      "options": [
+        { "label": "t:sections.all.color_style.transparent.label", "value": "transparent" },
+        { "label": "t:sections.all.color_style.pure.label", "value": "pure" },
+        { "label": "t:sections.all.color_style.neutral.label", "value": "neutral" },
+        { "label": "t:sections.all.color_style.brand.label", "value": "brand" },
+        { "label": "t:sections.all.color_style.secondary.label", "value": "secondary" },
+        { "label": "t:sections.all.color_style.striking.label", "value": "striking" }
+      ]
+    },
+    { "type": "header", "content": "t:sections.header.settings.menu.label" },
+    { "default": "main-menu", "id": "menu", "label": "t:sections.header.settings.menu.label", "type": "link_list" },
+    {
+      "id": "color_style",
+      "label": "t:sections.all.color_style.label",
+      "type": "select",
+      "default": "pure",
+      "options": [
+        { "label": "t:sections.all.color_style.transparent.label", "value": "transparent" },
+        { "label": "t:sections.all.color_style.pure.label", "value": "pure" },
+        { "label": "t:sections.all.color_style.neutral.label", "value": "neutral" },
+        { "label": "t:sections.all.color_style.brand.label", "value": "brand" },
+        { "label": "t:sections.all.color_style.secondary.label", "value": "secondary" },
+        { "label": "t:sections.all.color_style.striking.label", "value": "striking" }
+      ]
+    },
+    { "type": "header", "content": "t:sections.all.spacing" },
+    {
+      "default": "xxs",
+      "options": [
+        { "label": "t:sections.all.padding.options__1.label", "value": "none" },
+        { "label": "t:sections.all.padding.options__2.label", "value": "xxs" },
+        { "label": "t:sections.all.padding.options__3.label", "value": "xs" },
+        { "label": "t:sections.all.padding.options__4.label", "value": "s" },
+        { "label": "t:sections.all.padding.options__5.label", "value": "m" },
+        { "label": "t:sections.all.padding.options__6.label", "value": "l" },
+        { "label": "t:sections.all.padding.options__7.label", "value": "xl" }
+      ],
+      "id": "padding_top",
+      "label": "t:sections.all.padding.padding_top",
+      "type": "select"
+    },
+    {
+      "default": "xxs",
+      "options": [
+        { "label": "t:sections.all.padding.options__1.label", "value": "none" },
+        { "label": "t:sections.all.padding.options__2.label", "value": "xxs" },
+        { "label": "t:sections.all.padding.options__3.label", "value": "xs" },
+        { "label": "t:sections.all.padding.options__4.label", "value": "s" },
+        { "label": "t:sections.all.padding.options__5.label", "value": "m" },
+        { "label": "t:sections.all.padding.options__6.label", "value": "l" },
+        { "label": "t:sections.all.padding.options__7.label", "value": "xl" }
+      ],
+      "id": "padding_bottom",
+      "label": "t:sections.all.padding.padding_bottom",
+      "type": "select"
+    }
+  ],
+  "blocks": []
+}
+{% endschema %}

@@ -1,0 +1,131 @@
+{%- liquid
+  assign quantity_rule_soldout = false
+  assign check_against_inventory = true
+  assign inventory_policy = product.selected_or_first_available_variant.inventory_policy
+  if inventory_policy == 'continue'
+    assign check_against_inventory = false
+  endif
+  if product.selected_or_first_available_variant.quantity_rule.min > product.selected_or_first_available_variant.inventory_quantity and check_against_inventory
+    assign quantity_rule_soldout = true
+  endif
+
+  assign product_sku_isDisabled = false
+  if quantity_rule_soldout == false and product.selected_or_first_available_variant.available == false
+    assign product_sku_isDisabled = true
+  endif
+  assign add_cart_disabled = false
+  if quantity_rule_soldout == true or product_sku_isDisabled
+    assign add_cart_disabled = true
+  endif
+  assign add_cart_text = 'products.product.add_to_cart' | t
+  if product.selected_or_first_available_variant == null
+    assign add_cart_text = 'products.product.unavailable' | t
+  endif
+  if quantity_rule_soldout
+    assign add_cart_text = 'products.product.sold_out' | t
+  endif
+-%}
+<sticky-cart
+  data-product-id="{{ product.id }}"
+  data-cart-type="{{ settings.cart_type }}"
+  data-is-single-variant="{{ product.has_only_default_variant }}"
+>
+  {%- comment -%} 固定在底部的购买按钮栏 {%- endcomment -%}
+  <div class="sticky-cart-bar">
+    <div
+      type="button"
+      class="genstore-btn {{ buy_buttons_block.settings.button_style  | default:'default' }} {{ buy_buttons_block.settings.button_color_style | default:'brand'}} xl{% if add_cart_disabled %} disabled{% endif %}"
+      data-action="add_to_cart"
+      {% if add_cart_disabled %}
+        disabled
+      {% endif %}
+    >
+      {{ add_cart_text }}
+    </div>
+
+    <div
+      type="button"
+      class="genstore-btn {{ buy_buttons_block.settings.buy_button_style  | default:'primary' }} xl {{ buy_buttons_block.settings.buy_button_color_style | default:'brand'}}"
+      data-action="buy_now"
+    >
+      {{ 'products.product.buy_now' | t | default: 'Buy now' }}
+    </div>
+  </div>
+  {%- comment -%} 弹窗蒙层 {%- endcomment -%}
+  <div class="sticky-cart-overlay" hidden>
+    {% capture scheme %}
+      {% render 'genstore-computed-color-scheme', color_scheme: settings.theme_color_scheme, color_mode:'light', color_style:'pure' %}
+    {% endcapture %}
+    <div class="sticky-cart-modal {{ scheme }}">
+      <div class="sticky-cart-modal__content">
+        <div class="sticky-cart-modal__product">
+          <div class="sticky-cart-modal__image">
+            {% if product.selected_or_first_available_variant.featured_image %}
+              <img
+                src="{{ product.selected_or_first_available_variant.featured_image | image_url: width: 200 }}"
+                alt="{{ product.title }}"
+                loading="lazy"
+              >
+            {% elsif product.featured_image %}
+              <img src="{{ product.featured_image | image_url: width: 200 }}" alt="{{ product.title }}" loading="lazy">
+            {% endif %}
+          </div>
+          <div class="sticky-cart-modal__info">
+            <h3 class="sticky-cart-modal__title">{{ product.title }}</h3>
+            <div class="sticky-cart-modal__price">
+              <span class="sticky-cart-modal__price-current">
+                {{- product.selected_or_first_available_variant.price | money -}}
+              </span>
+              {% if product.selected_or_first_available_variant.compare_at_price
+                  > product.selected_or_first_available_variant.price
+              %}
+                <span class="sticky-cart-modal__price-compare">
+                  {{- product.selected_or_first_available_variant.compare_at_price | money -}}
+                </span>
+              {% endif %}
+            </div>
+          </div>
+          <button type="button" class="sticky-cart-modal__close" aria-label="Close">
+            {% render 'genstore-svg', icon_name: 'icon-close' %}
+          </button>
+        </div>
+        <div class="sticky-cart-modal__variants">
+          {% render 'product-variant-picker',
+            section: section,
+            product: product,
+            picker_type: 'button',
+            product_form_id: product_form_id,
+            id_prefix: 'sticky-cart-variant-selects'
+          %}
+        </div>
+        <div class="sticky-cart-modal__quantity">
+          <label class="sticky-cart-modal__quantity-label">{{ 'products.product.quantity.label' | t }}</label>
+          {% render 'genstore-quantity-input',
+            max: 99999,
+            min: 1,
+            value: 1,
+            step: 1,
+            product_form_id: product_form_id,
+            input_size: 'xl'
+          %}
+        </div>
+      </div>
+      <div class="sticky-cart-modal__footer">
+        <div class="add-cart-btn">
+          <button
+            type="button"
+            class="genstore-btn {{ buy_buttons_block.settings.button_style  | default:'default' }} {{ buy_buttons_block.settings.button_color_style | default:'brand'}} xl{% if add_cart_disabled %} disabled{% endif %}"
+            data-action="add_to_cart"
+            {% if add_cart_disabled %}
+              disabled
+            {% endif %}
+          >
+            {{ add_cart_text }}
+          </button>
+        </div>
+
+        {%- comment -%} 动态支付按钮将由 JavaScript (genstore-product-info.js L872-873) 动态添加到这里 {%- endcomment -%}
+      </div>
+    </div>
+  </div>
+</sticky-cart>

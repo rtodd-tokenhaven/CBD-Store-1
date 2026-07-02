@@ -1,0 +1,4 @@
+{% assign icon = icon_name | append: '.svg' %}
+<span class="genstore-svg-wrapper {{ icon_size | default: 'small' }} {{ className }}" style="{{ icon_style }}">
+  {{- icon | inline_asset_content -}}
+</span>

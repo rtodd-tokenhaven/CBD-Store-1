@@ -1,0 +1,38 @@
+{%- comment -%}
+  ai-btn — 按钮/链接组件
+  统一字体、尺寸、圆角基线
+
+  参数：
+    text      (string, 必填)  按钮文字
+    url       (string)        链接地址（渲染为 <a>），默认 '/collections'
+    variant   (string)        视觉变体 default/outline/ghost，默认 default
+    size      (string)        尺寸 sm/md/lg，默认 md
+    class     (string)        额外 CSS 类
+    style     (string)        额外内联样式
+    disabled  (boolean)       禁用状态
+    type      (string)        link/button，默认 link
+    attrs     (string)        额外 HTML 属性
+{%- endcomment -%}
+
+{%- liquid
+  assign _variant = variant | default: 'default'
+  assign _size = size | default: 'md'
+  assign _type = type | default: 'link'
+  assign _url = url | default: '/collections'
+-%}
+
+{%- if _type == 'button' -%}
+  <button class="ai-btn ai-btn--{{ _variant }} ai-btn--{{ _size }}{% if class != blank %} {{ class }}{% endif %}"
+          {% if style != blank %}style="{{ style }}"{% endif %}
+          {% if disabled %}disabled{% endif %}
+          {{ attrs }}>
+    {{- text -}}
+  </button>
+{%- else -%}
+  <a href="{{ _url }}"
+     class="ai-btn ai-btn--{{ _variant }} ai-btn--{{ _size }}{% if class != blank %} {{ class }}{% endif %}"
+     {% if style != blank %}style="{{ style }}"{% endif %}
+     {{ attrs }}>
+    {{- text -}}
+  </a>
+{%- endif -%}
